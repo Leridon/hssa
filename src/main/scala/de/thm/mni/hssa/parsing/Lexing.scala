@@ -1,9 +1,9 @@
 package de.thm.mni.hssa.parsing
 
-import de.thm.mni.hssa.util.parsing.{FileReader, LexicalGrammarUtilities, TokenReader}
+import de.thm.mni.hssa.util.parsing.{FileReader, LexicalGrammarUtilities, Token, TokenReader}
 
 import java.nio.file.Path
-import scala.util.parsing.input.CharSequenceReader
+import scala.util.parsing.input.{CharSequenceReader, Position}
 
 object Lexing {
     object Tokens {
@@ -19,6 +19,7 @@ object Lexing {
             case INTLIT
             case ASGN
             case TILDE
+            case EOF
             
             override def toString: String = this match
                 case IDENT => "IDENT"
@@ -31,6 +32,7 @@ object Lexing {
                 case INTLIT => "INTLIT"
                 case ASGN => "ASGN"
                 case TILDE => "TILDE"
+                case EOF => "<eof>"
         }
     }
     
@@ -39,6 +41,8 @@ object Lexing {
         import Tokens.TokenClass.*
         
         lazy val whitespace: Parser[Any] = """(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))*""".r
+        
+        def eof: Position => Token[Tokens.TokenClass] = symbol(EOF)
         
         def token: Parser[Symbol] = (in: Input) =>
             (
@@ -53,6 +57,8 @@ object Lexing {
                 "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
                 "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ (l => symbol(IDENT, l))
               )(in).map(_(in.pos))
+            
+        
     }
     
     def lex(path: Path): TokenReader[Tokens.TokenClass] = TokenReader(FileReader(path), LexicalGrammar)
