@@ -1,0 +1,44 @@
+procedure queue.init:
+    begin()
+        queue := allocate()
+        data := allocate()
+        0 := queue[0] := 0 // next free to the right of the collection
+        0 := queue[1] := 0 // number of elements
+        0 := queue[2] := data
+    end(queue)
+
+procedure queue.push:
+    begin(queue, value)
+        nextfree.0 := queue[0] := 0
+
+        // Borrow the data pointer, add the element
+        data := queue[2] := 0
+        0 := data[nextfree.0] := value
+        0 := queue[2] := data
+
+        // Increase the size
+        size.0 := queue[1] := 0
+        size.1 := size.0 + 1
+        0 := queue[1] := size.1
+
+        nextfree.1 := nextfree.0 + 1
+        0 := queue[0] := nextfree.1
+    end(queue)
+
+
+procedure queue.pop:
+    begin(queue)
+        nextfree.0 := queue[0] := 0
+            size.0 := queue[1] := 0
+
+            first.0 := 0 ^ (nextfree.0 - size.0)
+
+            // Borrow the data pointer, remove the element
+            data := queue[2] := 0
+            value := data[first.0] := 0
+            0 := queue[2] := data
+
+            size.1 := size.0 - 1
+            0 := queue[1] := size.1
+        0 := queue[0] := nextfree.0
+    end(queue, value)

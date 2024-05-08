@@ -1,0 +1,48 @@
+package de.thm.mni.hssa.parsing
+
+import de.thm.mni.hssa.{AtPosition, Syntax}
+import de.thm.mni.hssa.{AtPosition, Errors, Syntax}
+import de.thm.mni.hssa.util.parsing.{ParserUtilities, Token}
+import de.thm.mni.hssa.util.reversibility.Direction
+
+import scala.util.parsing.combinator.ImplicitConversions
+import scala.util.parsing.input.Reader
+
+object Parsing {
+    type TokenReader = Reader[Token[Lexing.Tokens.TokenClass]]
+    
+    object Grammar extends ParserUtilities[Lexing.Tokens.TokenClass] with ImplicitConversions {
+                
+        import de.thm.mni.hssa.parsing.Lexing.Tokens.TokenClass.*
+        
+        private type P[T] = Grammar.Parser[T]
+        
+        private def ident: P[String] = valueToken(IDENT)(classOf[String])
+        private def intlit: P[Int] = valueToken(INTLIT)(classOf[Integer]).map(_.intValue())
+                
+        def expression: P[Syntax.Expression] =
+            ident ^^ Syntax.Expression.Variable.apply
+              | intlit ^^ Syntax.Expression.Literal.apply
+              | LPAREN ~~ RPAREN ^^ (_ => Syntax.Expression.Unit())
+              | LPAREN ~~ expression ~~ COMMA ~~ expression ~~ RPAREN ^^ Syntax.Expression.Pair.apply
+                
+        def statement: P[Syntax.Statement] =
+            expression ~~ ASGN ~~ ident ~~ LARROW ^^ Syntax.UnconditionalEntry.apply |
+            expression ~~ ASGN ~~ ident ~~ COMMA ~~ ident ~~ LARROW ^^ Syntax.ConditionalEntry.apply |        
+            RARROW ~~ ident ~~ ASGN ~~ expression ^^ Syntax.UnconditionalExit.apply |
+            RARROW ~~ ident ~~ COMMA ~~ ident ~~ ASGN ~~ expression ^^ Syntax.ConditionalExit.apply
+            expression ~~ ASGN ~~ opt(TILDE).map(_.isDefined) ~~ ident ~~ expression ~~ ASGN ~~ expression ^^ Syntax.Assignment.apply
+        
+        def procedure: P[Syntax.Relation] = RELATION ~~ ident ~~ expression ~~ rep(statement) ^^ Syntax.Relation.apply
+        def program: P[Syntax.Program] = phrase(rep(procedure) ^^ Syntax.Program.apply)
+    }
+    
+    def parse(token_reader: TokenReader): Syntax.Program = {
+        Grammar.program(token_reader) match {
+            case Grammar.Success(prog, _) => prog
+            case Grammar.NoSuccess(msg, rest) => AtPosition(rest.pos) {
+                throw Errors.SyntaxError(msg)
+            }
+        }
+    }
+}
