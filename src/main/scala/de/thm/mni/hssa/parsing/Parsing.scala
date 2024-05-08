@@ -1,5 +1,6 @@
 package de.thm.mni.hssa.parsing
 
+import de.thm.mni.hssa.interpretation.Value
 import de.thm.mni.hssa.{AtPosition, Errors, Formatting, Syntax}
 import de.thm.mni.hssa.util.parsing.{ParserUtilities, Token}
 import de.thm.mni.hssa.util.reversibility.Direction
@@ -21,7 +22,7 @@ object Parsing {
         
         def expression: P[Syntax.Expression] =
             (ident ^^ Syntax.Expression.Variable.apply
-              | intlit ^^ Syntax.Expression.Literal.apply
+              | intlit ^^ (v => Syntax.Expression.Literal.apply(Value.Int(v)))
               | LPAREN ~~ RPAREN ^^ (_ => Syntax.Expression.Unit())
               | LPAREN ~~ expression ~~ COMMA ~~ expression ~~ RPAREN ^^ Syntax.Expression.Pair.apply
               | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))

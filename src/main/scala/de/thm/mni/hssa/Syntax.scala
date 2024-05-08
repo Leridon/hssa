@@ -1,16 +1,20 @@
 package de.thm.mni.hssa
 
+import de.thm.mni.hssa.Syntax.Expression
+import de.thm.mni.hssa.Syntax.Expression.Variable
+import de.thm.mni.hssa.interpretation.Value
+
 object Syntax {
-    abstract class Expression
+    sealed abstract class Expression
     
     object Expression {
-        case class Literal(value: Int) extends Expression
+        case class Literal(value: Value) extends Expression
         case class Variable(name: String) extends Expression
         case class Pair(a: Expression, b: Expression) extends Expression
         case class Unit() extends Expression
     }
     
-    abstract class Statement
+    abstract sealed class Statement
     case class Assignment(
                            target: Expression,
                            inverted: Boolean,
@@ -39,5 +43,14 @@ object SyntaxExtensions {
         def isEntry: Boolean = self match
             case _: Syntax.ConditionalEntry => true
             case _: Syntax.UnconditionalEntry => true
-            case _ => false
+    
+    
+    extension (self: Syntax.Expression)
+        def variables: List[Variable] = {
+            self match
+                case Expression.Literal(value) => Nil
+                case v: Variable => List(v)
+                case Expression.Pair(a, b) => a.variables ++ b.variables
+                case Expression.Unit() => Nil
+        }
 }

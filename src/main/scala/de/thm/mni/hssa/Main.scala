@@ -16,6 +16,8 @@ object Main {
             
             println(Formatting.format(prog))
             
+            println(Formatting.format(Inversion.invert(prog)))
+            
             // Parse
             // (opt) Auto-Repair
             // Validate
