@@ -1,12 +1,14 @@
 package de.thm.mni.hssa
 
 import de.thm.mni.hssa.Errors.LanguageError
+import de.thm.mni.hssa.interpretation.{Interpretation, Value}
 import de.thm.mni.hssa.parsing.Lexing.lex
 import de.thm.mni.hssa.parsing.Parsing
 
 import java.nio.file.Paths
 
 object Main {
+    
     def main(args: Array[String]): Unit = {
         try {
             lex(Paths.get("draft.hssa"))
@@ -17,6 +19,8 @@ object Main {
             println(Formatting.format(prog))
             
             println(Formatting.format(Inversion.invert(prog)))
+            
+            println(Interpretation.interpret(prog, "factorial", Value.Unit, Value.Int(5)))
             
             // Parse
             // (opt) Auto-Repair

@@ -23,10 +23,12 @@ object Syntax {
                            source: Expression
                          ) extends Statement
     
-    case class UnconditionalExit(target: String, argument: Expression) extends Statement
-    case class ConditionalExit(target1: String, target2: String, argument: Expression) extends Statement
-    case class UnconditionalEntry(initialized: Expression, target: String) extends Statement
-    case class ConditionalEntry(initialized: Expression, target1: String, target2: String) extends Statement
+    sealed trait Entry extends Statement
+    sealed trait Exit extends Statement
+    case class UnconditionalExit(target: String, argument: Expression) extends Exit
+    case class ConditionalExit(target1: String, target2: String, argument: Expression) extends Exit
+    case class UnconditionalEntry(initialized: Expression, target: String) extends Entry
+    case class ConditionalEntry(initialized: Expression, target1: String, target2: String) extends Entry
     
     case class Relation(name: String, parameter: Expression, body: List[Statement])
     
@@ -43,6 +45,18 @@ object SyntaxExtensions {
         def isEntry: Boolean = self match
             case _: Syntax.ConditionalEntry => true
             case _: Syntax.UnconditionalEntry => true
+            case _ => false
+    
+    
+    
+    extension (self: Syntax.Exit | Syntax.Entry) {
+        def labels: List[String] = self match {
+            case Syntax.UnconditionalEntry(initialized, target) => List(target)
+            case Syntax.ConditionalEntry(initialized, target1, target2) => List(target1, target2)
+            case Syntax.UnconditionalExit(target, argument) => List(target)
+            case Syntax.ConditionalExit(target1, target2, argument) => List(target1, target2)
+        }
+    }
     
     
     extension (self: Syntax.Expression)

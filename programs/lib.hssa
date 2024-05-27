@@ -1,0 +1,26 @@
+rel swap(()):
+    (a, b) := begin
+               end  := (b, a)
+
+rel id(()):
+    v := begin
+          end  := v
+
+rel compare((a, b)):
+
+    () := begin
+    greater_equal := ge (a, b) := ()
+    greater := gt (a, b) := ()
+
+    x.0 := add(-1) := greater_equal
+    x.1 := add(greater) := x.0
+
+    () := ~gt (a, b) := greater
+
+                end := x.1
+
+rel cons(())
+    (head, tail) := begin
+                     end  := (head, tail)
+
+
