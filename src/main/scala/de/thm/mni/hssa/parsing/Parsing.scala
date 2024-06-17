@@ -21,19 +21,19 @@ object Parsing {
         private def intlit: P[Int] = valueToken(INTLIT)(classOf[Integer]).map(_.intValue())
         
         def expression: P[Syntax.Expression] =
-            (ident ^^ Syntax.Expression.Variable.apply
+            ident ^^ Syntax.Expression.Variable.apply
               | intlit ^^ (v => Syntax.Expression.Literal.apply(Value.Int(v)))
               | LPAREN ~~ RPAREN ^^ (_ => Syntax.Expression.Unit())
               | LPAREN ~~ expression ~~ COMMA ~~ expression ~~ RPAREN ^^ Syntax.Expression.Pair.apply
+              | TILDE ~~ expression ^^ Syntax.Expression.Inversion.apply
               | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
-              )
         
         def statement: P[Syntax.Statement] =
-            (expression ~~ ASGN ~~ ident ~~ LARROW ^^ Syntax.UnconditionalEntry.apply |
+            expression ~~ ASGN ~~ ident ~~ LARROW ^^ Syntax.UnconditionalEntry.apply |
               expression ~~ ASGN ~~ ident ~~ COMMA ~~ ident ~~ LARROW ^^ Syntax.ConditionalEntry.apply |
               RARROW ~~ ident ~~ ASGN ~~ expression ^^ Syntax.UnconditionalExit.apply |
               RARROW ~~ ident ~~ COMMA ~~ ident ~~ ASGN ~~ expression ^^ Syntax.ConditionalExit.apply |
-              expression ~~ ASGN ~~ opt(TILDE).map(_.isDefined) ~~ ident ~~ expression ~~ ASGN ~~ expression ^^ Syntax.Assignment.apply)
+              expression ~~ ASGN ~~ expression ~~ expression ~~ ASGN ~~ expression ^^ Syntax.Assignment.apply
         
         def procedure: P[Syntax.Relation] = RELATION ~~ ident ~~ expression ~~ rep(statement) ^^ Syntax.Relation.apply
         def program: P[Syntax.Program] = phrase(rep(procedure) ^^ Syntax.Program.apply)

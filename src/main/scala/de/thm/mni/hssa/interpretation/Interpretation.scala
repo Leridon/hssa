@@ -88,11 +88,7 @@ object Interpretation {
                 relation.body.slice(a, b + 1)
             })
             
-            sequences.map(seq => new BlockIndex.Block(
-                seq.head.asInstanceOf[Syntax.Entry],
-                seq.slice(1, seq.length - 1).map(_.asInstanceOf[Syntax.Assignment]),
-                seq.last.asInstanceOf[Syntax.Exit]
-            ))
+            sequences.map(seq => new BlockIndex.Block(seq))
         }
         
         def entry(label: String): BlockIndex.Block = blocks.find(b => b.entry.labels.contains(label)).get
@@ -101,10 +97,12 @@ object Interpretation {
     
     object BlockIndex {
         class Block(
-                     val entry: Syntax.Entry,
-                     val assignments: List[Syntax.Assignment],
-                     val exit: Syntax.Exit
-                   )
+                     val sequence: Seq[Syntax.Statement]
+                   ) {
+            val entry: Syntax.Entry = sequence.head.asInstanceOf[Syntax.Entry]
+            val assignments: Seq[Syntax.Assignment] = sequence.slice(1, sequence.length - 1).map(_.asInstanceOf[Syntax.Assignment])
+            val exit: Syntax.Exit = sequence.last.asInstanceOf[Syntax.Exit]
+        }
     }
     
     case class ValueContext(parent: Option[ValueContext], values: Map[String, Value]) {
@@ -173,15 +171,15 @@ object Interpretation {
                     
                     val after_assignments = block.assignments.foldLeft(block_context)((stm_context, assignment) => {
                         assignment match {
-                            case Syntax.Assignment(target, inverted, relation_name, instance_argument, source) =>
+                            case Syntax.Assignment(target, relation_name, instance_argument, source) =>
                                 val consumedArg = evaluate(source, stm_context)
                                 val ctx = stm_context.undefine(source.variables.map(_.name))
                                 
                                 val instantiationArg = evaluate(instance_argument, ctx)
                                 
-                                val called_rel: Value.Relation = ctx.get(relation_name).asInstanceOf[Value.Relation]
+                                val called_rel: Value.Relation = evaluate(relation_name, stm_context).asInstanceOf[Value.Relation]
                                 
-                                ctx.define(assign(target, evaluate(ctx, called_rel, if (inverted) BACKWARDS else FORWARDS, instantiationArg, consumedArg)))
+                                ctx.define(assign(target, evaluate(ctx, called_rel, FORWARDS, instantiationArg, consumedArg)))
                         }
                     })
                     

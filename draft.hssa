@@ -1,14 +1,45 @@
-rel factorial ()
-n    :=    begin <-
-        -> L1    :=    (n, 1)
-                
-((n.0, product.0), c.0)    :=    L1,L2 <-        
-()    :=    ~ eq (product.0, 1)    :=    c.0
-product.1    :=    mul (product.0, n.0)    :=    ()
-()    :=    ~ div (product.1, n.0)     :=    product.0
-n.1    :=    sub 1    :=    n.0
-c.1    :=   gt (n.1, 1)    :=    ()
-        -> L2,L3    :=    ((n.1, product.1), c.1)
-                
-(1, result)     :=    L3 <-
-        ->end    :=    result
+rel sort(f):
+    out    := begin
+    c      := oracle () := ()
+              ->l3,l4   := (out, c)
+
+    (b, a)  := l4<-
+               ->l2 := (a, b)
+
+   ((a, b), c) := l3,l2<-
+      comp     := ?f (a, b) := () // Wenn f invertiert wird, dann ~f, sonst nur f
+      ()       := ~le (comp, 0) := c
+      ()       := ?f (a, b) := comp
+                     end    := (a, b)
+
+
+
+
+
+
+rel inverted_stupid_recursion (f):
+    in := begin
+    c  := ~less (in, 0) := ()
+            ->l1,l2 := (in, c)
+
+    in  := l1<-
+    in.1 := ~mul -1 := in
+    out  := inverted_stupid_recursion f := in.1
+                ->l3   := out
+
+    in  := l2<-
+    in.1 := ~sub 1 := in
+    out  := ~f ~inverted_stupid_recursion := in.1
+                ->l4   := out
+
+    (out, c) := l3,l4<-
+     ()      := ~discard () := c
+                  end := out
+
+
+ res :=    stupid_recursion stupid_recursion := -10
+
+
+map ~swap
+
+

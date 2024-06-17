@@ -14,10 +14,10 @@ object Formatting {
     }
     
     def formatInColumns(statement: Syntax.Statement): Array[String] = statement match {
-        case Syntax.Assignment(target, true, name, arg, consumed) =>
-            Array(format(target), ":=", s"~ $name ${format(arg)}", ":=", format(consumed))
-        case Syntax.Assignment(target, false, name, arg, consumed) =>
-            Array(format(target), ":=", s"$name ${format(arg)}", ":=", format(consumed))
+        case Syntax.Assignment(target, rel, arg, consumed) =>
+            Array(format(target), ":=", s"~ ${format(rel)} ${format(arg)}", ":=", format(consumed))
+        case Syntax.Assignment(target, rel, arg, consumed) =>
+            Array(format(target), ":=", s"${format(rel)} ${format(arg)}", ":=", format(consumed))
         case Syntax.UnconditionalEntry(initialized, target) =>
             Array(format(initialized), ":=", s"$target <-", "", "")
         case Syntax.ConditionalEntry(initialized, target1, target2) =>

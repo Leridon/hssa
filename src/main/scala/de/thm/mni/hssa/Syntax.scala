@@ -11,14 +11,14 @@ object Syntax {
         case class Literal(value: Value) extends Expression
         case class Variable(name: String) extends Expression
         case class Pair(a: Expression, b: Expression) extends Expression
+        case class Inversion(a: Expression) extends Expression
         case class Unit() extends Expression
     }
     
     abstract sealed class Statement
     case class Assignment(
                            target: Expression,
-                           inverted: Boolean,
-                           relation_name: String,
+                           relation: Expression,
                            instance_argument: Expression,
                            source: Expression
                          ) extends Statement
@@ -46,7 +46,10 @@ object SyntaxExtensions {
             case _: Syntax.ConditionalEntry => true
             case _: Syntax.UnconditionalEntry => true
             case _ => false
-    
+        
+        def initializes: Expression = ???
+        def finalizes: Expression = ???
+        def uses: Expression = ???
     
     
     extension (self: Syntax.Exit | Syntax.Entry) {

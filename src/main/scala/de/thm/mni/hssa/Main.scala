@@ -18,7 +18,7 @@ object Main {
             
             println(Formatting.format(prog))
             
-            println(Formatting.format(Inversion.invert(prog)))
+            println(Formatting.format(Inversion.Global.invert(prog)))
             
             println(Interpretation.interpret(prog, "factorial", Value.Unit, Value.Int(5)))
             

@@ -1,26 +1,194 @@
+rel dynamic_call((f, arg)):
+    in   := begin
+    c    := eq (f, 0) := ()
+            ->l1,l2   := (in, c)
+
+    in  := l1<-
+    out := plus_one arg := in
+             ->l3      := out
+
+    in  := l2<-
+    out := id arg := in
+             ->l4      := out
+
+    (out, c) := l3,l4<-
+    () := ~eq (f, 0) := c
+           end := out
+
+rel plus_one(()):
+    in   := begin
+    in.1 := add 1 := in.0
+             end  := in.1
+
+rel map(f):
+    (a.0, b.0)  :=  begin
+     a.1        :=   f ()   := a.0
+     b.1        :=   f ()   := b.0
+                     end    := (a.1, b.1)
+
+rel map(f):
+    (head, tail)  :=  begin
+     head.1       :=  f ()   := head
+     tail.1       :=  map f  := tail
+                      end    := (head.1, tail.1)
+
+f    := dup plus_one := ()
+5    :=  f ()  := a
+
+
+a     := ~f () := 5
+()    := ~dup plus_one := f
+
+(M.1, ()) :=   memaccess i   := (M, f)
+
+                 (plus_one, mul_3)
+
+rel inverted_map(f):
+    (head.1, tail.1)  :=  begin
+     tail       :=  inverted_map f  := tail.1        // 1 + 4, 3
+     head       :=      ~f ()       := head.1                // 1
+                      end    := (head, tail)
+
+// 1. Anwendungen werden invertiert, indem eine Tilde ergänzt oder entfernt wird
+//        out := f arg := in    wird zu     <in> := ~f <arg> := <out>
+// 3. Dynamische Funktionen als Funktionsargumente bleiben bei Inversion wie sie sind
+//        out := map f := in    wird zu      in := ~map f := out
+// 4. Statische Referenzen auf Funktionen (egal ob als Anwendung oder als Argument) werden (erneut) invertiert, falls die referenzierte Funktion invertiert wurde.
+//        in := ~map f := out wird zu in := map f := out   (falls map invertiert wurde)
+//        in := map f := out wird zu in := ~map f := out   (falls map invertiert wurde)
+
+
+
+
+(~f x1, f x2, ~f x3, xs)
+
+
+
+
+res  := map plus_one := (1, 2)              // res = (2, 3)
+res  := map ~plus_one := (1, 2)             // res := (0, 1)
+res  := ~map plus_one := (1, 2)             // res := (0, 1)
+
+
+type A + B = Left A | Right B
+
+Tree * Tree + a = Left (Tree * Tree) | Right a
+
+
+
+rel sort(f):
+    (a, b) := begin
+
+    comp   := f (a, b)     := ()
+    c      := le (comp, 0) := ()
+    ()     := ~f (a, b)    := comp
+              -> l3,l2     := ((a, b), c)
+
+    (a, b) := l2<-
+               ->l4 := (b, a)
+
+    (out, c) := l3,l4<-
+         ()   := discard () := c
+               end := out
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sort ~f != ~sort f
+
+(3, 4) := sort less := (3, 4)
+(3, 4) := sort less := (4, 3)
+(4, 3) := sort ge := (4, 3)
+(4, 3) := sort ge := (3, 4)
+(4, 3) := ~sort ge := (3, 4)
+
+rel id (()):
+    x := begin
+          end  := x
+
 rel swap(()):
     (a, b) := begin
                end  := (b, a)
+
+rel less(()):
+    (a, b) := begin
+     res   := lt (a, b)  := ()
+      ()   := discard () := (a, b)
+                end      := res
+
+rel main (()):
+    ()   := begin
+    //res  := map swap := ((1, 2), (3, 4))  // less
+    res  := dynamic_call (0, ()) := 1
+            end := res
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+rel compare((a, b)):
+
+      () := begin
+   greater_equal := ge (a, b) := ()
+   greater := gt (a, b) := ()
+
+   x.0 := add(-1) := greater_equal
+   x.1 := add(greater) := x.0
+
+   () := ~gt (a, b) := greater
+
+               end := x.1
 
 rel id(()):
     v := begin
           end  := v
 
-rel compare((a, b)):
-
-    () := begin
-    greater_equal := ge (a, b) := ()
-    greater := gt (a, b) := ()
-
-    x.0 := add(-1) := greater_equal
-    x.1 := add(greater) := x.0
-
-    () := ~gt (a, b) := greater
-
-                end := x.1
 
 rel cons(())
     (head, tail) := begin
+
+
+
                      end  := (head, tail)
-
-
