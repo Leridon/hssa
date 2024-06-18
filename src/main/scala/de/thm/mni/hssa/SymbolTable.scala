@@ -35,7 +35,6 @@ class SymbolTable[T](
         symbol.finalized_index = Some(index)
     }
     
-    def addBlockScope() = ???
     def addSubScope(`type`: SymbolTable.ScopeType, names: (String | Int)*): SymbolTable[T] = {
         val scope = new SymbolTable(`type`, Some(this), mutable.Map(), mutable.ListBuffer())
         
@@ -43,8 +42,7 @@ class SymbolTable[T](
         
         scope
     }
-    
-    
+    override def getSubContext(name: String): Option[SymbolTable[T]] = this.subscopes.find(_._1.contains(name)).map(_._2)
     def copy(): SymbolTable[T] = {
         new SymbolTable[T](
             this.`type`,
@@ -63,6 +61,8 @@ object SymbolTable {
         def get(name: String): SymbolTable.Symbol[T] = this.lookup(name).getOrElse(throw HSSAError.notFound(name))
         
         def lookup(name: String): Option[SymbolTable.Symbol[T]]
+        
+        def getSubContext(name: String): Option[SymbolTable.View[T]]
     }
     
     def init[T](): SymbolTable[T] = new SymbolTable[T](ScopeType.Global, None, mutable.Map(), mutable.ListBuffer())

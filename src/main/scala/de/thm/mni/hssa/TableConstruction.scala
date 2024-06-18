@@ -23,7 +23,7 @@ object TableConstruction {
             val blocks = new BlockIndex(rel)
             
             blocks.blocks.foreach(block => {
-                val block_local = local.addSubScope(Block)
+                val block_local = local.addSubScope(Block, block.entry.labels*)
                 
                 block.sequence.zipWithIndex.foreach((stm, index) => {
                     

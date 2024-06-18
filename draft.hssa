@@ -1,4 +1,4 @@
-rel sort(f):
+rel sort(f)
     out    := begin
     c      := oracle () := ()
               ->l3,l4   := (out, c)
@@ -7,9 +7,9 @@ rel sort(f):
                ->l2 := (a, b)
 
    ((a, b), c) := l3,l2<-
-      comp     := ?f (a, b) := () // Wenn f invertiert wird, dann ~f, sonst nur f
+      comp     := f (a, b) := () // Wenn f invertiert wird, dann ~f, sonst nur f
       ()       := ~le (comp, 0) := c
-      ()       := ?f (a, b) := comp
+      ()       := f (a, b) := comp
                      end    := (a, b)
 
 
@@ -17,7 +17,7 @@ rel sort(f):
 
 
 
-rel inverted_stupid_recursion (f):
+rel inverted_stupid_recursion (f)
     in := begin
     c  := ~less (in, 0) := ()
             ->l1,l2 := (in, c)

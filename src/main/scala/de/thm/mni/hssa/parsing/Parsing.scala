@@ -29,13 +29,13 @@ object Parsing {
               | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
         
         def statement: P[Syntax.Statement] =
-            expression ~~ ASGN ~~ ident ~~ LARROW ^^ Syntax.UnconditionalEntry.apply |
-              expression ~~ ASGN ~~ ident ~~ COMMA ~~ ident ~~ LARROW ^^ Syntax.ConditionalEntry.apply |
-              RARROW ~~ ident ~~ ASGN ~~ expression ^^ Syntax.UnconditionalExit.apply |
+            RARROW ~~ ident ~~ ASGN ~~ expression ^^ Syntax.UnconditionalExit.apply |
               RARROW ~~ ident ~~ COMMA ~~ ident ~~ ASGN ~~ expression ^^ Syntax.ConditionalExit.apply |
+              expression ~~ ASGN ~~ ident ~~ LARROW ^^ Syntax.UnconditionalEntry.apply |
+              expression ~~ ASGN ~~ ident ~~ COMMA ~~ ident ~~ LARROW ^^ Syntax.ConditionalEntry.apply |
               expression ~~ ASGN ~~ expression ~~ expression ~~ ASGN ~~ expression ^^ Syntax.Assignment.apply
         
-        def procedure: P[Syntax.Relation] = RELATION ~~ ident ~~ expression ~~ rep(statement) ^^ Syntax.Relation.apply
+        def procedure: P[Syntax.Relation] = RELATION ~~ ident ~~ LPAREN ~~ expression ~~ RPAREN ~~ rep(statement) ^^ Syntax.Relation.apply
         def program: P[Syntax.Program] = phrase(rep(procedure) ^^ Syntax.Program.apply)
     }
     

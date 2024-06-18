@@ -1,6 +1,8 @@
 package de.thm.mni.hssa
 
 import de.thm.mni.hssa.Syntax.{Expression, Program, Relation}
+import de.thm.mni.hssa.SyntaxExtensions._
+import de.thm.mni.hssa.interpretation.Interpretation.BlockIndex
 
 object Inversion {
     
@@ -15,7 +17,7 @@ object Inversion {
         def invert(statement: Syntax.Statement): Syntax.Statement = statement match {
             case Syntax.Assignment(target, Syntax.Expression.Inversion(rel), instance_argument, source) =>
                 Syntax.Assignment(source, rel, instance_argument, target)
-            case Syntax.Assignment(target, Syntax.Expression.Inversion(rel), instance_argument, source) =>
+            case Syntax.Assignment(target,rel, instance_argument, source) =>
                 Syntax.Assignment(source, Syntax.Expression.Inversion(rel), instance_argument, target)
             case Syntax.UnconditionalExit(target, argument) =>
                 Syntax.UnconditionalEntry(argument, target)
@@ -41,7 +43,7 @@ object Inversion {
         
         private class Adjuster(context: SymbolTable.View[Unit], val inverted_relations: Set[String]) {
             
-            def context(context: SymbolTable.View[Unit]) = Adjuster(context, inverted_relations)
+            def context(context: SymbolTable.View[Unit]): Adjuster = Adjuster(context, inverted_relations)
             
             private def must_invert(context: SymbolTable.View[Unit], name: String): Boolean = context.get(name).scope.`type` == SymbolTable.ScopeType.Global && inverted_relations.contains(name)
             
@@ -67,15 +69,28 @@ object Inversion {
             }
             
             def apply(relation: Syntax.Relation): Syntax.Relation = {
+                val blockIndex = new BlockIndex(relation)
                 
+                val new_body = blockIndex.blocks.flatMap(block => {
+                    val block_context = this.context.getSubContext(block.exit.labels.head).get
+                    
+                    block.sequence.map(this.context(block_context).apply)
+                })
                 
-                ???
+                Syntax.Relation(relation.name,
+                    this.apply(relation.parameter),
+                    new_body.toList
+                )
             }
             
             def apply(program: Program): Program = {
                 
+                Program(
+                    program.definitions.map(rel => {
+                        this.context(context.getSubContext(rel.name).get).apply(rel)
+                    })
+                )
                 
-                ???
             }
         }
         
