@@ -58,7 +58,9 @@ object SymbolTable {
     trait View[+T] {
         def `type`: ScopeType
         
-        def get(name: String): SymbolTable.Symbol[T] = this.lookup(name).getOrElse(throw HSSAError.notFound(name))
+        def get(name: String): SymbolTable.Symbol[T] = this.lookup(name).getOrElse({
+            throw HSSAError.notFound(name)
+        })
         
         def lookup(name: String): Option[SymbolTable.Symbol[T]]
         

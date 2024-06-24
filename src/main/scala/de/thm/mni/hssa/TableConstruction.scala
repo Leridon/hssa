@@ -14,6 +14,8 @@ object TableConstruction {
         })
         
         program.definitions.foreach(rel => {
+            global.add((rel.name, ()))
+            
             val local = global.addSubScope(Proc, rel.name)
             
             rel.parameter.variables.foreach(v => {

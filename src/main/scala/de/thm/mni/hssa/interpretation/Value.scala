@@ -5,7 +5,9 @@ import de.thm.mni.hssa.Syntax
 sealed trait Value
 
 object Value {
-    case class Int(value: scala.Int) extends Value
+    case class Int(value: scala.Int) extends Value {
+        override def toString() = value.toString
+    }
     case class Pair(a: Value, b: Value) extends Value
     
     sealed trait Relation extends Value

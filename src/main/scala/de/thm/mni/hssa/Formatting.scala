@@ -11,11 +11,10 @@ object Formatting {
             case Expression.Pair(a, b) => s"(${format(a)}, ${format(b)})"
             case Expression.Unit() => "()"
             case Expression.Variable(name) => name
+            case Expression.Inversion(sub) => s"~${format(sub)}"
     }
     
     def formatInColumns(statement: Syntax.Statement): Array[String] = statement match {
-        case Syntax.Assignment(target, rel, arg, consumed) =>
-            Array(format(target), ":=", s"~ ${format(rel)} ${format(arg)}", ":=", format(consumed))
         case Syntax.Assignment(target, rel, arg, consumed) =>
             Array(format(target), ":=", s"${format(rel)} ${format(arg)}", ":=", format(consumed))
         case Syntax.UnconditionalEntry(initialized, target) =>

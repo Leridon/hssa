@@ -11,16 +11,17 @@ object Main {
     
     def main(args: Array[String]): Unit = {
         try {
-            lex(Paths.get("draft.hssa"))
-              .readAll().map(_.asStringWithPosition).foreach(println)
+            //            lex(Paths.get("draft.hssa"))              .readAll().map(_.asStringWithPosition).foreach(println)
             
             var prog = Parsing.parse(lex(Paths.get("draft.hssa")))
             
+            println("Original:")
             println(Formatting.format(prog))
             
+            println("Inverted:")
             println(Formatting.format(Inversion.Global.invert(prog)))
             
-            println(Interpretation.interpret(prog, "factorial", Value.Unit, Value.Int(5)))
+            println(Interpretation.interpret(prog, "main", Value.Unit, Value.Int(5)))
             
             // Parse
             // (opt) Auto-Repair

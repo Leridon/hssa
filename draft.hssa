@@ -1,7 +1,25 @@
-rel sort(f)
-    out    := begin
+rel factorial (())
+    a := begin<-
+    c := ls (a, 1) := ()
+        ->L1,return2 := (a, c)
+
+    a := L1<-
+    an := sub 1 := a
+        res := call factorial(an)
+
+        res2 := 0 ^ (res * a)
+        0 := res ^ (res2 / a)
+
+        delete(a)
+    -> return1(res2)
+
+    return1(a)return2 <- a > 1
+    end(a)
+
+rel sort (f)
+    out    := begin<-
     c      := oracle () := ()
-              ->l3,l4   := (out, c)
+             ->l3,l4   := (out, c)
 
     (b, a)  := l4<-
                ->l2 := (a, b)
@@ -10,7 +28,7 @@ rel sort(f)
       comp     := f (a, b) := () // Wenn f invertiert wird, dann ~f, sonst nur f
       ()       := ~le (comp, 0) := c
       ()       := f (a, b) := comp
-                     end    := (a, b)
+                     ->end    := (a, b)
 
 
 
@@ -18,8 +36,8 @@ rel sort(f)
 
 
 rel inverted_stupid_recursion (f)
-    in := begin
-    c  := ~less (in, 0) := ()
+    in := begin<-
+    c  := ~le (in, 0) := ()
             ->l1,l2 := (in, c)
 
     in  := l1<-
@@ -34,12 +52,9 @@ rel inverted_stupid_recursion (f)
 
     (out, c) := l3,l4<-
      ()      := ~discard () := c
-                  end := out
+                  ->end := out
 
-
- res :=    stupid_recursion stupid_recursion := -10
-
-
-map ~swap
-
+rel main (())
+    () := begin<-
+           ->end := 5
 
