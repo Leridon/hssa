@@ -24,6 +24,7 @@ object Main {
             
             println(Interpretation.interpret(prog, "factorial", Value.Unit, Value.Int(5), FORWARDS))
             println(Interpretation.interpret(prog, "factorial", Value.Unit, Value.Int(120), BACKWARDS))
+            println(Interpretation.interpret(prog, "test_list", Value.Unit, Value.Unit, FORWARDS))
             //sprintln(Interpretation.interpret(prog, "main", Value.Unit, Value.Int(5)))
             
             // Parse

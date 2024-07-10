@@ -223,6 +223,8 @@ object Interpretation {
                 var continuation = (relation_argument, "begin")
                 
                 while (continuation._2 != "end") {
+                    println(continuation)
+                
                     continuation = executeBlock(block_index.entry(continuation._2), continuation._2, continuation._1)
                 }
                 

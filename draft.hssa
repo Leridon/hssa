@@ -1,3 +1,49 @@
+rel nil (())
+() := begin <-
+       -> end  := (0, ())
+
+
+rel cons (())
+(head, tail) := begin <-
+                 -> end  := (1, (head, tail))
+
+
+rel map (f)
+  (type, val)    :=     begin <-
+       c         := equal (type, 0)  :=        ()
+                        -> L1,L2     := ((type, val), c)
+
+      val        :=      L2 <-
+  (head, tail)   :=     ~cons ()     :=       val
+     head.1      :=       f ()       :=       head
+     tail.1      :=      map f       :=       tail
+     val.1       :=     cons ()      := (head.1, tail.1)
+                         -> L3       :=      val.1
+
+((type, val), c) :=     L1,L3 <-
+       ()        := ~equal (type, 0) :=        c
+                         -> end      :=   (type, val)
+
+
+rel test_list ( () )
+    () := begin<-
+    l.0 := nil () := ()
+    l.1 := cons () := (8, l.0)
+    l.2 := cons () := (9, l.1)
+    l.3 := cons () := (2, l.2)
+    l.4 := cons () := (3, l.3)
+    l.5 := cons () := (4, l.4)
+    l.6 := cons () := (5, l.5)
+    l.7 := cons () := (6, l.6)
+    l.8 := cons () := (7, l.7)
+
+    l.9 := map factorial := l.8
+            -> end := l.9
+
+
+
+
+
 rel factorial (())
            n            :=       begin <-
                                    -> L1         :=         (n, 1)
