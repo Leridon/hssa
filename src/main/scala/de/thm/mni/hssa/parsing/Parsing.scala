@@ -25,7 +25,7 @@ object Parsing {
               | intlit ^^ (v => Syntax.Expression.Literal.apply(Value.Int(v)))
               | LPAREN ~~ RPAREN ^^ (_ => Syntax.Expression.Unit())
               | LPAREN ~~ expression ~~ COMMA ~~ expression ~~ RPAREN ^^ Syntax.Expression.Pair.apply
-              | TILDE ~~ expression ^^ Syntax.Expression.Inversion.apply
+              | TILDE ~~ expression ^^ Syntax.Expression.Invert.apply
               | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
         
         def statement: P[Syntax.Statement] =

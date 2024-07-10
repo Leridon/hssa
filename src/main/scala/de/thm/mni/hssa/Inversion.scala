@@ -15,14 +15,18 @@ object Inversion {
          * @return
          */
         def invert(statement: Syntax.Statement): Syntax.Statement = statement match {
-            case Syntax.Assignment(target, Syntax.Expression.Inversion(rel), instance_argument, source) =>
+            case Syntax.Assignment(target, Syntax.Expression.Invert(rel), instance_argument, source) =>
                 Syntax.Assignment(source, rel, instance_argument, target)
             case Syntax.Assignment(target,rel, instance_argument, source) =>
-                Syntax.Assignment(source, Syntax.Expression.Inversion(rel), instance_argument, target)
+                Syntax.Assignment(source, Syntax.Expression.Invert(rel), instance_argument, target)
+            case Syntax.UnconditionalExit("end", argument) =>
+                Syntax.UnconditionalEntry(argument, "begin")
             case Syntax.UnconditionalExit(target, argument) =>
                 Syntax.UnconditionalEntry(argument, target)
             case Syntax.ConditionalExit(target1, target2, argument) =>
                 Syntax.ConditionalEntry(argument, target1, target2)
+            case Syntax.UnconditionalEntry(initialized, "begin") =>
+                Syntax.UnconditionalExit("end", initialized)
             case Syntax.UnconditionalEntry(initialized, target) =>
                 Syntax.UnconditionalExit(target, initialized)
             case Syntax.ConditionalEntry(initialized, target1, target2) =>
@@ -48,9 +52,9 @@ object Inversion {
             private def must_invert(context: SymbolTable.View[Unit], name: String): Boolean = context.get(name).scope.`type` == SymbolTable.ScopeType.Global && inverted_relations.contains(name)
             
             def apply(expression: Syntax.Expression): Expression = expression match {
-                case Expression.Inversion(v@Expression.Variable(name)) if this.must_invert(context, name) => v
-                case v@Expression.Variable(name) if this.must_invert(context, name) => Expression.Inversion(v)
-                case Expression.Inversion(a) => Expression.Inversion(apply(a))
+                case Expression.Invert(v@Expression.Variable(name)) if this.must_invert(context, name) => v
+                case v@Expression.Variable(name) if this.must_invert(context, name) => Expression.Invert(v)
+                case Expression.Invert(a) => Expression.Invert(apply(a))
                 case Expression.Pair(a, b) => Expression.Pair(apply(a), apply(b))
                 case e => e
             }
@@ -72,7 +76,7 @@ object Inversion {
                 val blockIndex = new BlockIndex(relation)
                 
                 val new_body = blockIndex.blocks.flatMap(block => {
-                    val block_context = this.context.getSubContext(block.exit.labels.head).get
+                    val block_context = this.context.getSubContext(block.entry.labels.head).get
                     
                     block.sequence.map(this.context(block_context).apply)
                 })
@@ -105,7 +109,7 @@ object Inversion {
                 else rel
             }))
             
-            Adjuster(TableConstruction.construct(program), relations).apply(transformed)
+            Adjuster(TableConstruction.construct(transformed), relations).apply(transformed)
         }
     }
     

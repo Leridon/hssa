@@ -11,7 +11,7 @@ object Syntax {
         case class Literal(value: Value) extends Expression
         case class Variable(name: String) extends Expression
         case class Pair(a: Expression, b: Expression) extends Expression
-        case class Inversion(a: Expression) extends Expression
+        case class Invert(a: Expression) extends Expression
         case class Unit() extends Expression
     }
     

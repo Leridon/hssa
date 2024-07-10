@@ -11,7 +11,7 @@ object Formatting {
             case Expression.Pair(a, b) => s"(${format(a)}, ${format(b)})"
             case Expression.Unit() => "()"
             case Expression.Variable(name) => name
-            case Expression.Inversion(sub) => s"~${format(sub)}"
+            case Expression.Invert(sub) => s"~${format(sub)}"
     }
     
     def formatInColumns(statement: Syntax.Statement): Array[String] = statement match {

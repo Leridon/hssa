@@ -11,7 +11,7 @@ object Value {
     case class Pair(a: Value, b: Value) extends Value
     
     sealed trait Relation extends Value
-    case class UserRelation(rel: Syntax.Relation) extends Relation
+    case class UserRelation(forwards: (Syntax.Relation, Interpretation.ValueContext), backwards: (Syntax.Relation, Interpretation.ValueContext)) extends Relation
     case class BuiltinRelation(
                                 forwards: Value => Value => Value,
                                 backwards: Value => Value => Value,

@@ -1,60 +1,14 @@
 rel factorial (())
-    a := begin<-
-    c := ls (a, 1) := ()
-        ->L1,return2 := (a, c)
+           n            :=       begin <-
+                                   -> L1         :=         (n, 1)
 
-    a := L1<-
-    an := sub 1 := a
-        res := call factorial(an)
+((n.0, product.0), c.0) :=       L1,L2 <-
+          ()            := ~equal (product.0, 1) :=           c.0
+       product.1        := mul (product.0, n.0)  :=           ()
+          ()            := ~div (product.1, n.0) :=        product.0
+          n.1           :=        add -1         :=           n.0
+          c.1           :=   greater (n.1, 1)    :=           ()
+                                 -> L2,L3        := ((n.1, product.1), c.1)
 
-        res2 := 0 ^ (res * a)
-        0 := res ^ (res2 / a)
-
-        delete(a)
-    -> return1(res2)
-
-    return1(a)return2 <- a > 1
-    end(a)
-
-rel sort (f)
-    out    := begin<-
-    c      := oracle () := ()
-             ->l3,l4   := (out, c)
-
-    (b, a)  := l4<-
-               ->l2 := (a, b)
-
-   ((a, b), c) := l3,l2<-
-      comp     := f (a, b) := () // Wenn f invertiert wird, dann ~f, sonst nur f
-      ()       := ~le (comp, 0) := c
-      ()       := f (a, b) := comp
-                     ->end    := (a, b)
-
-
-
-
-
-
-rel inverted_stupid_recursion (f)
-    in := begin<-
-    c  := ~le (in, 0) := ()
-            ->l1,l2 := (in, c)
-
-    in  := l1<-
-    in.1 := ~mul -1 := in
-    out  := inverted_stupid_recursion f := in.1
-                ->l3   := out
-
-    in  := l2<-
-    in.1 := ~sub 1 := in
-    out  := ~f ~inverted_stupid_recursion := in.1
-                ->l4   := out
-
-    (out, c) := l3,l4<-
-     ()      := ~discard () := c
-                  ->end := out
-
-rel main (())
-    () := begin<-
-           ->end := 5
-
+      (1, result)       :=         L3 <-
+                                  -> end         :=         result
