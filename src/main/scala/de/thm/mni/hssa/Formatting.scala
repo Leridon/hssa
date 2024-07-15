@@ -1,7 +1,7 @@
 package de.thm.mni.hssa
 
 import de.thm.mni.hssa.Syntax.Expression
-import de.thm.mni.hssa.SyntaxExtensions._
+import de.thm.mni.hssa.Syntax.Extensions._
 
 object Formatting {
     

@@ -29,13 +29,13 @@ rel test_list ( () )
     () := begin<-
     l.0 := nil () := ()
     l.1 := cons () := (8, l.0)
-    l.2 := cons () := (9, l.1)
-    l.3 := cons () := (2, l.2)
-    l.4 := cons () := (3, l.3)
+    l.2 := cons () := (7, l.1)
+    l.3 := cons () := (6, l.2)
+    l.4 := cons () := (5, l.3)
     l.5 := cons () := (4, l.4)
-    l.6 := cons () := (5, l.5)
-    l.7 := cons () := (6, l.6)
-    l.8 := cons () := (7, l.7)
+    l.6 := cons () := (3, l.5)
+    l.7 := cons () := (2, l.6)
+    l.8 := cons () := (1, l.7)
 
     l.9 := map factorial := l.8
             -> end := l.9
@@ -53,8 +53,8 @@ rel factorial (())
        product.1        := mul (product.0, n.0)  :=           ()
           ()            := ~div (product.1, n.0) :=        product.0
           n.1           :=        add -1         :=           n.0
-          c.1           :=   greater (n.1, 1)    :=           ()
+          c.1           :=   greater (n.1, 0)    :=           ()
                                  -> L2,L3        := ((n.1, product.1), c.1)
 
-      (1, result)       :=         L3 <-
+      (0, result)       :=         L3 <-
                                   -> end         :=         result

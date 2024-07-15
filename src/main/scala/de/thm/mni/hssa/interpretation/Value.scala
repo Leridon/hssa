@@ -2,12 +2,9 @@ package de.thm.mni.hssa.interpretation
 
 import de.thm.mni.hssa.Syntax
 
-sealed trait Value
+trait Value
 
 object Value {
-    case class Int(value: scala.Int) extends Value {
-        override def toString() = value.toString
-    }
     case class Pair(a: Value, b: Value) extends Value
     
     sealed trait Relation extends Value
@@ -16,5 +13,4 @@ object Value {
                                 forwards: Value => Value => Value,
                                 backwards: Value => Value => Value,
                               ) extends Relation
-    case object Unit extends Value
 }

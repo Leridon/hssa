@@ -1,6 +1,7 @@
 package de.thm.mni.hssa
 
 import de.thm.mni.hssa.interpretation.Value
+import de.thm.mni.hssa.plugin.Basic
 
 object Types {
     
@@ -20,9 +21,7 @@ object Types {
     case class Literal(value: Value) extends Type
     case class UnionType(a: Type, b: Type) extends Type
     
-    
-    val Unit: Literal = Literal(Value.Unit)
-    
+    val Unit: Literal = Literal(Basic.Unit)
     
     def unify(a: Type, b: Type): Option[Type] = {
         (a, b)  match {

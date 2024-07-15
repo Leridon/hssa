@@ -1,7 +1,7 @@
 package de.thm.mni.hssa
 
 import de.thm.mni.hssa.Syntax.{Expression, Program, Relation}
-import de.thm.mni.hssa.SyntaxExtensions._
+import de.thm.mni.hssa.Syntax.Extensions._
 import de.thm.mni.hssa.interpretation.Interpretation.BlockIndex
 
 object Inversion {
@@ -112,30 +112,4 @@ object Inversion {
             Adjuster(TableConstruction.construct(transformed), relations).apply(transformed)
         }
     }
-    
-    /*
-    case class InversionContext(
-                                 table: SymbolTable[Unit],
-                                 inverted_relations: List[String],
-                               ) {
-        def inverts(relation: String): Boolean = inverted_relations.contains(relation)
-        
-        def withScope(table: SymbolTable[Unit]) = InversionContext(table, this.inverted_relations)
-    }
-    
-    object InversionContext {
-        def all(program: Program): InversionContext = InversionContext(
-            TableConstruction.construct(program),
-            program.definitions.map(_.name)
-        )
-        def only(relations: List[String]): InversionContext = InversionContext(relations)
-        def local(): InversionContext = InversionContext(Nil)
-    }
-    
-    
-    def invert(program: Program, ctx: InversionContext = null): Syntax.Program = {
-        val context = if (ctx == null) InversionContext.all(program) else ctx
-        
-        Syntax.Program(program.definitions.map(invert(_, context)))
-    }*/
 }

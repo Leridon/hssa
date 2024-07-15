@@ -4,6 +4,7 @@ import de.thm.mni.hssa.Errors.LanguageError
 import de.thm.mni.hssa.interpretation.{Interpretation, Value}
 import de.thm.mni.hssa.parsing.Lexing.lex
 import de.thm.mni.hssa.parsing.Parsing
+import de.thm.mni.hssa.plugin.{Arithmetic, Basic}
 import de.thm.mni.hssa.util.reversibility.Direction.{BACKWARDS, FORWARDS}
 
 import java.nio.file.Paths
@@ -14,7 +15,9 @@ object Main {
         try {
             //            lex(Paths.get("draft.hssa"))              .readAll().map(_.asStringWithPosition).foreach(println)
             
-            var prog = Parsing.parse(lex(Paths.get("draft.hssa")))
+            val language = Language(Seq(Basic, Arithmetic))
+            
+            var prog = Parsing(language).parse(lex(Paths.get("draft.hssa")))
             
             println("Original:")
             println(Formatting.format(prog))
@@ -22,10 +25,10 @@ object Main {
             println("Inverted:")
             println(Formatting.format(Inversion.Global.invert(prog)))
             
-            println(Interpretation.interpret(prog, "factorial", Value.Unit, Value.Int(5), FORWARDS))
-            println(Interpretation.interpret(prog, "factorial", Value.Unit, Value.Int(120), BACKWARDS))
-            println(Interpretation.interpret(prog, "test_list", Value.Unit, Value.Unit, FORWARDS))
-            //sprintln(Interpretation.interpret(prog, "main", Value.Unit, Value.Int(5)))
+            println(Interpretation(language).interpret(prog, "factorial", Basic.Unit, Basic.Int(5), FORWARDS))
+            println(Interpretation(language).interpret(prog, "factorial", Basic.Unit, Basic.Int(120), BACKWARDS))
+            println(Interpretation(language).interpret(prog, "test_list", Basic.Unit, Basic.Unit, FORWARDS))
+            //println(Interpretation.interpret(prog, "main", Value.Unit, Value.Int(5)))
             
             // Parse
             // (opt) Auto-Repair

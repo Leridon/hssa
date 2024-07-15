@@ -2,7 +2,7 @@ package de.thm.mni.hssa
 
 import de.thm.mni.hssa.SymbolTable.ScopeType.{Block, Proc}
 import de.thm.mni.hssa.Syntax.Program
-import de.thm.mni.hssa.SyntaxExtensions.*
+import de.thm.mni.hssa.Syntax.Extensions.*
 import de.thm.mni.hssa.interpretation.Interpretation.BlockIndex
 
 object TableConstruction {
