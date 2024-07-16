@@ -13,7 +13,6 @@ object Arithmetic extends Language.Plugin {
         def binary_preserve_left(name: String, fw: (Int, Int) => Int, bw: (Int, Int) => Int): Builtin =
             Language.Plugin.Builtin(
                 name,
-                Types.ParameterizedRelation(Types.Int, Types.Int, Types.Int),
                 Value.BuiltinRelation(
                     { case Basic.Int(l) => {
                         case Basic.Int(r) => Basic.Int(fw(l, r))
@@ -28,7 +27,6 @@ object Arithmetic extends Language.Plugin {
         
         def binary_preserve_both(name: String, f: (Int, Int) => Int): Builtin = Language.Plugin.Builtin(
             name,
-            Types.ParameterizedRelation(Types.Pair(Types.Int, Types.Int), Types.Unit, Types.Int),
             Value.BuiltinRelation(
                 { case Value.Pair(Basic.Int(a), Basic.Int(b)) => {
                     case Basic.Unit => Basic.Int(f(a, b))

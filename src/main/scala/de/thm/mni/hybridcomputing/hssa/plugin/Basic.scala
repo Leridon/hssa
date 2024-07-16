@@ -10,7 +10,7 @@ object Basic extends Language.Plugin {
     }
     
     case class Int(value: scala.Int) extends Value {
-        override def toString() = value.toString
+        override def toString = value.toString
     }
     
     override def literal_parser(grammar: Parsing.Grammar): grammar.Parser[Value] = {

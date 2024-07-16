@@ -12,4 +12,5 @@ object HSSAError {
     def notFound(name: String) = new HSSAError(s"Not found: $name")
     
     def violation(message: String) = new HSSAError(s"Reversibility violation: $message")
+    def nondeterminism(message: String) = new HSSAError(s"Nondeterminism error: $message")
 }
