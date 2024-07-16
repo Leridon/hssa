@@ -24,21 +24,32 @@ rel map (f)
        ()        := ~equal (type, 0) :=        c
                          -> end      :=   (type, val)
 
+rel range (())
+              (from, to)                :=       begin <-
+                 done                   :=   equal (from, to)    :=                 ()
+                                                 -> L1,L2        :=         ((from, to), done)
+
+              (from, to)                :=         L1 <-
+                   0                    :=       sub from        :=                 to
+                 tail                   :=        nil ()         :=                 ()
+                 list                   :=        cons ()        :=            (from, tail)
+                                                   -> L3         :=                list
+
+              (from, to)                :=         L2 <-
+                from.1                  :=       add from        :=                 1
+                 tail                   :=       range ()        :=            (from.1, to)
+                 list                   :=        cons ()        :=            (from, tail)
+                                                   -> L4         :=                list
+
+((1, (head, (tail_type, tailtail))), c) :=       L3,L4 <-
+                  ()                    := ~equal (0, tail_type) :=                 c
+                                                  -> end         := (1, (head, (tail_type, tailtail)))
 
 
 
 rel test_list ( () )
     () := begin<-
-    l.0 := nil () := ()
-    l.1 := cons () := (8, l.0)
-    l.2 := cons () := (7, l.1)
-    l.3 := cons () := (6, l.2)
-    l.4 := cons () := (5, l.3)
-    l.5 := cons () := (4, l.4)
-    l.6 := cons () := (3, l.5)
-    l.7 := cons () := (2, l.6)
-    l.8 := cons () := (1, l.7)
-
+    l.8 := range () := (1, 8)
     l.9 := map factorial := l.8
             -> end := l.9
 
