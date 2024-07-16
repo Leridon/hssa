@@ -1,7 +1,7 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hssa.interpretation.Value
-import de.thm.mni.hssa.plugin.Basic
+import de.thm.mni.hybridcomputing.hssa.interpretation.Value
+import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
 object Types {
     

@@ -1,14 +1,29 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hssa.interpretation.Value
-import de.thm.mni.hssa.parsing.Parsing
-import de.thm.mni.hssa.plugin.Basic
+import de.thm.mni.hybridcomputing.hssa.Language.Plugin
+import de.thm.mni.hybridcomputing.hssa.interpretation.Value
+import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
+import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
 class Language(val plugins: Seq[Language.Plugin]) {
+    val builtins: Seq[Plugin.Builtin] = plugins.flatMap(_.builtins)
     
+    def table(): SymbolTable[Unit] = {
+        val global = SymbolTable.init[Unit]()
+        
+        builtins.foreach(b => {
+            global.add((b.name, ()))
+        })
+        
+        global
+    }
+    
+    def areDependenciesFulfilled(): Boolean = ???
 }
 
 object Language {
+    val Empty = Language(Seq())
+    
     trait Plugin {
         def requirements: Seq[Plugin] = Seq(Basic)
         

@@ -1,11 +1,12 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hssa.Errors.LanguageError
-import de.thm.mni.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hssa.parsing.Lexing.lex
-import de.thm.mni.hssa.parsing.Parsing
-import de.thm.mni.hssa.plugin.{Arithmetic, Basic}
-import de.thm.mni.hssa.util.reversibility.Direction.{BACKWARDS, FORWARDS}
+import de.thm.mni.hybridcomputing.hssa.Errors.LanguageError
+import de.thm.mni.hybridcomputing.hssa.interpretation.Value.Pair
+import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
+import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
+import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
+import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Basic}
+import de.thm.mni.hybridcomputing.hssa.util.reversibility.Direction.{BACKWARDS, FORWARDS}
 
 import java.nio.file.Paths
 
@@ -28,6 +29,7 @@ object Main {
             println(Interpretation(language).interpret(prog, "factorial", Basic.Unit, Basic.Int(5), FORWARDS))
             println(Interpretation(language).interpret(prog, "factorial", Basic.Unit, Basic.Int(120), BACKWARDS))
             println(Interpretation(language).interpret(prog, "test_list", Basic.Unit, Basic.Unit, FORWARDS))
+            println(Interpretation(language).interpret(prog, "test_list", Basic.Unit, Pair(Basic.Int(1),Pair(Basic.Int(1),Pair(Basic.Int(1),Pair(Basic.Int(2),Pair(Basic.Int(1),Pair(Basic.Int(6),Pair(Basic.Int(1),Pair(Basic.Int(24),Pair(Basic.Int(1),Pair(Basic.Int(120),Pair(Basic.Int(1),Pair(Basic.Int(720),Pair(Basic.Int(1),Pair(Basic.Int(5040),Pair(Basic.Int(1),Pair(Basic.Int(40320),Pair(Basic.Int(0),Basic.Unit))))))))))))))))), BACKWARDS))
             //println(Interpretation.interpret(prog, "main", Value.Unit, Value.Int(5)))
             
             // Parse

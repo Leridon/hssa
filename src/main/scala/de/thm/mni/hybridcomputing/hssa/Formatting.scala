@@ -1,7 +1,7 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hssa.Syntax.Expression
-import de.thm.mni.hssa.Syntax.Extensions._
+import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
+import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions._
 
 object Formatting {
     

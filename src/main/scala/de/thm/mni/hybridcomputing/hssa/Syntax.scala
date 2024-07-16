@@ -1,8 +1,8 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hssa.Syntax.Expression
-import de.thm.mni.hssa.Syntax.Expression.Variable
-import de.thm.mni.hssa.interpretation.Value
+import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
+import de.thm.mni.hybridcomputing.hssa.Syntax.Expression.Variable
+import de.thm.mni.hybridcomputing.hssa.interpretation.Value
 
 object Syntax {
     sealed abstract class Expression

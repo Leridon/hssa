@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa.interpretation
 
-import de.thm.mni.hssa.Syntax
+import de.thm.mni.hybridcomputing.hssa.Syntax
 
 trait Value
 

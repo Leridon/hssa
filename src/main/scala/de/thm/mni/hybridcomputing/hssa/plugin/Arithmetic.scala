@@ -1,8 +1,8 @@
 package de.thm.mni.hybridcomputing.hssa.plugin
 
-import de.thm.mni.hssa.Language.Plugin.Builtin
-import de.thm.mni.hssa.interpretation.Value
-import de.thm.mni.hssa.{Language, Types}
+import de.thm.mni.hybridcomputing.hssa.Language.Plugin.Builtin
+import de.thm.mni.hybridcomputing.hssa.interpretation.Value
+import de.thm.mni.hybridcomputing.hssa.{Language, Types}
 
 object Arithmetic extends Language.Plugin {
     

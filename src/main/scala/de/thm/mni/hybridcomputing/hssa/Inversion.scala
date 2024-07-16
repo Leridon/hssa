@@ -1,8 +1,8 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hssa.Syntax.{Expression, Program, Relation}
-import de.thm.mni.hssa.Syntax.Extensions._
-import de.thm.mni.hssa.interpretation.Interpretation.BlockIndex
+import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program, Relation}
+import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions._
+import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
 
 object Inversion {
     
@@ -17,7 +17,7 @@ object Inversion {
         def invert(statement: Syntax.Statement): Syntax.Statement = statement match {
             case Syntax.Assignment(target, Syntax.Expression.Invert(rel), instance_argument, source) =>
                 Syntax.Assignment(source, rel, instance_argument, target)
-            case Syntax.Assignment(target,rel, instance_argument, source) =>
+            case Syntax.Assignment(target, rel, instance_argument, source) =>
                 Syntax.Assignment(source, Syntax.Expression.Invert(rel), instance_argument, target)
             case Syntax.UnconditionalExit("end", argument) =>
                 Syntax.UnconditionalEntry(argument, "begin")
@@ -49,7 +49,11 @@ object Inversion {
             
             def context(context: SymbolTable.View[Unit]): Adjuster = Adjuster(context, inverted_relations)
             
-            private def must_invert(context: SymbolTable.View[Unit], name: String): Boolean = context.get(name).scope.`type` == SymbolTable.ScopeType.Global && inverted_relations.contains(name)
+            private def must_invert(context: SymbolTable.View[Unit], name: String): Boolean = {
+                context.lookup(name) match
+                    case Some(entry) => entry.scope.`type` == SymbolTable.ScopeType.Global && inverted_relations.contains(name)
+                    case None => false
+            }
             
             def apply(expression: Syntax.Expression): Expression = expression match {
                 case Expression.Invert(v@Expression.Variable(name)) if this.must_invert(context, name) => v
@@ -109,7 +113,7 @@ object Inversion {
                 else rel
             }))
             
-            Adjuster(TableConstruction.construct(transformed), relations).apply(transformed)
+            Adjuster(TableConstruction(Language.Empty).construct(transformed), relations).apply(transformed)
         }
     }
 }

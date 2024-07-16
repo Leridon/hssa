@@ -1,17 +1,13 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hssa.SymbolTable.ScopeType.{Block, Proc}
-import de.thm.mni.hssa.Syntax.Program
-import de.thm.mni.hssa.Syntax.Extensions.*
-import de.thm.mni.hssa.interpretation.Interpretation.BlockIndex
+import de.thm.mni.hybridcomputing.hssa.SymbolTable.ScopeType.{Block, Proc}
+import de.thm.mni.hybridcomputing.hssa.Syntax.Program
+import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
+import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
 
-object TableConstruction {
+case class TableConstruction(language: Language) {
     def construct(program: Program): SymbolTable[Unit] = {
-        val global = SymbolTable.init[Unit]()
-        
-        Builtins.builtins.foreach(b => {
-            global.add((b.name, ()))
-        })
+        val global = language.table()
         
         program.definitions.foreach(rel => {
             global.add((rel.name, ()))
@@ -25,7 +21,7 @@ object TableConstruction {
             val blocks = new BlockIndex(rel)
             
             blocks.blocks.foreach(block => {
-                val block_local = local.addSubScope(Block, block.entry.labels*)
+                val block_local = local.addSubScope(Block, block.entry.labels *)
                 
                 block.sequence.zipWithIndex.foreach((stm, index) => {
                     

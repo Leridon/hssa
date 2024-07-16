@@ -1,15 +1,15 @@
 package de.thm.mni.hybridcomputing.hssa.interpretation
 
-import de.thm.mni.hssa.Inversion.Global
-import de.thm.mni.hssa.Syntax.Expression.{Invert, Variable}
-import de.thm.mni.hssa.Syntax.Extensions.*
-import de.thm.mni.hssa.Syntax.{Expression, Program, Relation}
-import de.thm.mni.hssa.interpretation.Value.{BuiltinRelation, UserRelation}
-import de.thm.mni.hssa.plugin.Basic
-import de.thm.mni.hssa.util.reversibility
-import de.thm.mni.hssa.util.reversibility.Direction
-import de.thm.mni.hssa.util.reversibility.Direction.FORWARDS
-import de.thm.mni.hssa.{HSSAError, Inversion, Language, Syntax}
+import de.thm.mni.hybridcomputing.hssa.Inversion.Global
+import de.thm.mni.hybridcomputing.hssa.Syntax.Expression.{Invert, Variable}
+import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
+import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program, Relation}
+import de.thm.mni.hybridcomputing.hssa.interpretation.Value.{BuiltinRelation, UserRelation}
+import de.thm.mni.hybridcomputing.hssa.plugin.Basic
+import de.thm.mni.hybridcomputing.hssa.util.reversibility
+import de.thm.mni.hybridcomputing.hssa.util.reversibility.Direction
+import de.thm.mni.hybridcomputing.hssa.util.reversibility.Direction.FORWARDS
+import de.thm.mni.hybridcomputing.hssa.{HSSAError, Inversion, Language, Syntax}
 
 import scala.collection.mutable
 

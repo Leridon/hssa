@@ -1,8 +1,8 @@
 package de.thm.mni.hybridcomputing.hssa.plugin
 
-import de.thm.mni.hssa.Language
-import de.thm.mni.hssa.interpretation.Value
-import de.thm.mni.hssa.parsing.Parsing
+import de.thm.mni.hybridcomputing.hssa.Language
+import de.thm.mni.hybridcomputing.hssa.interpretation.Value
+import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 
 object Basic extends Language.Plugin {
     object Unit extends Value {
@@ -15,7 +15,7 @@ object Basic extends Language.Plugin {
     
     override def literal_parser(grammar: Parsing.Grammar): grammar.Parser[Value] = {
         import grammar.*
-        import de.thm.mni.hssa.parsing.Lexing.Tokens.TokenClass.*
+        import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.Tokens.TokenClass.*
         
         LPAREN ~~ RPAREN ^^ (_ => Unit) | valueToken(INTLIT)(classOf[Integer]).map(i => Basic.Int(i.intValue()))
     }

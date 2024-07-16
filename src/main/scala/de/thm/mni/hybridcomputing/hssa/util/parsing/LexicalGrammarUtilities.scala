@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa.util.parsing
 
-import de.thm.mni.hssa.Errors
+import de.thm.mni.hybridcomputing.hssa.Errors
 
 import scala.util.parsing.combinator.RegexParsers
 import scala.util.parsing.input.{Position, Reader}

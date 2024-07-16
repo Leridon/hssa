@@ -25,6 +25,8 @@ rel map (f)
                          -> end      :=   (type, val)
 
 
+
+
 rel test_list ( () )
     () := begin<-
     l.0 := nil () := ()

@@ -1,10 +1,10 @@
 package de.thm.mni.hybridcomputing.hssa.parsing
 
-import de.thm.mni.hssa.Syntax.Expression
-import de.thm.mni.hssa.interpretation.Value
-import de.thm.mni.hssa.{AtPosition, Errors, Formatting, Language, Syntax}
-import de.thm.mni.hssa.util.parsing.{ParserUtilities, Token}
-import de.thm.mni.hssa.util.reversibility.Direction
+import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
+import de.thm.mni.hybridcomputing.hssa.interpretation.Value
+import de.thm.mni.hybridcomputing.hssa.{AtPosition, Errors, Formatting, Language, Syntax}
+import de.thm.mni.hybridcomputing.hssa.util.parsing.{ParserUtilities, Token}
+import de.thm.mni.hybridcomputing.hssa.util.reversibility.Direction
 import de.thm.mni.hybridcomputing.hssa.Syntax.Program
 
 import scala.util.parsing.combinator.ImplicitConversions
@@ -31,7 +31,7 @@ object Parsing {
     
     class Grammar(language: Language) extends ParserUtilities[Lexing.Tokens.TokenClass] with ImplicitConversions {
         
-        import de.thm.mni.hssa.parsing.Lexing.Tokens.TokenClass.*
+        import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.Tokens.TokenClass.*
         
         private type P[T] = this.Parser[T]
         

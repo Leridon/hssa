@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hssa
+import de.thm.mni.hybridcomputing.hssa
 
 import scala.collection.mutable
 

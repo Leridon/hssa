@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hssa.Errors.LanguageError
+import de.thm.mni.hybridcomputing.hssa.Errors.LanguageError
 
 import scala.util.parsing.input.{NoPosition, Position}
 

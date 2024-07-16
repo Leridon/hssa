@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa.parsing
 
-import de.thm.mni.hssa.util.parsing.{FileReader, LexicalGrammarUtilities, Token, TokenReader}
+import de.thm.mni.hybridcomputing.hssa.util.parsing.{FileReader, LexicalGrammarUtilities, Token, TokenReader}
 
 import java.nio.file.Path
 import scala.util.parsing.input.{CharSequenceReader, Position}
