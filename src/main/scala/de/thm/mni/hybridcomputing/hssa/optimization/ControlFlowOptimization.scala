@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa.optimization
 
-import de.thm.mni.hybridcomputing.hssa.Syntax
+import de.thm.mni.hybridcomputing.hssa.{Syntax, Transformer}
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 
@@ -31,16 +31,21 @@ object ControlFlowOptimization {
         }
         
         def compile(): Syntax.Relation = Syntax.Relation(name, parameter, this.blocks.flatMap(_.sequence).toSeq)
+        
+        def updateLabels(f: String => String): Unit = {
+            val transformer = Transformer.Labels(f)
+            blocks.mapInPlace(b => new BlockIndex.Block(b.sequence.map(transformer.apply)))
+        }
     }
     
-    object MergeStrictlyConsecutiveBlocks {
+    object MergeStrictlyConsecutiveBlocks extends Transformer.RelationTransformer {
         def apply(relation: Syntax.Relation): Syntax.Relation = {
-            val blocks = new BlockIndex(relation)
-            
-            val connectingLabels = blocks.labels.filter(label => !blocks.entry(label).hasConditionalEntry && !blocks.exit(label).hasConditionalExit)
-            
             val builder = new RelationBuilder(relation)
             
+            // Find all labels that connect strictly consecutive blocks once
+            val connectingLabels = builder.labels.filter(label => !builder.getByEntryLabel(label).hasConditionalEntry && !builder.getByExitLabel(label).hasConditionalExit)
+            
+            // Two blocks are merged by merging their statements and inserting a single assignment to glue them together
             def merge(a: BlockIndex.Block, b: BlockIndex.Block): BlockIndex.Block = {
                 new BlockIndex.Block(
                     a.sequence.init
@@ -60,6 +65,33 @@ object ControlFlowOptimization {
                 
                 builder.add(merge(from, to))
             })
+            
+            builder.compile()
+        }
+    }
+    
+    object RemoveRedirections extends Transformer.RelationTransformer {
+        def apply(relation: Syntax.Relation): Syntax.Relation = {
+            val builder = new RelationBuilder(relation)
+            
+            case class Redirection(block: BlockIndex.Block, from: String, to: String)
+            
+            val redirections: Seq[Redirection] = builder.blocks.flatMap(block => {
+                if (!block.hasConditionalEntry &&
+                  !block.hasConditionalExit &&
+                  block.assignments.isEmpty &&
+                  block.entry.initialized == block.exit.finalized
+                ) Seq(Redirection(block, block.entry.labels.head, block.exit.labels.head))
+                else Seq()
+            }).toSeq
+            
+            // Remove blocks that do the redirections
+            redirections.foreach(redirect => {
+                builder.remove(redirect.block)
+            })
+            
+            // Update references to redirected labels
+            builder.updateLabels(redirections.map(r => r.to -> r.from).toMap)
             
             builder.compile()
         }
