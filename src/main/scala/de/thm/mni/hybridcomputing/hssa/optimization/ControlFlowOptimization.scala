@@ -36,9 +36,7 @@ object ControlFlowOptimization {
         
         def updateLabels(f: String => String): Unit = this.updateStatements(Transformer.Labels(f).apply)
         
-        
         def updateStatements(f: Syntax.Statement => Syntax.Statement): Unit = blocks.mapInPlace(b => new BlockIndex.Block(b.sequence.map(f)))
-        
         
         def filterBlocks(f: BlockIndex.Block => Boolean): Unit = this.blocks.filterInPlace(f)
     }
