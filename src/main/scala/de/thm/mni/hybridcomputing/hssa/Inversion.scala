@@ -41,6 +41,9 @@ object Inversion {
          * @return
          */
         def invert(statements: Seq[Syntax.Statement]): Seq[Syntax.Statement] = statements.map(invert).reverse
+        
+        def invert(relation: Relation): Relation = Relation(relation.name, relation.parameter, Local.invert(relation.body))
+        
     }
     
     object Global {
@@ -101,15 +104,11 @@ object Inversion {
                 
             }
         }
-        
-        private def invert(relation: Relation): Relation = {
-            Relation(relation.name, relation.parameter, Local.invert(relation.body))
-        }
-        
+                
         def invert(program: Program): Syntax.Program = invert(program, program.definitions.map(_.name).toSet)
         def invert(program: Program, relations: Set[String]): Syntax.Program = {
             val transformed = Syntax.Program(program.definitions.map(rel => {
-                if (relations.contains(rel.name)) invert(rel)
+                if (relations.contains(rel.name)) Local.invert(rel)
                 else rel
             }))
             

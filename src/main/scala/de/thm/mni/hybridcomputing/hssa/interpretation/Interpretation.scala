@@ -69,7 +69,7 @@ case class Interpretation(language: Language) {
                 
                 val block_index = new BlockIndex(rel._1)
                 
-                var pc = block_index.entry("begin")
+                var pc = block_index.byEntryLabel("begin")
                 
                 def executeBlock(block: BlockIndex.Block, entered_by: String, entry_value: Value): (Value, String) = {
                     
@@ -110,7 +110,7 @@ case class Interpretation(language: Language) {
                 var continuation = (relation_argument, "begin")
                 
                 while (continuation._2 != "end") {
-                    continuation = executeBlock(block_index.entry(continuation._2), continuation._2, continuation._1)
+                    continuation = executeBlock(block_index.byEntryLabel(continuation._2), continuation._2, continuation._1)
                 }
                 
                 continuation._1
@@ -153,8 +153,8 @@ object Interpretation {
             sequences.map(seq => new BlockIndex.Block(seq))
         }
         
-        def entry(label: String): BlockIndex.Block = blocks.find(b => b.entry.labels.contains(label)).get
-        def exit(label: String): BlockIndex.Block = blocks.find(b => b.exit.labels.contains(label)).get
+        def byEntryLabel(label: String): BlockIndex.Block = blocks.find(b => b.entry.labels.contains(label)).get
+        def byExitLabel(label: String): BlockIndex.Block = blocks.find(b => b.exit.labels.contains(label)).get
         
         val labels: Set[String] = {
             this.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet

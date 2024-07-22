@@ -1,9 +1,11 @@
 package de.thm.mni.hybridcomputing.hssa.optimization
 
-import de.thm.mni.hybridcomputing.hssa.{Syntax, Transformer}
+import de.thm.mni.hybridcomputing.hssa.{Inversion, Syntax, Transformer}
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
+import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
+import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
 object ControlFlowOptimization {
@@ -32,10 +34,13 @@ object ControlFlowOptimization {
         
         def compile(): Syntax.Relation = Syntax.Relation(name, parameter, this.blocks.flatMap(_.sequence).toSeq)
         
-        def updateLabels(f: String => String): Unit = {
-            val transformer = Transformer.Labels(f)
-            blocks.mapInPlace(b => new BlockIndex.Block(b.sequence.map(transformer.apply)))
-        }
+        def updateLabels(f: String => String): Unit = this.updateStatements(Transformer.Labels(f).apply)
+        
+        
+        def updateStatements(f: Syntax.Statement => Syntax.Statement): Unit = blocks.mapInPlace(b => new BlockIndex.Block(b.sequence.map(f)))
+        
+        
+        def filterBlocks(f: BlockIndex.Block => Boolean): Unit = this.blocks.filterInPlace(f)
     }
     
     object MergeStrictlyConsecutiveBlocks extends Transformer.RelationTransformer {
@@ -92,6 +97,55 @@ object ControlFlowOptimization {
             
             // Update references to redirected labels
             builder.updateLabels(redirections.map(r => r.to -> r.from).toMap)
+            
+            builder.compile()
+        }
+    }
+    
+    class RemoveUnreachableCode(strict: Boolean) extends Transformer.RelationTransformer {
+        override def apply(relation: Syntax.Relation): Syntax.Relation = {
+            
+            def reach(block: BlockIndex.Block): Set[String] = {
+                block.exit match {
+                    case Syntax.ConditionalExit(l1, l2, Syntax.Expression.Pair(_, Syntax.Expression.Literal(Basic.Int(1)))) => Set(l1)
+                    case Syntax.ConditionalExit(l1, l2, Syntax.Expression.Pair(_, Syntax.Expression.Literal(Basic.Int(0)))) => Set(l2)
+                    case other => other.labels.toSet
+                }
+            }
+            
+            def reachForwards(relation: Syntax.Relation): Set[String] = {
+                val cfg = new BlockIndex(relation)
+                
+                @tailrec
+                def reachRecursively(reachable: Set[String]): Set[String] = {
+                    val exit = reachable.map(cfg.byEntryLabel).flatMap(reach)
+                    
+                    if (exit != reachable) reachRecursively(exit)
+                    else reachable
+                }
+                
+                reachRecursively(Set("begin"))
+            }
+            
+            // Analyse reachability in both directions
+            val fw = reachForwards(relation)
+            val bw = reachForwards(Inversion.Local.invert(relation))
+            
+            // Full set of reachable labels
+            val R = if (strict) fw union bw else fw intersect bw
+            
+            val builder = new RelationBuilder(relation)
+            
+            // Remove all blocks that have no reachable label in them
+            builder.filterBlocks(b => b.entry.labels.exists(R.contains))
+            
+            builder.updateStatements({
+                case Syntax.ConditionalExit(target1, target2, argument) if !R.contains(target1) => Syntax.UnconditionalExit(target2, argument)
+                case Syntax.ConditionalExit(target1, target2, argument) if !R.contains(target2) => Syntax.UnconditionalExit(target1, argument)
+                case Syntax.ConditionalEntry(initialized, target1, target2) if !R.contains(target1) => Syntax.UnconditionalEntry(initialized, target2)
+                case Syntax.ConditionalEntry(initialized, target1, target2) if !R.contains(target2) => Syntax.UnconditionalEntry(initialized, target1)
+                case other => other
+            })
             
             builder.compile()
         }
