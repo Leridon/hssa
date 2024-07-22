@@ -105,8 +105,8 @@ object ControlFlowOptimization {
             
             def reach(block: BlockIndex.Block): Set[String] = {
                 block.exit match {
-                    case Syntax.ConditionalExit(l1, l2, Syntax.Expression.Pair(_, Syntax.Expression.Literal(Basic.Int(1)))) => Set(l1)
-                    case Syntax.ConditionalExit(l1, l2, Syntax.Expression.Pair(_, Syntax.Expression.Literal(Basic.Int(0)))) => Set(l2)
+                    case Syntax.ConditionalExit(l1, l2, Syntax.Expression.Pair(_, Syntax.Expression.Literal(Basic.True))) => Set(l1)
+                    case Syntax.ConditionalExit(l1, l2, Syntax.Expression.Pair(_, Syntax.Expression.Literal(Basic.False))) => Set(l2)
                     case other => other.labels.toSet
                 }
             }

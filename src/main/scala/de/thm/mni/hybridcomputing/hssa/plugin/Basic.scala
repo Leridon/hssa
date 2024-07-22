@@ -13,6 +13,9 @@ object Basic extends Language.Plugin {
         override def toString = value.toString
     }
     
+    val True = Int(1)
+    val False = Int(0)
+    
     override def literal_parser(grammar: Parsing.Grammar): grammar.Parser[Value] = {
         import grammar.*
         import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.Tokens.TokenClass.*
