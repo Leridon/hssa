@@ -40,7 +40,7 @@ object Inversion {
          * @param ctx
          * @return
          */
-        def invert(statements: List[Syntax.Statement]): List[Syntax.Statement] = statements.map(invert).reverse
+        def invert(statements: Seq[Syntax.Statement]): Seq[Syntax.Statement] = statements.map(invert).reverse
     }
     
     object Global {

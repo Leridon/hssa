@@ -30,7 +30,7 @@ object Syntax {
     case class UnconditionalEntry(override val initialized: Expression, target: String) extends Entry(initialized)
     case class ConditionalEntry(override val initialized: Expression, target1: String, target2: String) extends Entry(initialized)
     
-    case class Relation(name: String, parameter: Expression, body: List[Statement])
+    case class Relation(name: String, parameter: Expression, body: Seq[Statement])
     
     case class Program(definitions: List[Relation])
     

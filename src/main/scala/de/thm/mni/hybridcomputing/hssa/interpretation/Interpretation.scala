@@ -155,6 +155,10 @@ object Interpretation {
         
         def entry(label: String): BlockIndex.Block = blocks.find(b => b.entry.labels.contains(label)).get
         def exit(label: String): BlockIndex.Block = blocks.find(b => b.exit.labels.contains(label)).get
+        
+        val labels: Set[String] = {
+            this.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet
+        }
     }
     
     object BlockIndex {
@@ -164,6 +168,9 @@ object Interpretation {
             val entry: Syntax.Entry = sequence.head.asInstanceOf[Syntax.Entry]
             val assignments: Seq[Syntax.Assignment] = sequence.slice(1, sequence.length - 1).map(_.asInstanceOf[Syntax.Assignment])
             val exit: Syntax.Exit = sequence.last.asInstanceOf[Syntax.Exit]
+            
+            def hasConditionalEntry: Boolean = entry.isInstanceOf[Syntax.ConditionalEntry]
+            def hasConditionalExit: Boolean = exit.isInstanceOf[Syntax.ConditionalEntry]
         }
     }
     
