@@ -11,12 +11,12 @@ import de.thm.mni.hybridcomputing.hssa.util.reversibility.Direction
 import de.thm.mni.hybridcomputing.hssa.util.reversibility.Direction.FORWARDS
 import de.thm.mni.hybridcomputing.hssa.{HSSAError, Inversion, Language, Syntax}
 
+import scala.annotation.tailrec
 import scala.collection.mutable
 
 case class Interpretation(language: Language) {
     
     import Interpretation.*
-    
     
     val builtins: ValueContext = {
         val context = ValueContext(None)
@@ -38,7 +38,15 @@ case class Interpretation(language: Language) {
         }
     }
     
-    def assign(pattern: Expression, value: Value): Map[String, Value] = {
+    def evaluateFinalizing(exp: Expression, context: ValueContext): Value = {
+        val consumedArg = evaluate(exp, context)
+        
+        context.undefine(exp.variables.map(_.name))
+        
+        consumedArg
+    }
+    
+    private def assign(pattern: Expression, value: Value): Map[String, Value] = {
         (pattern, value) match {
             case (Expression.Variable(name), value) => Map(name -> value)
             case (Expression.Unit(), Basic.Unit) => Map()
@@ -51,16 +59,11 @@ case class Interpretation(language: Language) {
         }
     }
     
-    def evaluate(context: ValueContext, rel: Value.Relation, instance_argument: Value, relation_argument: Value): Value = {
+    def evaluate(rel: Value, instance_argument: Value, relation_argument: Value): Value = {
         rel match {
             case Value.BuiltinRelation(forwards, backwards) =>
-                try {
-                    forwards(instance_argument)(relation_argument)
-                } catch {
-                    case msg: MatchError => throw HSSAError.violation(msg.getMessage())
-                }
-            case UserRelation(rel, _) => {
-                
+                forwards(instance_argument)(relation_argument)
+            case UserRelation(rel, _) =>
                 val execution_context = rel._2
                 
                 val relation_context = ValueContext(Some(execution_context))
@@ -69,18 +72,54 @@ case class Interpretation(language: Language) {
                 
                 val block_index = new BlockIndex(rel._1)
                 
-                var pc = block_index.byEntryLabel("begin")
+                @tailrec
+                def func(entry_value: Value, entry_label: String): Value = {
+                    entry_label match
+                        case "end" => entry_value
+                        case _ =>
+                            val block = block_index.byEntryLabel(entry_label)
+                            
+                            val block_context = ValueContext(Some(relation_context))
+                            
+                            block_context.define(block.entry match {
+                                case Syntax.UnconditionalEntry(initialized, _) => assign(initialized, entry_value)
+                                case Syntax.ConditionalEntry(initialized, target1, _) =>
+                                    if (target1 == entry_label) assign(initialized, Value.Pair(entry_value, Basic.True))
+                                    else assign(initialized, Value.Pair(entry_value, Basic.False))
+                            })
+                            
+                            
+                            block.assignments.foreach {
+                                case Syntax.Assignment(target, relation, instance_argument, source) =>
+                                    val consumedArg = evaluateFinalizing(source, block_context)
+                                    val instantiationArg = evaluate(instance_argument, block_context)
+                                    val called_rel = evaluate(relation, block_context)
+                                    
+                                    block_context.define(assign(target, evaluate(called_rel, instantiationArg, consumedArg)))
+                            }
+                            
+                            val continue = block.exit match {
+                                case Syntax.UnconditionalExit(target, argument) => (evaluateFinalizing(argument, block_context), target)
+                                case Syntax.ConditionalExit(target1, target2, argument) =>
+                                    evaluateFinalizing(argument, block_context) match {
+                                        case Value.Pair(arg, Basic.True) => (arg, target1)
+                                        case Value.Pair(arg, Basic.False) => (arg, target2)
+                                    }
+                            }
+                            
+                            func(continue._1, continue._2)
+                }
+                
+                return func(relation_argument, "begin")
                 
                 def executeBlock(block: BlockIndex.Block, entered_by: String, entry_value: Value): (Value, String) = {
-                    
-                    
                     val block_context = ValueContext(Some(relation_context))
                     
                     block_context.define(block.entry match {
                         case Syntax.UnconditionalEntry(initialized, _) => assign(initialized, entry_value)
                         case Syntax.ConditionalEntry(initialized, target1, target2) =>
-                            if (target1 == entered_by) assign(initialized, Value.Pair(entry_value, Basic.Int(1)))
-                            else assign(initialized, Value.Pair(entry_value, Basic.Int(0)))
+                            if (target1 == entered_by) assign(initialized, Value.Pair(entry_value, Basic.True))
+                            else assign(initialized, Value.Pair(entry_value, Basic.False))
                     })
                     
                     
@@ -93,17 +132,16 @@ case class Interpretation(language: Language) {
                             
                             val called_rel: Value.Relation = evaluate(relation, block_context).asInstanceOf[Value.Relation]
                             
-                            block_context.define(assign(target, evaluate(block_context, called_rel, instantiationArg, consumedArg)))
+                            block_context.define(assign(target, evaluate(called_rel, instantiationArg, consumedArg)))
                     }
                     
                     block.exit match {
                         case Syntax.UnconditionalExit(target, argument) => (evaluate(argument, block_context), target)
                         case Syntax.ConditionalExit(target1, target2, argument) =>
                             evaluate(argument, block_context) match {
-                                case Value.Pair(arg, Basic.Int(1)) => (arg, target1)
-                                case Value.Pair(arg, Basic.Int(0)) => (arg, target2)
+                                case Value.Pair(arg, Basic.True) => (arg, target1)
+                                case Value.Pair(arg, Basic.False) => (arg, target2)
                             }
-                        
                     }
                 }
                 
@@ -114,7 +152,8 @@ case class Interpretation(language: Language) {
                 }
                 
                 continuation._1
-            }
+            case _ =>
+                throw HSSAError.violation(s"$rel is not a relation")
         }
         
     }
@@ -127,8 +166,6 @@ case class Interpretation(language: Language) {
         
         program.definitions.zip(inverted.definitions).foreach({
             case (original, inverted) =>
-                val value = Value.UserRelation((original, context), (inverted, inverse_context))
-                
                 context.define(Map(original.name -> Value.UserRelation((original, context), (inverted, inverse_context))))
                 inverse_context.define(Map(original.name -> Value.UserRelation((inverted, inverse_context), (original, context))))
         })
@@ -136,7 +173,7 @@ case class Interpretation(language: Language) {
         
         val rel: Value.Relation = (if (direction == Direction.FORWARDS) context else inverse_context).get(relation_name).asInstanceOf[Value.Relation]
         
-        evaluate(context, rel, instance_argument, relation_argument)
+        evaluate(rel, instance_argument, relation_argument)
     }
 }
 
