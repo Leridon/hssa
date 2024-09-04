@@ -71,3 +71,19 @@ rel factorial (())
 
       (0, result)       :=         L3 <-
                                   -> end         :=         result
+
+rel broken (())
+    () := begin <-
+           -> L1,L2 := ((), 1)
+
+    () := L1<-
+          -> L := ()
+
+    () := L2<-
+          -> L := ()
+
+    () := L3<-
+          -> L := ()
+
+     () := L <-
+            ->end := ()

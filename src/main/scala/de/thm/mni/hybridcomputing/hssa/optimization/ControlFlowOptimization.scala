@@ -22,6 +22,9 @@ object ControlFlowOptimization {
         def getByEntryLabel(label: String): BlockIndex.Block = blocks.find(b => b.entry.labels.contains(label)).get
         def getByExitLabel(label: String): BlockIndex.Block = blocks.find(b => b.exit.labels.contains(label)).get
         
+        def getAllByEntryLabel(label: String): Seq[BlockIndex.Block] = blocks.filter(b => b.entry.labels.contains(label)).toSeq
+        def getAllByExitLabel(label: String): Seq[BlockIndex.Block] = blocks.filter(b => b.exit.labels.contains(label)).toSeq
+        
         def labels: Set[String] = this.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet
         
         def remove(block: BlockIndex.Block): Unit = {
@@ -39,6 +42,8 @@ object ControlFlowOptimization {
         def updateStatements(f: Syntax.Statement => Syntax.Statement): Unit = blocks.mapInPlace(b => new BlockIndex.Block(b.sequence.map(f)))
         
         def filterBlocks(f: BlockIndex.Block => Boolean): Unit = this.blocks.filterInPlace(f)
+        
+        def newLabel(template: String): String = ???
     }
     
     object MergeStrictlyConsecutiveBlocks extends Transformer.RelationTransformer {

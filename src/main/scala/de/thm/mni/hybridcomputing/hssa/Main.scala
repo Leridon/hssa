@@ -1,8 +1,10 @@
 package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.Errors.LanguageError
+import de.thm.mni.hybridcomputing.hssa.Syntax.Program
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value.Pair
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
+import de.thm.mni.hybridcomputing.hssa.optimization.EliminateNondeterminism
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Basic}
@@ -19,6 +21,8 @@ object Main {
             val language = Language(Seq(Basic, Arithmetic))
             
             var prog = Parsing(language).parse(lex(Paths.get("draft.hssa")))
+            
+            prog = EliminateNondeterminism.ControlFlow.apply(prog)
             
             println("Original:")
             println(Formatting.format(prog))
