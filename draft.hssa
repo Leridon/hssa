@@ -1,14 +1,14 @@
-rel nil (())
+rel nil ()
 () := begin <-
        -> end  := (0, ())
 
 
-rel cons (())
+rel cons ()
 (head, tail) := begin <-
                  -> end  := (1, (head, tail))
 
 
-rel map (f)
+rel map f
   (type, val)    :=     begin <-
        c         := equal (type, 0)  :=        ()
                         -> L1,L2     := ((type, val), c)
@@ -24,7 +24,7 @@ rel map (f)
        ()        := ~equal (type, 0) :=        c
                          -> end      :=   (type, val)
 
-rel range (())
+rel range ()
               (from, to)                :=       begin <-
                  done                   :=   equal (from, to)    :=                 ()
                                                  -> L1,L2        :=         ((from, to), done)
@@ -47,7 +47,7 @@ rel range (())
 
 
 
-rel test_list ( () )
+rel test_list()
     () := begin<-
     l.8 := range () := (1, 8)
     l.9 := map factorial := l.8
@@ -57,7 +57,7 @@ rel test_list ( () )
 
 
 
-rel factorial (())
+rel factorial ()
            n            :=       begin <-
                                    -> L1         :=         (n, 1)
 
@@ -72,7 +72,7 @@ rel factorial (())
       (0, result)       :=         L3 <-
                                   -> end         :=         result
 
-rel broken (())
+rel broken ()
     () := begin <-
            -> L1,L2 := ((), 1)
 

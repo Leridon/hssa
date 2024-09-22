@@ -41,8 +41,9 @@ object Parsing {
         def expression: P[Syntax.Expression] =
             language.plugins.map(_.literal_parser(this)).foldLeft(failure(""))((a, b) => a | b).map(Expression.Literal(_))
               | ident ^^ Syntax.Expression.Variable.apply
-              | LPAREN ~~ expression ~~ COMMA ~~ expression ~~ RPAREN ^^ Syntax.Expression.Pair.apply
-              | TILDE ~~ expression ^^ Syntax.Expression.Invert.apply
+              | LPAREN ~~ expression ~~ COMMA ~~ rep1sep(expression, COMMA) ~~ RPAREN ^^ { case first ~ rest =>
+                Expression.Pair(first, rest.reduceRight((a, b) => Expression.Pair(b, a)))
+            } | TILDE ~~ expression ^^ Syntax.Expression.Invert.apply
               | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
         
         def statement: P[Syntax.Statement] =
@@ -52,8 +53,7 @@ object Parsing {
               expression ~~ ASGN ~~ ident ~~ COMMA ~~ ident ~~ LARROW ^^ Syntax.ConditionalEntry.apply |
               expression ~~ ASGN ~~ expression ~~ expression ~~ ASGN ~~ expression ^^ Syntax.Assignment.apply
         
-        def procedure: P[Syntax.Relation] = RELATION ~~ ident ~~ LPAREN ~~ expression ~~ RPAREN ~~ rep(statement) ^^ Syntax.Relation.apply
+        def procedure: P[Syntax.Relation] = RELATION ~~ ident ~~ expression ~~ rep(statement) ^^ Syntax.Relation.apply
         def program: P[Syntax.Program] = phrase(rep(procedure) ^^ Syntax.Program.apply)
     }
-    
 }

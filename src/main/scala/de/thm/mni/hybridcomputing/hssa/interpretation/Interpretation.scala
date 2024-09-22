@@ -72,6 +72,7 @@ case class Interpretation(language: Language) {
                 
                 val block_index = new BlockIndex(rel._1)
                 
+                /*
                 @tailrec
                 def func(entry_value: Value, entry_label: String): Value = {
                     entry_label match
@@ -110,7 +111,7 @@ case class Interpretation(language: Language) {
                             func(continue._1, continue._2)
                 }
                 
-                return func(relation_argument, "begin")
+                return func(relation_argument, "begin")*/
                 
                 def executeBlock(block: BlockIndex.Block, entered_by: String, entry_value: Value): (Value, String) = {
                     val block_context = ValueContext(Some(relation_context))
