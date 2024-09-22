@@ -2,13 +2,9 @@ rel id ()
     x := begin<-
     -> end := x
 
-rel stack_init ()
-    () := begin<-
-       -> end := (0, ())
-
 rel stack_peek_nonempty ((head, tail), index)
     () := begin<-
-    c := eq (index, 0) := ()
+    c := equal (index, 0) := ()
         ->L1,L2 := ((), c)
 
     () := L1<- // index == 0
@@ -22,26 +18,10 @@ rel stack_peek_nonempty ((head, tail), index)
             ->L4 := res
 
     (res, c) := L3,L4<-
-    () := ~eq (index, 0) := c
+    () := ~equal (index, 0) := c
         -> end := res
 
-rel stack_peek ((size, stack), index):
-    () := begin<-
-    c := gte (index, size) := ()
-    ->L1,L2 := ((), c)
-
-    () := L1<- // out of bounds
-        ->L3 := 0
-
-    () := L2<-
-    res := stack_peek_nonempty (stack, index) := ()
-        -> L4 := res
-
-    (res, c) := L3,L4<-
-    () := ~gte (index, size) := c
-        ->end :=res
-
-rel stack_pop():
+rel stack_pop ()
     (stack_size, stack) := begin<-
     stack_empty := equal (stack_size, 0) := ()
         ->L1,L2 := ((stack_size, stack), stack_empty)
@@ -51,7 +31,7 @@ rel stack_pop():
         ->L3 := ((0, ()), 0)
 
     (size, (head, tail)) := L2<-
-    size.1 := sub 1 := size
+    size.1 := add -1 := size
         ->L4 := ((size.1, tail), head)
 
     (((stack_size, stack), top), c) := L3,L4<-
@@ -60,14 +40,13 @@ rel stack_pop():
 
     -> end := (stack, top)
 
-rel move_right  ():
+rel move_right  ()
     (stack_left, (center, stack_right)) := begin<-
-
-    stack_left.1 := stack_push () := (stack_left, center)
-    (center.1, stack_right.1) := stack_pop () := stack_right
+        stack_left.1 := ~stack_pop () := (stack_left, center)
+        (center.1, stack_right.1) := stack_pop () := stack_right
     -> end := (stack_left.1, (center.1, stack_right.1))
 
-rel move dir:
+rel move dir
     tape := begin<-
         c := equal (dir, 1) := ()
     ->L1,L2 := (tape, c)
@@ -86,7 +65,7 @@ rel move dir:
         () := ~equal (dir, 1) := ()
     -> end := tape
 
-rel maybe_read_write ((from, to), (read, write)):
+rel maybe_read_write ((from, to), (read, write))
     (state, (left, (center, right))) := begin<-
         c := equal (center, read) := ()
     ->L1,L2 := ((state, (left, (center, right))), c)
@@ -96,13 +75,13 @@ rel maybe_read_write ((from, to), (read, write)):
         state.1 := xor to := 0
         0 := xor read := center
         center.1 := xor write := 0
-    -> L3 :== (state.1, left, center.1, right)
+    -> L3 := (state.1, left, center.1, right)
 
     ((state, left, center, right), c) := L3,L2<-
-        () := ~equal (center, write) := ()
+        () := ~equal (center, write) := c
     ->end := (state, left, center, right)
 
-rel maybe_apply ((from, to), type, specifics):
+rel maybe_apply ((from, to), type, specifics)
     (state, tape) := begin<-
         c := equal (state, from) := ()
     ->L1,L2 := ((state, tape), c)
@@ -123,17 +102,17 @@ rel maybe_apply ((from, to), type, specifics):
         state.1 := xor to := 0
     ->L6 := (state.1, tape.1)
 
-    (state, c)  := <-L5,L6
+    (state, c) := L5,L6<-
         () := ~equal (0, type) := c
     ->L7 := state
 
-    ((state, tape), c) := L2,L7<-
-        () := ~equal (state, from) := c
+    ((state, tape), c) := L7,L2<-
+        () := ~equal (state, to) := c // TODO: This assertion is wrong.
     ->end := (state, tape)
 
 rel main (
     start_q, end_q, (transitions_n, transitions)
-    ):
+    )
 
     tape_right := begin<-
         tape := id () := ((0, ()), 0, tape_right)
@@ -156,12 +135,12 @@ rel main (
 
         rule_index.1 := add 1 := rule_index
 
-        c.1 := lt (rule_index.1, transitions_n) := ()
+        c.1 := less (rule_index.1, transitions_n) := ()
 
     -> L2,L3 := ((state.1, rule_index.1), c.1)
 
     ((state, tape), rule_index) := L3<-
-        0 := sub transitions_n := rule_index
+        0 := xor transitions_n := rule_index
 
         c := equal (state, end_q) := ()
     -> L6,L7 := ((state, tape), c)

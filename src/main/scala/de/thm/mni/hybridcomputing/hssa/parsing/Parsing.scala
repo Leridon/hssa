@@ -1,17 +1,20 @@
 package de.thm.mni.hybridcomputing.hssa.parsing
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
-import de.thm.mni.hybridcomputing.hssa.interpretation.Value
+import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
 import de.thm.mni.hybridcomputing.hssa.{AtPosition, Errors, Formatting, Language, Syntax}
 import de.thm.mni.hybridcomputing.hssa.util.parsing.{ParserUtilities, Token}
 import de.thm.mni.hybridcomputing.hssa.util.reversibility.Direction
 import de.thm.mni.hybridcomputing.hssa.Syntax.Program
 
+import scala.collection.mutable
 import scala.util.parsing.combinator.ImplicitConversions
 import scala.util.parsing.input.Reader
 
 case class Parsing(val language: Language) {
     val grammar = new Parsing.Grammar(language)
+    
+    def parseLiteral(string: String): Value = Interpretation(language).evaluate(this.grammar.expression(Lexing.lex(string)).get, Interpretation.ValueContext(None))
     
     def parse(token_reader: Parsing.TokenReader): Program = {
         
@@ -42,7 +45,7 @@ object Parsing {
             language.plugins.map(_.literal_parser(this)).foldLeft(failure(""))((a, b) => a | b).map(Expression.Literal(_))
               | ident ^^ Syntax.Expression.Variable.apply
               | LPAREN ~~ expression ~~ COMMA ~~ rep1sep(expression, COMMA) ~~ RPAREN ^^ { case first ~ rest =>
-                Expression.Pair(first, rest.reduceRight((a, b) => Expression.Pair(b, a)))
+                Expression.Pair(first, rest.reduceRight((a, b) => Expression.Pair(a, b)))
             } | TILDE ~~ expression ^^ Syntax.Expression.Invert.apply
               | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
         

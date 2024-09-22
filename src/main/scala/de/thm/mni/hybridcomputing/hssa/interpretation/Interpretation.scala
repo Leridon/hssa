@@ -133,7 +133,9 @@ case class Interpretation(language: Language) {
                             
                             val called_rel: Value.Relation = evaluate(relation, block_context).asInstanceOf[Value.Relation]
                             
-                            block_context.define(assign(target, evaluate(called_rel, instantiationArg, consumedArg)))
+                            val result = evaluate(called_rel, instantiationArg, consumedArg)
+                            
+                            block_context.define(assign(target, result))
                     }
                     
                     block.exit match {

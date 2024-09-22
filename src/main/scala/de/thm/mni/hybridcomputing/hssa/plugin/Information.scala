@@ -10,7 +10,7 @@ object Information extends Plugin {
             { case Basic.Unit => _ => Basic.Unit },
             { case Basic.Unit => _ => throw HSSAError.nondeterminism("Cannot execute inverted discard (aka oracle)") }
         )),
-        Plugin.Builtin("dupe", Value.BuiltinRelation(
+        Plugin.Builtin("dup", Value.BuiltinRelation(
             value => {
                 case Basic.Unit => value
             },
