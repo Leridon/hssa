@@ -45,17 +45,11 @@ rel range ()
                   ()                    := ~equal (0, tail_type) :=                 c
                                                   -> end         := (1, (head, (tail_type, tailtail)))
 
-
-
 rel test_list()
     () := begin<-
     l.8 := range () := (1, 8)
     l.9 := map factorial := l.8
             -> end := l.9
-
-
-
-
 
 rel factorial ()
            n            :=       begin <-
@@ -71,19 +65,3 @@ rel factorial ()
 
       (0, result)       :=         L3 <-
                                   -> end         :=         result
-
-rel broken ()
-    () := begin <-
-           -> L1,L2 := ((), 1)
-
-    () := L1<-
-          -> L := ()
-
-    () := L2<-
-          -> L := ()
-
-    () := L3<-
-          -> L := ()
-
-     () := L <-
-            ->end := ()

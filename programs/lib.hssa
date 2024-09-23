@@ -1,4 +1,0 @@
-rel id (()):
-x := begin<-
-      ->end := x
-

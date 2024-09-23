@@ -32,8 +32,6 @@ object Formatting {
     }
     
     def format(rel: Syntax.Relation): String = {
-        type A = Array[String]
-        
         val rows = rel.body.map(stm => (stm, formatInColumns(stm)))
         
         val column_widths = Array(0, 1, 2, 3, 4)
@@ -45,7 +43,7 @@ object Formatting {
             " ".repeat(before) + s + " ".repeat(width - before - s.length)
         }
         
-        s"rel ${rel.name} (${format(rel.parameter)})\n" + rows.map(row => {
+        s"rel ${rel.name} ${format(rel.parameter)}\n" + rows.map(row => {
             val r = row._2.zipWithIndex.map({ case (value, index) =>
                 center(value, column_widths(index))
             }).mkString(" ")

@@ -127,7 +127,6 @@ case class Interpretation(language: Language) {
                             else assign(initialized, Value.Pair(entry_value, Basic.False))
                     })
                     
-                    
                     block.assignments.foreach {
                         case Syntax.Assignment(target, relation, instance_argument, source) =>
                             val consumedArg = evaluate(source, block_context)
@@ -157,7 +156,7 @@ case class Interpretation(language: Language) {
                 var continuation = (relation_argument, "begin")
                 
                 while (continuation._2 != "end") {
-                    // if(rel._1.name == "main") println(continuation._2)
+                    //if (rel._1.name == "main") println(continuation._2)
                     continuation = executeBlock(block_index.byEntryLabel(continuation._2), continuation._2, continuation._1)
                 }
                 
