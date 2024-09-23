@@ -30,6 +30,7 @@ case class Interpretation(language: Language) {
         exp match {
             case Expression.Literal(value) => value
             case Expression.Variable(name) => context.get(name)
+              .getOrElse(throw new HSSAError(s"Variable ${name} is not defined."))
             case Expression.Pair(a, b) => Value.Pair(evaluate(a, context), evaluate(b, context))
             case Expression.Unit() => Basic.Unit
             case Expression.Invert(sub) => evaluate(sub, context) match
@@ -48,7 +49,8 @@ case class Interpretation(language: Language) {
     
     private def assign(pattern: Expression, value: Value): Map[String, Value] = {
         (pattern, value) match {
-            case (Expression.Variable(name), value) => Map(name -> value)
+            case (Expression.Variable(name), value) =>
+                Map(name -> value)
             case (Expression.Unit(), Basic.Unit) => Map()
             case (Expression.Literal(v), value) if v == value => Map()
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) => assign(pat_1, val_a) ++ assign(pat_2, val_b)
@@ -64,6 +66,8 @@ case class Interpretation(language: Language) {
             case Value.BuiltinRelation(forwards, backwards) =>
                 forwards(instance_argument)(relation_argument)
             case UserRelation(rel, _) =>
+                // println(s"${rel._1.name} ${instance_argument} : $relation_argument")
+                
                 val execution_context = rel._2
                 
                 val relation_context = ValueContext(Some(execution_context))
@@ -135,6 +139,8 @@ case class Interpretation(language: Language) {
                             
                             val result = evaluate(called_rel, instantiationArg, consumedArg)
                             
+                            // println(s"Back in ${rel._1.name}")
+                            
                             block_context.define(assign(target, result))
                     }
                     
@@ -151,8 +157,11 @@ case class Interpretation(language: Language) {
                 var continuation = (relation_argument, "begin")
                 
                 while (continuation._2 != "end") {
+                    // if(rel._1.name == "main") println(continuation._2)
                     continuation = executeBlock(block_index.byEntryLabel(continuation._2), continuation._2, continuation._1)
                 }
+                
+                // if(rel._1.name == "main") println(continuation._2)
                 
                 continuation._1
             case _ =>
@@ -174,7 +183,9 @@ case class Interpretation(language: Language) {
         })
         
         
-        val rel: Value.Relation = (if (direction == Direction.FORWARDS) context else inverse_context).get(relation_name).asInstanceOf[Value.Relation]
+        val rel: Value.Relation = (if (direction == Direction.FORWARDS) context else inverse_context).get(relation_name)
+          .getOrElse(throw new HSSAError(s"Entrypoint $relation_name does not exist"))
+          .asInstanceOf[Value.Relation]
         
         evaluate(rel, instance_argument, relation_argument)
     }
@@ -230,11 +241,8 @@ object Interpretation {
             })
         }
         
-        def get(name: String): Value = {
-            this.values.get(name).orElse(this.parent.map(_.get(name))).getOrElse({
-                println(name)
-                null
-            })
+        def get(name: String): Option[Value] = {
+            this.values.get(name).orElse(this.parent.flatMap(_.get(name)))
         }
     }
 }

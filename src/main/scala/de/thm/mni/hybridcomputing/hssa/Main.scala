@@ -36,12 +36,30 @@ object Main {
             println(Interpretation(language).interpret(prog, "test_list", Basic.Unit, Pair(Basic.Int(1),Pair(Basic.Int(1),Pair(Basic.Int(1),Pair(Basic.Int(2),Pair(Basic.Int(1),Pair(Basic.Int(6),Pair(Basic.Int(1),Pair(Basic.Int(24),Pair(Basic.Int(1),Pair(Basic.Int(120),Pair(Basic.Int(1),Pair(Basic.Int(720),Pair(Basic.Int(1),Pair(Basic.Int(5040),Pair(Basic.Int(1),Pair(Basic.Int(40320),Pair(Basic.Int(0),Basic.Unit))))))))))))))))), BACKWARDS))
            */
             
-            println(Interpretation(language).interpret(prog, "main", Parsing(language).parseLiteral(
+            val id_rtm = Parsing(language).parseLiteral(
                 """
                   |(0, 1, (1, (
-                  |((0, 1), 0, (0, 0)),
+                  |((0, 1), 0, 0, 0),
                   |())))
-                  |""".stripMargin), Parsing(language).parseLiteral("(4, (1, 1, 0, 1, ()))"), FORWARDS))
+                  |""".stripMargin)
+            
+            val inc_rtm = Parsing(language).parseLiteral(
+                """
+                  |(1, 6, (8, (
+                  | ((1, 2), 0, -1, -1),
+                  | ((2, 3), 1, 0, 0),
+                  | ((3, 2), 0, 1, 1),
+                  | ((3, 4), 0, 0, 1),
+                  | ((3, 4), 0, -1, -1),
+                  | ((4, 5), -1, 0, 0),
+                  | ((5, 4), 0, 1, 0),
+                  | ((5, 6), 0, -1, -1),
+                  |())))
+                  |""".stripMargin
+            )
+            
+            println(Interpretation(language).interpret(prog, "main", inc_rtm, Parsing(language).parseLiteral("(4, (1, 1, 0, 1, ()))"), FORWARDS))
+            println(Interpretation(language).interpret(prog, "main", inc_rtm, Parsing(language).parseLiteral("(4, (1, 1, 0, 1, ()))"), BACKWARDS))
             //println(Interpretation.interpret(prog, "main", Value.Unit, Value.Int(5)))
             
             // Parse
