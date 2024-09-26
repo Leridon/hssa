@@ -23,12 +23,8 @@ object Syntax {
                            source: Expression
                          ) extends Statement
     
-    sealed abstract class Exit(val finalized: Expression) extends Statement
-    sealed abstract class Entry(val initialized: Expression) extends Statement
-    case class UnconditionalExit(target: String, argument: Expression) extends Exit(argument)
-    case class ConditionalExit(target1: String, target2: String, argument: Expression) extends Exit(argument)
-    case class UnconditionalEntry(override val initialized: Expression, target: String) extends Entry(initialized)
-    case class ConditionalEntry(override val initialized: Expression, target1: String, target2: String) extends Entry(initialized)
+    case class Exit(labels: Seq[String], argument: Expression) extends Statement
+    case class Entry(initialized: Expression, labels: Seq[String]) extends Statement
     
     case class Relation(name: String, parameter: Expression, body: Seq[Statement])
     
@@ -36,15 +32,9 @@ object Syntax {
     
     object Extensions {
         extension (self: Syntax.Statement)
-            def isExit: Boolean = self match
-                case _: Syntax.ConditionalExit => true
-                case _: Syntax.UnconditionalExit => true
-                case _ => false
+            def isExit: Boolean = self.isInstanceOf[Exit]
             
-            def isEntry: Boolean = self match
-                case _: Syntax.ConditionalEntry => true
-                case _: Syntax.UnconditionalEntry => true
-                case _ => false
+            def isEntry: Boolean = self.isInstanceOf[Entry]
             
             def initializes: Expression = self match
                 case Syntax.Assignment(target, relation, instance_argument, source) => target
@@ -53,7 +43,7 @@ object Syntax {
             def finalizes: Expression = self match
                 case Syntax.Assignment(target, relation, instance_argument, source) => source
                 case entry: Syntax.Entry => Expression.Unit()
-                case exit: Syntax.Exit => exit.finalized
+                case exit: Syntax.Exit => exit.argument
             def uses: Expression = self match
                 case Syntax.Assignment(target, relation, instance_argument, source) => Expression.Pair(relation, instance_argument)
                 case entry: Syntax.Entry => Expression.Unit()
@@ -62,10 +52,8 @@ object Syntax {
         
         extension (self: Syntax.Exit | Syntax.Entry) {
             def labels: List[String] = self match {
-                case Syntax.UnconditionalEntry(initialized, target) => List(target)
-                case Syntax.ConditionalEntry(initialized, target1, target2) => List(target1, target2)
-                case Syntax.UnconditionalExit(target, argument) => List(target)
-                case Syntax.ConditionalExit(target1, target2, argument) => List(target1, target2)
+                case Syntax.Entry(initialized, target) => target.toList
+                case Syntax.Exit(target, argument) => target.toList
             }
         }
         

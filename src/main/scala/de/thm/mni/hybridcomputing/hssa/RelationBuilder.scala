@@ -1,7 +1,7 @@
 package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.RelationBuilder.LabelUsage
-import de.thm.mni.hybridcomputing.hssa.RelationBuilder.LabelUsage.{Position, Role}
+import de.thm.mni.hybridcomputing.hssa.RelationBuilder.LabelUsage.Position
 import de.thm.mni.hybridcomputing.hssa.Syntax.Statement
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
@@ -57,20 +57,8 @@ class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks
         def getUsages(block: BlockIndex.Block, stm: Statement): List[RelationBuilder.LabelUsage] = {
             stm match
                 case Syntax.Assignment(target, relation, instance_argument, source) => Nil
-                case Syntax.UnconditionalExit(target, _) =>
-                    List(RelationBuilder.LabelUsage(block, LabelUsage.Role.UNCONDITIONAL, LabelUsage.Position.EXIT, target))
-                case Syntax.ConditionalExit(target1, target2, argument) =>
-                    List(
-                        RelationBuilder.LabelUsage(block, LabelUsage.Role.TRUE, LabelUsage.Position.EXIT, target1),
-                        RelationBuilder.LabelUsage(block, LabelUsage.Role.FALSE, LabelUsage.Position.EXIT, target2),
-                    )
-                case Syntax.UnconditionalEntry(initialized, target) =>
-                    List(RelationBuilder.LabelUsage(block, LabelUsage.Role.UNCONDITIONAL, LabelUsage.Position.ENTRY, target))
-                case Syntax.ConditionalEntry(initialized, target1, target2) =>
-                    List(
-                        RelationBuilder.LabelUsage(block, LabelUsage.Role.TRUE, LabelUsage.Position.ENTRY, target1),
-                        RelationBuilder.LabelUsage(block, LabelUsage.Role.FALSE, LabelUsage.Position.ENTRY, target2),
-                    )
+                case Syntax.Exit(labels, argument) => labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(block, i, LabelUsage.Position.EXIT, l) }).toList
+                case Syntax.Entry(argument, labels) => labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(block, i, LabelUsage.Position.ENTRY, l) }).toList
         }
         
         this.blocks.toList.flatMap(b => getUsages(b, b.entry) ++ getUsages(b, b.exit))
@@ -79,22 +67,10 @@ class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks
     def updateLabels(f: RelationBuilder.LabelUsage => String): Unit =
         this.blocks.mapInPlace(b => new BlockIndex.Block(
             b.sequence.map({
-                case Syntax.UnconditionalExit(target, argument) =>
-                    Syntax.UnconditionalExit(f(LabelUsage(b, Role.UNCONDITIONAL, Position.EXIT, target)), argument)
-                case Syntax.ConditionalExit(target1, target2, argument) =>
-                    Syntax.ConditionalExit(
-                        f(LabelUsage(b, Role.TRUE, Position.EXIT, target1)),
-                        f(LabelUsage(b, Role.FALSE, Position.EXIT, target2)),
-                        argument
-                    )
-                case Syntax.UnconditionalEntry(initialized, target) =>
-                    Syntax.UnconditionalEntry(initialized, f(LabelUsage(b, Role.UNCONDITIONAL, Position.EXIT, target)))
-                case Syntax.ConditionalEntry(initialized, target1, target2) =>
-                    Syntax.ConditionalEntry(
-                        initialized,
-                        f(LabelUsage(b, Role.TRUE, Position.ENTRY, target1)),
-                        f(LabelUsage(b, Role.FALSE, Position.ENTRY, target2))
-                    )
+                case Syntax.Exit(labels, argument) =>
+                    Syntax.Exit(labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(b, i, LabelUsage.Position.EXIT, l) }).map(f), argument)
+                case Syntax.Entry(argument, labels) =>
+                    Syntax.Entry(argument, labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(b, i, LabelUsage.Position.ENTRY, l) }).map(f))
                 case s => s
             })
         ))
@@ -103,18 +79,12 @@ class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks
 object RelationBuilder {
     case class LabelUsage(
                            block: BlockIndex.Block,
-                           role: LabelUsage.Role,
-                           position: LabelUsage.Position,
+                           pos: Int,
+                           role: LabelUsage.Position,
                            label: String
                          ) {}
     
     object LabelUsage {
-        enum Role {
-            case TRUE
-            case FALSE
-            case UNCONDITIONAL
-        }
-        
         enum Position {
             case ENTRY
             case EXIT
