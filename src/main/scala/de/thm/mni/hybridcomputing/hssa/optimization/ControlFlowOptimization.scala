@@ -9,7 +9,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
 object ControlFlowOptimization {
-    
+    /*
     class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks: Seq[BlockIndex.Block]) {
         def this(relation: Syntax.Relation) = {
             this(relation.name, relation.parameter, new BlockIndex(relation).blocks)
@@ -153,4 +153,7 @@ object ControlFlowOptimization {
             builder.compile()
         }
     }
+    
+    
+     */
 }

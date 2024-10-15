@@ -7,6 +7,11 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
 object Inversion {
     
     object Local {
+        def invert(label: String): String = label match
+            case "end" => "begin"
+            case "begin" => "end"
+            case l => l
+        
         /**
          * Locally inverts a statement.
          * All applications are inverted, without considering if the referenced relation is also being syntactically inverted,
@@ -20,9 +25,9 @@ object Inversion {
             case Syntax.Assignment(target, rel, instance_argument, source) =>
                 Syntax.Assignment(source, Syntax.Expression.Invert(rel), instance_argument, target)
             case Syntax.Exit(labels, argument) =>
-                Syntax.Entry(argument, labels)
+                Syntax.Entry(argument, labels.map(this.invert))
             case Syntax.Entry(initialized, labels) =>
-                Syntax.Exit(labels, initialized)
+                Syntax.Exit(labels.map(this.invert), initialized)
         }
         
         /**
