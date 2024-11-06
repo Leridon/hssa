@@ -17,7 +17,7 @@ object EliminateNondeterminism {
             def recurse(): Unit = {
                 
                 val offending = index.allLabelUsages
-                  .filter(_.position == LabelUsage.Position.EXIT)
+                  .filter(_.role == LabelUsage.Position.EXIT)
                   .groupBy(_.label)
                   .find(_._2.length > 1)
                 
@@ -35,9 +35,9 @@ object EliminateNondeterminism {
                         })
                         
                         index.add(new BlockIndex.Block(Seq(
-                            Syntax.ConditionalEntry(Syntax.Expression.Pair(Syntax.Expression.Variable("x"), Syntax.Expression.Variable("c")), first_replacement, second_replacement),
+                            Syntax.Entry(Syntax.Expression.Pair(Syntax.Expression.Variable("x"), Syntax.Expression.Variable("c")), List(first_replacement, second_replacement)),
                             Syntax.Assignment(Syntax.Expression.Unit(), Syntax.Expression.Variable("discard"), Syntax.Expression.Unit(), Syntax.Expression.Variable("c")),
-                            Syntax.UnconditionalExit(value._1, Syntax.Expression.Variable("x"))
+                            Syntax.Exit(List(value._1), Syntax.Expression.Variable("x"))
                         )))
                         
                         recurse()

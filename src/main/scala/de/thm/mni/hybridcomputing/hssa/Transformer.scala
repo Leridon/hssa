@@ -18,10 +18,8 @@ object Transformer {
     
     case class Labels(f: String => String) extends StatementTransformer {
         def apply(statement: Syntax.Statement): Syntax.Statement = statement match
-            case Syntax.UnconditionalExit(target, argument) => Syntax.UnconditionalExit(f(target), argument)
-            case Syntax.ConditionalExit(target1, target2, argument) => Syntax.ConditionalExit(f(target1), f(target2), argument)
-            case Syntax.UnconditionalEntry(initialized, target) => Syntax.UnconditionalEntry(initialized, f(target))
-            case Syntax.ConditionalEntry(initialized, target1, target2) => Syntax.ConditionalEntry(initialized, f(target1), f(target2))
+            case Syntax.Exit(labels, arguments) => Syntax.Exit(labels.map(f), arguments)
+            case Syntax.Entry(argument, labels) => Syntax.Entry(argument, labels.map(f))
             case a => a
     }
 }

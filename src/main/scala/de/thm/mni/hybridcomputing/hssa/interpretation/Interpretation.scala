@@ -120,12 +120,9 @@ case class Interpretation(language: Language) {
                 def executeBlock(block: BlockIndex.Block, entered_by: String, entry_value: Value): (Value, String) = {
                     val block_context = ValueContext(Some(relation_context))
                     
-                    block_context.define(block.entry match {
-                        case Syntax.UnconditionalEntry(initialized, _) => assign(initialized, entry_value)
-                        case Syntax.ConditionalEntry(initialized, target1, target2) =>
-                            if (target1 == entered_by) assign(initialized, Value.Pair(entry_value, Basic.True))
-                            else assign(initialized, Value.Pair(entry_value, Basic.False))
-                    })
+                    block_context.define(
+                        assign(block.entry.initialized, Value.Pair(entry_value, Basic.Int(block.entry.labels.indexOf(entered_by))))
+                    )
                     
                     block.assignments.foreach {
                         case Syntax.Assignment(target, relation, instance_argument, source) =>
@@ -143,13 +140,8 @@ case class Interpretation(language: Language) {
                             block_context.define(assign(target, result))
                     }
                     
-                    block.exit match {
-                        case Syntax.UnconditionalExit(target, argument) => (evaluate(argument, block_context), target)
-                        case Syntax.ConditionalExit(target1, target2, argument) =>
-                            evaluate(argument, block_context) match {
-                                case Value.Pair(arg, Basic.True) => (arg, target1)
-                                case Value.Pair(arg, Basic.False) => (arg, target2)
-                            }
+                    evaluate(block.exit.argument, block_context) match {
+                        case Value.Pair(arg, Basic.Int(i)) => (arg, block.exit.labels(i))
                     }
                 }
                 
@@ -218,9 +210,6 @@ object Interpretation {
             val entry: Syntax.Entry = sequence.head.asInstanceOf[Syntax.Entry]
             val assignments: Seq[Syntax.Assignment] = sequence.slice(1, sequence.length - 1).map(_.asInstanceOf[Syntax.Assignment])
             val exit: Syntax.Exit = sequence.last.asInstanceOf[Syntax.Exit]
-            
-            def hasConditionalEntry: Boolean = entry.isInstanceOf[Syntax.ConditionalEntry]
-            def hasConditionalExit: Boolean = exit.isInstanceOf[Syntax.ConditionalEntry]
         }
     }
     

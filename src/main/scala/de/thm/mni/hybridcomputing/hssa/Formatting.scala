@@ -17,14 +17,10 @@ object Formatting {
     def formatInColumns(statement: Syntax.Statement): Array[String] = statement match {
         case Syntax.Assignment(target, rel, arg, consumed) =>
             Array(format(target), ":=", s"${format(rel)} ${format(arg)}", ":=", format(consumed))
-        case Syntax.UnconditionalEntry(initialized, target) =>
-            Array(format(initialized), ":=", s"$target <-", "", "")
-        case Syntax.ConditionalEntry(initialized, target1, target2) =>
-            Array(format(initialized), ":=", s"$target1,$target2 <-", "", "")
-        case Syntax.UnconditionalExit(target, argument) =>
-            Array("", "", s"-> $target", ":=", format(argument))
-        case Syntax.ConditionalExit(target1, target2, argument) =>
-            Array("", "", s"-> $target1,$target2", ":=", format(argument))
+        case Syntax.Exit(labels, argument) =>
+            Array("", "", s"-> ${labels.mkString(",")}", ":=", format(argument))
+        case Syntax.Entry(initialized, labels) =>
+            Array(format(initialized), ":=", s"${labels.mkString(",")} <-", "", "")
     }
     
     def format(statement: Syntax.Statement): String = {
@@ -48,7 +44,7 @@ object Formatting {
                 center(value, column_widths(index))
             }).mkString(" ")
             
-            if(row._1.isExit) r + "\n" else r
+            if (row._1.isExit) r + "\n" else r
             
         }).mkString("\n")
     }

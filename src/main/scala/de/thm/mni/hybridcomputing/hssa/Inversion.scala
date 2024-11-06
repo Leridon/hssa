@@ -7,6 +7,11 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
 object Inversion {
     
     object Local {
+        def invert(label: String): String = label match
+            case "end" => "begin"
+            case "begin" => "end"
+            case l => l
+        
         /**
          * Locally inverts a statement.
          * All applications are inverted, without considering if the referenced relation is also being syntactically inverted,
@@ -19,18 +24,10 @@ object Inversion {
                 Syntax.Assignment(source, rel, instance_argument, target)
             case Syntax.Assignment(target, rel, instance_argument, source) =>
                 Syntax.Assignment(source, Syntax.Expression.Invert(rel), instance_argument, target)
-            case Syntax.UnconditionalExit("end", argument) =>
-                Syntax.UnconditionalEntry(argument, "begin")
-            case Syntax.UnconditionalExit(target, argument) =>
-                Syntax.UnconditionalEntry(argument, target)
-            case Syntax.ConditionalExit(target1, target2, argument) =>
-                Syntax.ConditionalEntry(argument, target1, target2)
-            case Syntax.UnconditionalEntry(initialized, "begin") =>
-                Syntax.UnconditionalExit("end", initialized)
-            case Syntax.UnconditionalEntry(initialized, target) =>
-                Syntax.UnconditionalExit(target, initialized)
-            case Syntax.ConditionalEntry(initialized, target1, target2) =>
-                Syntax.ConditionalExit(target1, target2, initialized)
+            case Syntax.Exit(labels, argument) =>
+                Syntax.Entry(argument, labels.map(this.invert))
+            case Syntax.Entry(initialized, labels) =>
+                Syntax.Exit(labels.map(this.invert), initialized)
         }
         
         /**
@@ -69,14 +66,10 @@ object Inversion {
             def apply(expression: Syntax.Statement): Syntax.Statement = expression match {
                 case Syntax.Assignment(target, relation, instance_argument, source) =>
                     Syntax.Assignment(apply(target), apply(relation), apply(instance_argument), apply(source))
-                case Syntax.UnconditionalEntry(initialized, target) =>
-                    Syntax.UnconditionalEntry(apply(initialized), target)
-                case Syntax.ConditionalEntry(initialized, target1, target2) =>
-                    Syntax.ConditionalEntry(apply(initialized), target1, target2)
-                case Syntax.UnconditionalExit(target, argument) =>
-                    Syntax.UnconditionalExit(target, apply(argument))
-                case Syntax.ConditionalExit(target1, target2, argument) =>
-                    Syntax.ConditionalExit(target1, target2, apply(argument))
+                case Syntax.Exit(labels, initialized) =>
+                    Syntax.Exit(labels, apply(initialized))
+                case Syntax.Entry(target, labels) =>
+                    Syntax.Entry(apply(target), labels)
             }
             
             def apply(relation: Syntax.Relation): Syntax.Relation = {
@@ -104,7 +97,7 @@ object Inversion {
                 
             }
         }
-                
+        
         def invert(program: Program): Syntax.Program = invert(program, program.definitions.map(_.name).toSet)
         def invert(program: Program, relations: Set[String]): Syntax.Program = {
             val transformed = Syntax.Program(program.definitions.map(rel => {
