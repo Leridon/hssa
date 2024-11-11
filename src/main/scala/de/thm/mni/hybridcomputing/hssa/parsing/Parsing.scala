@@ -2,7 +2,8 @@ package de.thm.mni.hybridcomputing.hssa.parsing
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program}
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.{AtPosition, Language, Syntax}
+import de.thm.mni.hybridcomputing.hssa.util.AtPosition
+import de.thm.mni.hybridcomputing.hssa.{Language, Syntax}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing
 import de.thm.mni.hybridcomputing.util.parsing.{ParserUtilities, SourceFile, SourcePosition, Token}
@@ -54,9 +55,15 @@ object Parsing {
               | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
         }
         
-        def entry: Parser[Syntax.Entry] = expression ~~ ASGN ~~ rep1sep(ident, COMMA) ~~ LARROW ^^ Syntax.Entry.apply
-        def exit: Parser[Syntax.Exit] = RARROW ~~ rep1sep(ident, COMMA) ~~ ASGN ~~ expression ^^ Syntax.Exit.apply
-        def assignment: Parser[Syntax.Assignment] = expression ~~ ASGN ~~ expression ~~ expression ~~ ASGN ~~ expression ^^ Syntax.Assignment.apply
+        def entry: Parser[Syntax.Entry] = posi {
+            expression ~~ ASGN ~~ rep1sep(ident, COMMA) ~~ LARROW ^^ Syntax.Entry.apply
+        }
+        def exit: Parser[Syntax.Exit] = posi {
+            RARROW ~~ rep1sep(ident, COMMA) ~~ ASGN ~~ expression ^^ Syntax.Exit.apply
+        }
+        def assignment: Parser[Syntax.Assignment] = posi {
+            expression ~~ ASGN ~~ expression ~~ expression ~~ ASGN ~~ expression ^^ Syntax.Assignment.apply
+        }
         
         def block: P[Syntax.Block] = posi {
             entry ~~ rep(assignment) ~~ exit ^^ Syntax.Block.apply

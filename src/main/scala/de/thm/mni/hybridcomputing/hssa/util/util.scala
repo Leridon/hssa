@@ -1,4 +1,4 @@
-package de.thm.mni.hybridcomputing.hssa
+package de.thm.mni.hybridcomputing.hssa.util
 
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition

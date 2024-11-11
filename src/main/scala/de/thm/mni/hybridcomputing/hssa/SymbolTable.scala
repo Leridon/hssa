@@ -4,12 +4,59 @@ import de.thm.mni.hybridcomputing.hssa
 
 import scala.collection.mutable
 
+
+object StaticEnvironment {
+    def init(language: Language) = SymbolTabl(language)
+    
+    class SymbolTabl(language: Language) {
+        private val entries: mutable.Map[String, SymbolTabl.RelationSymbol | SymbolTabl.BuiltinSymbol] = mutable.Map(
+            language.builtins.map(b => b.name -> SymbolTabl.BuiltinSymbol(b)) *
+        )
+        
+        def getRelation(name: String): Option[SymbolTabl.RelationSymbol] = ???
+        def get(name: String): Option[SymbolTabl.VarSymbol] = ???
+        
+        def add(relation: Syntax.Relation): Option[SymbolTabl.RelationSymbol] = {
+            if (this.entries.contains(relation.name)) return None
+            
+            val sym = SymbolTabl.RelationSymbol(relation, RelLocalTable(this))
+            
+            this.entries.addOne(relation.name -> sym)
+            
+            Some(sym)
+        }
+    }
+    
+    class RelLocalTable(parent: SymbolTabl) {
+        def getBlockByEntryLabel(label: String): Syntax.Block = ???
+        def getBlockByExitLabel(label: String): Syntax.Block = ???
+        
+        def getBlocksByEntryLabel(label: String): Seq[Syntax.Block] = ???
+        def getBlocksByExitLabel(label: String): Seq[Syntax.Block] = ???
+    }
+    
+    
+    class BlockLocalTable(parent: RelLocalTable) {
+    
+    }
+    
+    object SymbolTabl {
+        sealed trait VarSymbol
+        case class RelationSymbol(relation: Syntax.Relation, localContext: RelLocalTable) extends VarSymbol
+        case class BuiltinSymbol(builtin: Language.Plugin.Builtin) extends VarSymbol
+        case class VariableSymbol(variable: Syntax.Expression.Variable) extends VarSymbol
+        case class BlockSymbol(block: Syntax.Block, localTable: BlockLocalTable)
+    }
+    
+}
+
+
 class SymbolTable[T](
                       override val `type`: SymbolTable.ScopeType,
                       val parent: Option[SymbolTable[T]],
                       val entries: mutable.Map[String, SymbolTable.Symbol[T]],
                       val subscopes: mutable.ListBuffer[(Seq[String | Int], SymbolTable[T])]
-                    ) extends SymbolTable.View[T]{
+                    ) extends SymbolTable.View[T] {
     
     def lookup(name: String): Option[SymbolTable.Symbol[T]] = this.entries.get(name).orElse(this.parent.flatMap(_.lookup(name)))
     

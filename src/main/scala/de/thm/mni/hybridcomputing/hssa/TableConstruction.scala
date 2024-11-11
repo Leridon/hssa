@@ -18,8 +18,6 @@ case class TableConstruction(language: Language) {
                 local.add((v.name, ()))
             })
             
-            val blocks = new BlockIndex(rel)
-            
             rel.blocks.foreach(block => {
                 val block_local = local.addSubScope(Block, block.entry.labels *)
                 

@@ -1,4 +1,6 @@
-package de.thm.mni.hybridcomputing.hssa
+package de.thm.mni.hybridcomputing.hssa.util
+
+import de.thm.mni.hybridcomputing.hssa.Syntax
 
 trait Transformer {
     def apply(program: Syntax.Program): Syntax.Program

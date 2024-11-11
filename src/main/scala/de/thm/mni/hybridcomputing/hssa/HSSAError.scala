@@ -13,6 +13,7 @@ object HSSAError {
     
     object Runtime {
         case class ReversibilityViolation()
+        case class Nondeterminism()
     }
     
     def violation(message: String) = new HSSAError(s"Reversibility violation: $message")

@@ -1,9 +1,9 @@
 package de.thm.mni.hybridcomputing.hssa.optimization
 
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
-import de.thm.mni.hybridcomputing.hssa.RelationBuilder
-import de.thm.mni.hybridcomputing.hssa.RelationBuilder.LabelUsage
-import de.thm.mni.hybridcomputing.hssa.{Syntax, Transformer}
+import de.thm.mni.hybridcomputing.hssa.util.RelationBuilder.LabelUsage
+import de.thm.mni.hybridcomputing.hssa.util.{RelationBuilder, Transformer}
+import de.thm.mni.hybridcomputing.hssa.Syntax
 
 import scala.annotation.tailrec
 

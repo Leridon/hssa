@@ -1,10 +1,11 @@
-package de.thm.mni.hybridcomputing.hssa
+package de.thm.mni.hybridcomputing.hssa.util
 
-import de.thm.mni.hybridcomputing.hssa.RelationBuilder.LabelUsage
-import de.thm.mni.hybridcomputing.hssa.RelationBuilder.LabelUsage.Position
-import de.thm.mni.hybridcomputing.hssa.Syntax.{Relation, Statement}
+import RelationBuilder.LabelUsage
+import RelationBuilder.LabelUsage.Position
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
+import de.thm.mni.hybridcomputing.hssa.Syntax.{Relation, Statement}
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
+import de.thm.mni.hybridcomputing.hssa.{Syntax}
 
 import scala.collection.mutable.ListBuffer
 
