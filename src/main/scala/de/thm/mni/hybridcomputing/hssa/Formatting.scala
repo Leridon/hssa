@@ -28,7 +28,7 @@ object Formatting {
     }
     
     def format(rel: Syntax.Relation): String = {
-        val rows = rel.body.map(stm => (stm, formatInColumns(stm)))
+        val rows = rel.blocks.flatMap(_.sequence).map(stm => (stm, formatInColumns(stm)))
         
         val column_widths = Array(0, 1, 2, 3, 4)
           .map(i => rows.map(r => r._2(i).length).max)

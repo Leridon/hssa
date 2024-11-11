@@ -116,7 +116,7 @@ case class Interpretation(language: Language) {
                 
                 return func(relation_argument, "begin")*/
                 
-                def executeBlock(block: BlockIndex.Block, entered_by: String, entry_value: Value): (Value, String) = {
+                def executeBlock(block: Syntax.Block, entered_by: String, entry_value: Value): (Value, String) = {
                     val block_context = ValueContext(Some(relation_context))
                     
                     block_context.define(
@@ -183,32 +183,12 @@ case class Interpretation(language: Language) {
 
 object Interpretation {
     class BlockIndex(relation: Relation) {
-        val blocks: Seq[BlockIndex.Block] = {
-            val entries = relation.body.zipWithIndex.filter(a => a._1.isInstanceOf[Syntax.Entry]).map(a => a._2)
-            val exits = relation.body.zipWithIndex.filter(a => a._1.isInstanceOf[Syntax.Exit]).map(a => a._2)
-            
-            val sequences = entries.zip(exits).map((a, b) => {
-                relation.body.slice(a, b + 1)
-            })
-            
-            sequences.map(seq => new BlockIndex.Block(seq))
-        }
         
-        def byEntryLabel(label: String): BlockIndex.Block = blocks.find(b => b.entry.labels.contains(label)).get
-        def byExitLabel(label: String): BlockIndex.Block = blocks.find(b => b.exit.labels.contains(label)).get
+        def byEntryLabel(label: String): Syntax.Block = relation.blocks.find(b => b.entry.labels.contains(label)).get
+        def byExitLabel(label: String): Syntax.Block = relation.blocks.find(b => b.exit.labels.contains(label)).get
         
         val labels: Set[String] = {
-            this.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet
-        }
-    }
-    
-    object BlockIndex {
-        class Block(
-                     val sequence: Seq[Syntax.Statement]
-                   ) {
-            val entry: Syntax.Entry = sequence.head.asInstanceOf[Syntax.Entry]
-            val assignments: Seq[Syntax.Assignment] = sequence.slice(1, sequence.length - 1).map(_.asInstanceOf[Syntax.Assignment])
-            val exit: Syntax.Exit = sequence.last.asInstanceOf[Syntax.Exit]
+            relation.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet
         }
     }
     

@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hybridcomputing.hssa.Errors.LanguageError
+import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.hssa.Syntax.Program
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value.Pair
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
@@ -99,7 +99,7 @@ object Main {
              */
         } catch {
             case e: LanguageError =>
-                println(s"An error occurred @ ${e.pos}")
+                println(s"An error occurred @ ${e.position}")
                 
                 println(e.msg)
         }

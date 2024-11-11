@@ -20,7 +20,7 @@ case class TableConstruction(language: Language) {
             
             val blocks = new BlockIndex(rel)
             
-            blocks.blocks.foreach(block => {
+            rel.blocks.foreach(block => {
                 val block_local = local.addSubScope(Block, block.entry.labels *)
                 
                 block.sequence.zipWithIndex.foreach((stm, index) => {

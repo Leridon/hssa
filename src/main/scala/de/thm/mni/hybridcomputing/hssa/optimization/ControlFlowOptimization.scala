@@ -10,28 +10,28 @@ import scala.collection.mutable.ListBuffer
 
 object ControlFlowOptimization {
     /*
-    class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks: Seq[BlockIndex.Block]) {
+    class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks: Seq[Syntax.Block]) {
         def this(relation: Syntax.Relation) = {
             this(relation.name, relation.parameter, new BlockIndex(relation).blocks)
         }
         
-        val blocks: ListBuffer[BlockIndex.Block] = new ListBuffer[BlockIndex.Block]
+        val blocks: ListBuffer[Syntax.Block] = new ListBuffer[Syntax.Block]
         
         blocks.addAll(initial_blocks)
         
-        def getByEntryLabel(label: String): BlockIndex.Block = blocks.find(b => b.entry.labels.contains(label)).get
-        def getByExitLabel(label: String): BlockIndex.Block = blocks.find(b => b.exit.labels.contains(label)).get
+        def getByEntryLabel(label: String): Syntax.Block = blocks.find(b => b.entry.labels.contains(label)).get
+        def getByExitLabel(label: String): Syntax.Block = blocks.find(b => b.exit.labels.contains(label)).get
         
-        def getAllByEntryLabel(label: String): Seq[BlockIndex.Block] = blocks.filter(b => b.entry.labels.contains(label)).toSeq
-        def getAllByExitLabel(label: String): Seq[BlockIndex.Block] = blocks.filter(b => b.exit.labels.contains(label)).toSeq
+        def getAllByEntryLabel(label: String): Seq[Syntax.Block] = blocks.filter(b => b.entry.labels.contains(label)).toSeq
+        def getAllByExitLabel(label: String): Seq[Syntax.Block] = blocks.filter(b => b.exit.labels.contains(label)).toSeq
         
         def labels: Set[String] = this.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet
         
-        def remove(block: BlockIndex.Block): Unit = {
+        def remove(block: Syntax.Block): Unit = {
             this.blocks.remove(this.blocks.indexOf(block))
         }
         
-        def add(block: BlockIndex.Block): Unit = {
+        def add(block: Syntax.Block): Unit = {
             this.blocks.addOne(block)
         }
         
@@ -39,9 +39,9 @@ object ControlFlowOptimization {
         
         def updateLabels(f: String => String): Unit = this.updateStatements(Transformer.Labels(f).apply)
         
-        def updateStatements(f: Syntax.Statement => Syntax.Statement): Unit = blocks.mapInPlace(b => new BlockIndex.Block(b.sequence.map(f)))
+        def updateStatements(f: Syntax.Statement => Syntax.Statement): Unit = blocks.mapInPlace(b => new Syntax.Block(b.sequence.map(f)))
         
-        def filterBlocks(f: BlockIndex.Block => Boolean): Unit = this.blocks.filterInPlace(f)
+        def filterBlocks(f: Syntax.Block => Boolean): Unit = this.blocks.filterInPlace(f)
         
         def newLabel(template: String): String = ???
     }
@@ -54,8 +54,8 @@ object ControlFlowOptimization {
             val connectingLabels = builder.labels.filter(label => builder.getByEntryLabel(label).entry.labels.length == 1 && builder.getByExitLabel(label).exit.labels.length == 1)
             
             // Two blocks are merged by merging their statements and inserting a single assignment to glue them together
-            def merge(a: BlockIndex.Block, b: BlockIndex.Block): BlockIndex.Block = {
-                new BlockIndex.Block(
+            def merge(a: Syntax.Block, b: Syntax.Block): Syntax.Block = {
+                new Syntax.Block(
                     a.sequence.init
                       ++
                       Seq(Syntax.Assignment(b.entry.initialized, Syntax.Expression.Variable("id"), Syntax.Expression.Unit(), a.exit.finalized))
@@ -82,7 +82,7 @@ object ControlFlowOptimization {
         def apply(relation: Syntax.Relation): Syntax.Relation = {
             val builder = new RelationBuilder(relation)
             
-            case class Redirection(block: BlockIndex.Block, from: String, to: String)
+            case class Redirection(block: Syntax.Block, from: String, to: String)
             
             val redirections: Seq[Redirection] = builder.blocks.flatMap(block => {
                 if (!block.hasConditionalEntry &&
@@ -108,7 +108,7 @@ object ControlFlowOptimization {
     class RemoveUnreachableCode(strict: Boolean) extends Transformer.RelationTransformer {
         override def apply(relation: Syntax.Relation): Syntax.Relation = {
             
-            def reach(block: BlockIndex.Block): Set[String] = {
+            def reach(block: Syntax.Block): Set[String] = {
                 block.exit match {
                     case Syntax.ConditionalExit(l1, l2, Syntax.Expression.Pair(_, Syntax.Expression.Literal(Basic.True))) => Set(l1)
                     case Syntax.ConditionalExit(l1, l2, Syntax.Expression.Pair(_, Syntax.Expression.Literal(Basic.False))) => Set(l2)

@@ -29,7 +29,11 @@ object Syntax {
     case class Exit(labels: Seq[String], argument: Expression) extends Statement
     case class Entry(initialized: Expression, labels: Seq[String]) extends Statement
     
-    case class Relation(name: String, parameter: Expression, body: Seq[Statement]) extends Node
+    case class Block(entry: Entry, assignments: Seq[Assignment], exit: Exit) extends Node {
+        lazy val sequence: Seq[Statement] = Seq(entry) ++ assignments ++ Seq(exit)
+    }
+    
+    case class Relation(name: String, parameter: Expression, blocks: Seq[Block]) extends Node
     
     case class Program(definitions: List[Relation]) extends Node
     

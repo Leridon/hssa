@@ -1,38 +1,39 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hybridcomputing.hssa.Errors.LanguageError
+import de.thm.mni.hybridcomputing.util.errors.LanguageError
+import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 
 import scala.util.parsing.input.{NoPosition, Position}
 
 def TODO(s: String = ""): Nothing = {
-  throw new NotImplementedError(s)
+    throw new NotImplementedError(s)
 }
 
 
-extension[A] (self: List[A]) {
-  def filterIsInstance[B](implicit c: Class[B]): List[B] = self.filter(c.isInstance).map(c.cast)
-  def foldMap[B, C](start: B)(f: (B, A) => (B, C)): (B, List[C]) = {
-    val res = self.foldLeft[(B, List[C])]((start, Nil))({
-      case ((running, acc), element) => {
-        val (b, c) = f(running, element)
-        (b, c :: acc)
-      }
-    })
-
-    (res._1, res._2.reverse)
-  }
+extension [A](self: List[A]) {
+    def filterIsInstance[B](implicit c: Class[B]): List[B] = self.filter(c.isInstance).map(c.cast)
+    def foldMap[B, C](start: B)(f: (B, A) => (B, C)): (B, List[C]) = {
+        val res = self.foldLeft[(B, List[C])]((start, Nil))({
+            case ((running, acc), element) => {
+                val (b, c) = f(running, element)
+                (b, c :: acc)
+            }
+        })
+        
+        (res._1, res._2.reverse)
+    }
 }
 
-extension[A] (self: Set[A]) {
-  def filterIsInstance[B](implicit c: Class[B]): Set[B] = self.filter(c.isInstance).map(c.cast)
+extension [A](self: Set[A]) {
+    def filterIsInstance[B](implicit c: Class[B]): Set[B] = self.filter(c.isInstance).map(c.cast)
 }
 
-def AtPosition[T](pos: Position)(exp: => T): T = try {
-  exp
+def AtPosition[T](pos: SourcePosition)(exp: => T): T = try {
+    exp
 } catch {
-  case e: LanguageError =>
-    if (e.pos == NoPosition) e.pos = pos
-    throw e
+    case e: LanguageError =>
+        if (e.position == null) e.position = pos
+        throw e
 }
 
 def isSet[A](collection: Seq[A]): Boolean = collection.toSet.size == collection.size

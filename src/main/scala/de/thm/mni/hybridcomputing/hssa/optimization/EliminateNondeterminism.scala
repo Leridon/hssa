@@ -34,11 +34,11 @@ object EliminateNondeterminism {
                             else usage.label
                         })
                         
-                        index.add(new BlockIndex.Block(Seq(
+                        index.add(Syntax.Block(
                             Syntax.Entry(Syntax.Expression.Pair(Syntax.Expression.Variable("x"), Syntax.Expression.Variable("c")), List(first_replacement, second_replacement)),
-                            Syntax.Assignment(Syntax.Expression.Unit(), Syntax.Expression.Variable("discard"), Syntax.Expression.Unit(), Syntax.Expression.Variable("c")),
+                            Seq(Syntax.Assignment(Syntax.Expression.Unit(), Syntax.Expression.Variable("discard"), Syntax.Expression.Unit(), Syntax.Expression.Variable("c"))),
                             Syntax.Exit(List(value._1), Syntax.Expression.Variable("x"))
-                        )))
+                        ))
                         
                         recurse()
                     case None =>
