@@ -8,7 +8,8 @@ import de.thm.mni.hybridcomputing.hssa.optimization.EliminateNondeterminism
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Basic, Information}
-import de.thm.mni.hybridcomputing.hssa.util.reversibility.Direction.{BACKWARDS, FORWARDS}
+import de.thm.mni.hybridcomputing.util.parsing.SourceFile
+import de.thm.mni.hybridcomputing.util.reversibility.Direction.{BACKWARDS, FORWARDS}
 
 import java.nio.file.Paths
 
@@ -20,7 +21,7 @@ object Main {
             
             val language = Language(Seq(Basic, Arithmetic, Information))
             
-            var prog = Parsing(language).parse(lex(Paths.get("programs/rtm.hssa")))
+            var prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/rtm.hssa"))))
             
             prog = EliminateNondeterminism.ControlFlow.apply(prog)
             
@@ -71,8 +72,8 @@ object Main {
                   |""".stripMargin
             )
             
-            val rtm_int = Parsing(language).parse(lex(Paths.get("programs/rtm.hssa")))
-            val tm_int = Parsing(language).parse(lex(Paths.get("programs/tm.hssa")))
+            val rtm_int = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/rtm.hssa"))))
+            val tm_int = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/tm.hssa"))))
             
             val input = Parsing(language).parseLiteral("(4, (1, 1, 0, 1, ()))")
             

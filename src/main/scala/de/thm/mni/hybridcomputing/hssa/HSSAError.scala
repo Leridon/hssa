@@ -1,10 +1,10 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import scala.util.parsing.input.Position
+import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 
 class HSSAError(message: String,
-                position: Position = null
-           ) extends Exception {
+                position: SourcePosition = null
+               ) extends Exception {
     
 }
 

@@ -3,9 +3,12 @@ package de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression.Variable
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value
+import de.thm.mni.hybridcomputing.util.parsing.Positioned
 
 object Syntax {
-    sealed abstract class Expression
+    sealed trait Node extends Positioned
+    
+    sealed abstract class Expression extends Node
     
     object Expression {
         case class Literal(value: Value) extends Expression
@@ -15,7 +18,7 @@ object Syntax {
         case class Unit() extends Expression
     }
     
-    abstract sealed class Statement
+    abstract sealed class Statement extends Node
     case class Assignment(
                            target: Expression,
                            relation: Expression,
@@ -26,9 +29,9 @@ object Syntax {
     case class Exit(labels: Seq[String], argument: Expression) extends Statement
     case class Entry(initialized: Expression, labels: Seq[String]) extends Statement
     
-    case class Relation(name: String, parameter: Expression, body: Seq[Statement])
+    case class Relation(name: String, parameter: Expression, body: Seq[Statement]) extends Node
     
-    case class Program(definitions: List[Relation])
+    case class Program(definitions: List[Relation]) extends Node
     
     object Extensions {
         extension (self: Syntax.Statement)

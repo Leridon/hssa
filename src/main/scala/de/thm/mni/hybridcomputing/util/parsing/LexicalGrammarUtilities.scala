@@ -1,4 +1,4 @@
-package de.thm.mni.hybridcomputing.hssa.util.parsing
+package de.thm.mni.hybridcomputing.util.parsing
 
 import de.thm.mni.hybridcomputing.hssa.Errors
 

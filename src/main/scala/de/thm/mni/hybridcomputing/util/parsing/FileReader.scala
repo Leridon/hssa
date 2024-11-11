@@ -1,4 +1,4 @@
-package de.thm.mni.hybridcomputing.hssa.util.parsing
+package de.thm.mni.hybridcomputing.util.parsing
 
 import java.io.BufferedReader
 import java.nio.file.Path

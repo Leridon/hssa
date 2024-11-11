@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa.parsing
 
-import de.thm.mni.hybridcomputing.hssa.util.parsing.{FileReader, LexicalGrammarUtilities, Token, TokenReader}
+import de.thm.mni.hybridcomputing.util.parsing.{FileReader, LexicalGrammarUtilities, SourceFile, Token, TokenReader}
 
 import java.nio.file.Path
 import scala.util.parsing.input.{CharSequenceReader, Position}
@@ -57,10 +57,9 @@ object Lexing {
                 "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
                 "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ (l => symbol(IDENT, l))
               )(in).map(_(in.pos))
-            
+        
         
     }
     
-    def lex(path: Path): TokenReader[Tokens.TokenClass] = TokenReader(FileReader(path), LexicalGrammar)
-    def lex(input: String): TokenReader[Tokens.TokenClass] = TokenReader(new CharSequenceReader(input), LexicalGrammar)
+    def lex(file: SourceFile): TokenReader[Tokens.TokenClass] = TokenReader(file, file.reader, LexicalGrammar)
 }

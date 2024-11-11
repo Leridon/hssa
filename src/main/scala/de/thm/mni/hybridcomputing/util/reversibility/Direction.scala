@@ -1,4 +1,4 @@
-package de.thm.mni.hybridcomputing.hssa.util.reversibility
+package de.thm.mni.hybridcomputing.util.reversibility
 
 enum Direction {
   case FORWARDS

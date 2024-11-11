@@ -33,7 +33,6 @@ def AtPosition[T](pos: Position)(exp: => T): T = try {
   case e: LanguageError =>
     if (e.pos == NoPosition) e.pos = pos
     throw e
-  case e: Throwable => throw e
 }
 
 def isSet[A](collection: Seq[A]): Boolean = collection.toSet.size == collection.size

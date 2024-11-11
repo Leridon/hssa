@@ -1,4 +1,4 @@
-package de.thm.mni.hybridcomputing.hssa.util.parsing
+package de.thm.mni.hybridcomputing.util.parsing
 
 import scala.util.parsing.combinator.Parsers
 
@@ -6,6 +6,21 @@ trait ParserUtilities[TokenClass] extends Parsers {
   override type Elem = Token[TokenClass]
 
   def ignore[T](parser: Parser[T]): IgnoredParser = new IgnoredParser(parser.map(_ => ()))
+  
+  def posi[T <: Positioned](p: this.Parser[T]): Parser[T] = {
+    case in: TokenReader[TokenClass] =>
+      val res = p(in)
+      
+      val end = res.next.asInstanceOf[TokenReader[TokenClass]]
+      
+      res.map(r => {
+        r.position = SourcePosition(in.file, in.position, end.position)
+        
+        r
+      })
+    
+    case in => p(in)
+  }
 
   class IgnoredParser(self: Parser[Unit]) extends Parser[Unit] {
     override def apply(in: Input): ParseResult[Unit] = self(in)

@@ -6,12 +6,11 @@ import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program, Relation}
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value.{BuiltinRelation, UserRelation}
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
-import de.thm.mni.hybridcomputing.hssa.util.reversibility
-import de.thm.mni.hybridcomputing.hssa.util.reversibility.Direction
-import de.thm.mni.hybridcomputing.hssa.util.reversibility.Direction.FORWARDS
 import de.thm.mni.hybridcomputing.hssa.{HSSAError, Inversion, Language, Syntax}
+import de.thm.mni.hybridcomputing.util.reversibility
+import de.thm.mni.hybridcomputing.util.reversibility.Direction
+import de.thm.mni.hybridcomputing.util.reversibility.Direction.FORWARDS
 
-import scala.annotation.tailrec
 import scala.collection.mutable
 
 case class Interpretation(language: Language) {
