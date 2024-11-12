@@ -3,49 +3,83 @@ package de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa
 
 import scala.collection.mutable
-
+import scala.collection.mutable.ListBuffer
 
 object StaticEnvironment {
-    def init(language: Language) = SymbolTabl(language)
+    class MultiMap[Key, Value](initialdata: (Key, Value)*) {
+        private val data = mutable.Map[Key, ListBuffer[Value]]()
+        
+        this.add(initialdata *)
+        
+        def keys(): Set[Key] = data.keySet.toSet
+        
+        def add(pair: (Key, Value)*): Unit = {
+            pair.foreach({
+                case (key, value) => this.data.getOrElseUpdate(key, new ListBuffer[Value]()).addOne(value)
+            })
+        }
+        
+        def getAll(key: Key): Seq[Value] = this.data.get(key).map(_.toSeq).getOrElse(Seq())
+        
+        def get(key: Key, filter: Value => Boolean = _ => true): Option[Value] = this.data.get(key).map(_.toSeq).getOrElse(Seq()).find(filter)
+        
+        def all: Map[Key, Seq[Value]] = this.data.toMap.view.mapValues(_.toSeq).toMap
+    }
     
-    class SymbolTabl(language: Language) {
-        private val entries: mutable.Map[String, SymbolTabl.RelationSymbol | SymbolTabl.BuiltinSymbol] = mutable.Map(
+    def init(language: Language, program: Syntax.Program) = SymbolTabl(language, program)
+    
+    class SymbolTabl(language: Language, program: Syntax.Program) {
+        val relations: Seq[SymbolTabl.RelationSymbol] = program.definitions.map(rel => {
+            SymbolTabl.RelationSymbol(RelLocalTable(this, rel))
+        })
+        
+        private val entries: MultiMap[String, SymbolTabl.RelationSymbol | SymbolTabl.BuiltinSymbol] = MultiMap(
             language.builtins.map(b => b.name -> SymbolTabl.BuiltinSymbol(b)) *
         )
         
-        def getRelation(name: String): Option[SymbolTabl.RelationSymbol] = ???
-        def get(name: String): Option[SymbolTabl.VarSymbol] = ???
+        this.entries.add(
+            program.definitions.map(rel => {
+                rel.name -> SymbolTabl.RelationSymbol(RelLocalTable(this, rel))
+            }) *
+        )
         
-        def add(relation: Syntax.Relation): Option[SymbolTabl.RelationSymbol] = {
-            if (this.entries.contains(relation.name)) return None
-            
-            val sym = SymbolTabl.RelationSymbol(relation, RelLocalTable(this))
-            
-            this.entries.addOne(relation.name -> sym)
-            
-            Some(sym)
-        }
+        def getAll(name: String): Seq[SymbolTabl.RelationSymbol | SymbolTabl.BuiltinSymbol] = entries.getAll(name)
+        
+        def getRelation(name: String): Option[SymbolTabl.RelationSymbol] = entries.get(name, _.isInstanceOf[SymbolTabl.RelationSymbol]).map(_.asInstanceOf[SymbolTabl.RelationSymbol])
+        
+        def get(name: String): Option[SymbolTabl.VarSymbol] = entries.getAll(name).headOption
+        
+        def names(): Set[String] = this.entries.keys()
     }
     
-    class RelLocalTable(parent: SymbolTabl) {
-        def getBlockByEntryLabel(label: String): Syntax.Block = ???
-        def getBlockByExitLabel(label: String): Syntax.Block = ???
+    class RelLocalTable(val parent: SymbolTabl, val relation: Syntax.Relation) {
+        val blocks: Seq[BlockLocalTable] = relation.blocks.map(block => BlockLocalTable(this, block))
         
-        def getBlocksByEntryLabel(label: String): Seq[Syntax.Block] = ???
-        def getBlocksByExitLabel(label: String): Seq[Syntax.Block] = ???
+        private val entries: MultiMap[String, RelLocalTable.LabelUsage] = MultiMap(blocks.flatMap(block => block.block.entry.labels.zipWithIndex.map(l => l._1 -> RelLocalTable.LabelUsage(l._2, block))) *)
+        private val exits: MultiMap[String, RelLocalTable.LabelUsage] = MultiMap(blocks.flatMap(block => block.block.exit.labels.zipWithIndex.map(l => l._1 -> RelLocalTable.LabelUsage(l._2, block))) *)
+        
+        lazy val labels: Set[String] = entries.keys() ++ exits.keys()
+        
+        def getEntryByLabel(label: String): Option[RelLocalTable.LabelUsage] = entries.get(label)
+        def getExitByLabel(label: String): Option[RelLocalTable.LabelUsage] = exits.get(label)
+        
+        def getAllEntries(label: String): Seq[RelLocalTable.LabelUsage] = entries.getAll(label)
+        def getAllExits(label: String): Seq[RelLocalTable.LabelUsage] = exits.getAll(label)
     }
     
+    object RelLocalTable {
+        case class LabelUsage(index: Int, block: BlockLocalTable)
+    }
     
-    class BlockLocalTable(parent: RelLocalTable) {
+    class BlockLocalTable(parent: RelLocalTable, val block: Syntax.Block) {
     
     }
     
     object SymbolTabl {
         sealed trait VarSymbol
-        case class RelationSymbol(relation: Syntax.Relation, localContext: RelLocalTable) extends VarSymbol
+        case class RelationSymbol(localContext: RelLocalTable) extends VarSymbol
         case class BuiltinSymbol(builtin: Language.Plugin.Builtin) extends VarSymbol
         case class VariableSymbol(variable: Syntax.Expression.Variable) extends VarSymbol
-        case class BlockSymbol(block: Syntax.Block, localTable: BlockLocalTable)
     }
     
 }

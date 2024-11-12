@@ -1,10 +1,11 @@
 package de.thm.mni.hybridcomputing.hssa
 
+import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 
 class HSSAError(message: String,
                 position: SourcePosition = null
-               ) extends Exception {
+               ) extends LanguageError(message, position) {
     
 }
 
@@ -14,6 +15,10 @@ object HSSAError {
     object Runtime {
         case class ReversibilityViolation()
         case class Nondeterminism()
+    }
+    
+    object Static {
+    
     }
     
     def violation(message: String) = new HSSAError(s"Reversibility violation: $message")
