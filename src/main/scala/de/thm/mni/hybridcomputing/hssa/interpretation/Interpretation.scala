@@ -7,6 +7,7 @@ import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program, Relation}
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value.{BuiltinRelation, UserRelation}
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.{HSSAError, Inversion, Language, Syntax}
+import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.reversibility
 import de.thm.mni.hybridcomputing.util.reversibility.Direction
 import de.thm.mni.hybridcomputing.util.reversibility.Direction.FORWARDS
@@ -28,8 +29,8 @@ case class Interpretation(language: Language) {
     def evaluate(exp: Expression, context: ValueContext): Value = {
         exp match {
             case Expression.Literal(value) => value
-            case Expression.Variable(name) => context.get(name)
-              .getOrElse(throw new HSSAError(s"Variable ${name} is not defined."))
+            case Expression.Variable(name) => context.get(name.name)
+              .getOrElse(new HSSAError(LanguageError.Severity.Error, s"Variable ${name} is not defined.").raise())
             case Expression.Pair(a, b) => Value.Pair(evaluate(a, context), evaluate(b, context))
             case Expression.Unit() => Basic.Unit
             case Expression.Invert(sub) => evaluate(sub, context) match
@@ -41,7 +42,7 @@ case class Interpretation(language: Language) {
     def evaluateFinalizing(exp: Expression, context: ValueContext): Value = {
         val consumedArg = evaluate(exp, context)
         
-        context.undefine(exp.variables.map(_.name))
+        context.undefine(exp.variables.map(_.name.name))
         
         consumedArg
     }
@@ -49,14 +50,14 @@ case class Interpretation(language: Language) {
     private def assign(pattern: Expression, value: Value): Map[String, Value] = {
         (pattern, value) match {
             case (Expression.Variable(name), value) =>
-                Map(name -> value)
+                Map(name.name -> value)
             case (Expression.Unit(), Basic.Unit) => Map()
             case (Expression.Literal(v), value) if v == value => Map()
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) => assign(pat_1, val_a) ++ assign(pat_2, val_b)
             case (Expression.Invert(sub), UserRelation(fw, bw)) => assign(sub, UserRelation(bw, fw))
             case (Expression.Invert(sub), BuiltinRelation(forwards, backwards)) => assign(sub, BuiltinRelation(backwards, forwards))
             case _ =>
-                throw HSSAError.violation(s"$value does not match $pattern")
+                HSSAError.violation(s"$value does not match $pattern").raise()
         }
     }
     
@@ -126,7 +127,7 @@ case class Interpretation(language: Language) {
                     block.assignments.foreach {
                         case Syntax.Assignment(target, relation, instance_argument, source) =>
                             val consumedArg = evaluate(source, block_context)
-                            block_context.undefine(source.variables.map(_.name))
+                            block_context.undefine(source.variables.map(_.name.name))
                             
                             val instantiationArg = evaluate(instance_argument, block_context)
                             
@@ -140,7 +141,7 @@ case class Interpretation(language: Language) {
                     }
                     
                     evaluate(block.exit.argument, block_context) match {
-                        case Value.Pair(arg, Basic.Int(i)) => (arg, block.exit.labels(i))
+                        case Value.Pair(arg, Basic.Int(i)) => (arg, block.exit.labels(i).name)
                     }
                 }
                 
@@ -155,12 +156,12 @@ case class Interpretation(language: Language) {
                 
                 continuation._1
             case _ =>
-                throw HSSAError.violation(s"$rel is not a relation")
+                HSSAError.violation(s"$rel is not a relation").raise()
         }
         
     }
     
-    def interpret(program: Program, relation_name: String, instance_argument: Value, relation_argument: Value, direction: Direction): Value = {
+    def interpret(program: Program, relation_name: String = "main", instance_argument: Value = Basic.Unit, relation_argument: Value = Basic.Unit, direction: Direction = Direction.FORWARDS): Value = {
         val inverted = Inversion.Global.invert(program)
         
         val context = ValueContext(Some(builtins))
@@ -168,13 +169,13 @@ case class Interpretation(language: Language) {
         
         program.definitions.zip(inverted.definitions).foreach({
             case (original, inverted) =>
-                context.define(Map(original.name -> Value.UserRelation((original, context), (inverted, inverse_context))))
-                inverse_context.define(Map(original.name -> Value.UserRelation((inverted, inverse_context), (original, context))))
+                context.define(Map(original.name.name -> Value.UserRelation((original, context), (inverted, inverse_context))))
+                inverse_context.define(Map(original.name.name -> Value.UserRelation((inverted, inverse_context), (original, context))))
         })
         
         
         val rel: Value.Relation = (if (direction == Direction.FORWARDS) context else inverse_context).get(relation_name)
-          .getOrElse(throw new HSSAError(s"Entrypoint $relation_name does not exist"))
+          .getOrElse(new HSSAError(LanguageError.Severity.Error, "Entrypoint $relation_name does not exist").raise())
           .asInstanceOf[Value.Relation]
         
         evaluate(rel, instance_argument, relation_argument)
@@ -187,7 +188,7 @@ object Interpretation {
         def byEntryLabel(label: String): Syntax.Block = relation.blocks.find(b => b.entry.labels.contains(label)).get
         def byExitLabel(label: String): Syntax.Block = relation.blocks.find(b => b.exit.labels.contains(label)).get
         
-        val labels: Set[String] = {
+        val labels: Set[Syntax.Identifier] = {
             relation.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet
         }
     }

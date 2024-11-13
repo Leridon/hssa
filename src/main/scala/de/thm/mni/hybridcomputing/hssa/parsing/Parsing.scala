@@ -2,7 +2,6 @@ package de.thm.mni.hybridcomputing.hssa.parsing
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program}
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.util.AtPosition
 import de.thm.mni.hybridcomputing.hssa.{Language, Syntax}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing
@@ -20,13 +19,10 @@ case class Parsing(language: Language) {
         
         this.grammar.program(token_reader) match {
             case grammar.Success(prog, _) => prog
-            case grammar.NoSuccess(msg, rest) => {
+            case grammar.NoSuccess(msg, rest) =>
                 val r = rest.asInstanceOf[parsing.TokenReader[?]]
                 
-                AtPosition(SourcePosition(r.file, r.position, null)) {
-                    throw LanguageError.SyntaxError(msg)
-                }
-            }
+                LanguageError.SyntaxError(msg).setPosition(SourcePosition(r.file, r.position, null)).raise()
             case grammar.Failure(_, _) => ???
             case grammar.Error(_, _) => ???
         }
@@ -43,7 +39,9 @@ object Parsing {
         
         private type P[T] = this.Parser[T]
         
-        private def ident: P[String] = valueToken(IDENT)(classOf[String])
+        private def ident: P[Syntax.Identifier] = posi {
+            valueToken(IDENT)(classOf[String]) ^^ Syntax.Identifier.apply
+        }
         private def intlit: P[Int] = valueToken(INTLIT)(classOf[Integer]).map(_.intValue())
         
         def expression: P[Syntax.Expression] = posi {

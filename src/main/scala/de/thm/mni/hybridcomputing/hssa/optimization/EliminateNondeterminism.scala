@@ -8,6 +8,8 @@ import de.thm.mni.hybridcomputing.hssa.Syntax
 import scala.annotation.tailrec
 
 object EliminateNondeterminism {
+    import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
+    
     object ControlFlow extends Transformer.RelationTransformer {
         override def apply(relation: Syntax.Relation): Syntax.Relation = {
             

@@ -10,7 +10,7 @@ object Formatting {
             case Expression.Literal(value) => value.toString
             case Expression.Pair(a, b) => s"(${format(a)}, ${format(b)})"
             case Expression.Unit() => "()"
-            case Expression.Variable(name) => name
+            case Expression.Variable(name) => name.toString
             case Expression.Invert(sub) => s"~${format(sub)}"
     }
     

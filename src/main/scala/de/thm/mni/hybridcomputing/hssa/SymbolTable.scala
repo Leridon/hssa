@@ -5,6 +5,8 @@ import de.thm.mni.hybridcomputing.hssa
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
+import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
+
 object StaticEnvironment {
     class MultiMap[Key, Value](initialdata: (Key, Value)*) {
         private val data = mutable.Map[Key, ListBuffer[Value]]()
@@ -39,7 +41,7 @@ object StaticEnvironment {
         
         this.entries.add(
             program.definitions.map(rel => {
-                rel.name -> SymbolTabl.RelationSymbol(RelLocalTable(this, rel))
+                rel.name.name -> SymbolTabl.RelationSymbol(RelLocalTable(this, rel))
             }) *
         )
         
@@ -55,8 +57,8 @@ object StaticEnvironment {
     class RelLocalTable(val parent: SymbolTabl, val relation: Syntax.Relation) {
         val blocks: Seq[BlockLocalTable] = relation.blocks.map(block => BlockLocalTable(this, block))
         
-        private val entries: MultiMap[String, RelLocalTable.LabelUsage] = MultiMap(blocks.flatMap(block => block.block.entry.labels.zipWithIndex.map(l => l._1 -> RelLocalTable.LabelUsage(l._2, block))) *)
-        private val exits: MultiMap[String, RelLocalTable.LabelUsage] = MultiMap(blocks.flatMap(block => block.block.exit.labels.zipWithIndex.map(l => l._1 -> RelLocalTable.LabelUsage(l._2, block))) *)
+        private val entries: MultiMap[String, RelLocalTable.LabelUsage] = MultiMap(blocks.flatMap(block => block.block.entry.labels.zipWithIndex.map(l => l._1.name -> RelLocalTable.LabelUsage(l._2, block))) *)
+        private val exits: MultiMap[String, RelLocalTable.LabelUsage] = MultiMap(blocks.flatMap(block => block.block.exit.labels.zipWithIndex.map(l => l._1.name -> RelLocalTable.LabelUsage(l._2, block))) *)
         
         lazy val labels: Set[String] = entries.keys() ++ exits.keys()
         
@@ -69,10 +71,53 @@ object StaticEnvironment {
     
     object RelLocalTable {
         case class LabelUsage(index: Int, block: BlockLocalTable)
+        
+        enum LabelRole:
+            case Entry
+            case Exit
     }
     
-    class BlockLocalTable(parent: RelLocalTable, val block: Syntax.Block) {
+    class BlockLocalTable(val parent: RelLocalTable, val block: Syntax.Block) {
+        val initializations = MultiMap(
+            block.sequence.zipWithIndex.flatMap({ case (s, index) => s.initializes.variables.map(v => BlockLocalTable.VariableUsage(v, s, index, BlockLocalTable.VariableRole.Init)) })
+              .map(u => u.variable.name.name -> u) *
+        )
+        
+        val usages = MultiMap(
+            block.sequence.zipWithIndex.flatMap({ case (s, index) => s.uses.variables.map(v => BlockLocalTable.VariableUsage(v, s, index, BlockLocalTable.VariableRole.Use)) })
+              .map(u => u.variable.name.name -> u) *
+        )
+        
+        val finalizations = MultiMap(
+            block.sequence.zipWithIndex.flatMap({ case (s, index) => s.finalizes.variables.map(v => BlockLocalTable.VariableUsage(v, s, index, BlockLocalTable.VariableRole.Final)) })
+              .map(u => u.variable.name.name -> u) *
+        )
+        
+        val all_variable_usages: MultiMap[String, BlockLocalTable.VariableUsage] = MultiMap(
+            block.sequence.zipWithIndex.flatMap({
+                  case (s, index) =>
+                      s.initializes.variables.map(v => BlockLocalTable.VariableUsage(v, s, index, BlockLocalTable.VariableRole.Init)) ++
+                        s.uses.variables.map(v => BlockLocalTable.VariableUsage(v, s, index, BlockLocalTable.VariableRole.Use)) ++
+                        s.finalizes.variables.map(v => BlockLocalTable.VariableUsage(v, s, index, BlockLocalTable.VariableRole.Final))
+              })
+              .map(u => u.variable.name.name -> u) *
+        )
+        
+        val block_local_variables: Set[String] = initializations.keys() ++ finalizations.keys()
+    }
     
+    object BlockLocalTable {
+        case class VariableUsage(
+                                  variable: Syntax.Expression.Variable,
+                                  statement: Syntax.Statement,
+                                  statement_index: Int,
+                                  role: VariableRole
+                                )
+        
+        enum VariableRole:
+            case Init
+            case Final
+            case Use
     }
     
     object SymbolTabl {
@@ -140,7 +185,7 @@ object SymbolTable {
         def `type`: ScopeType
         
         def get(name: String): SymbolTable.Symbol[T] = this.lookup(name).getOrElse({
-            throw HSSAError.notFound(name)
+            HSSAError.notFound(name).raise()
         })
         
         def lookup(name: String): Option[SymbolTable.Symbol[T]]

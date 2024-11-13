@@ -8,10 +8,11 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
 import de.thm.mni.hybridcomputing.hssa.{Syntax}
 
 import scala.collection.mutable.ListBuffer
+import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 
 class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks: Seq[Syntax.Block]) {
     def this(relation: Syntax.Relation) = {
-        this(relation.name, relation.parameter, relation.blocks)
+        this(relation.name.name, relation.parameter, relation.blocks)
     }
     
     val blocks: ListBuffer[Syntax.Block] = new ListBuffer[Syntax.Block]
@@ -26,7 +27,7 @@ class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks
     def getAllByEntryLabel(label: String): Seq[Syntax.Block] = blocks.filter(b => b.entry.labels.contains(label)).toSeq
     def getAllByExitLabel(label: String): Seq[Syntax.Block] = blocks.filter(b => b.exit.labels.contains(label)).toSeq
     
-    def labels: Set[String] = this.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet
+    def labels: Set[String] = this.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet.map(_.name)
     
     def remove(block: Syntax.Block): Unit = {
         this.blocks.remove(this.blocks.indexOf(block))
@@ -56,8 +57,8 @@ class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks
         def getUsages(block: Syntax.Block, stm: Statement): List[RelationBuilder.LabelUsage] = {
             stm match
                 case Syntax.Assignment(target, relation, instance_argument, source) => Nil
-                case Syntax.Exit(labels, argument) => labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(block, i, LabelUsage.Position.EXIT, l) }).toList
-                case Syntax.Entry(argument, labels) => labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(block, i, LabelUsage.Position.ENTRY, l) }).toList
+                case Syntax.Exit(labels, argument) => labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(block, i, LabelUsage.Position.EXIT, l.name) }).toList
+                case Syntax.Entry(argument, labels) => labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(block, i, LabelUsage.Position.ENTRY, l.name) }).toList
         }
         
         this.blocks.toList.flatMap(b => getUsages(b, b.entry) ++ getUsages(b, b.exit))
@@ -65,9 +66,9 @@ class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks
     
     def updateLabels(f: RelationBuilder.LabelUsage => String): Unit =
         this.blocks.mapInPlace(b => Syntax.Block(
-            Syntax.Entry(b.entry.initialized, b.entry.labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(b, i, LabelUsage.Position.ENTRY, l) }).map(f)),
+            Syntax.Entry(b.entry.initialized, b.entry.labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(b, i, LabelUsage.Position.ENTRY, l.name) }).map(u => f(u))),
             b.assignments,
-            Syntax.Exit(b.exit.labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(b, i, LabelUsage.Position.EXIT, l) }).map(f), b.exit.argument)
+            Syntax.Exit(b.exit.labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(b, i, LabelUsage.Position.EXIT, l.name) }).map(u => f(u)), b.exit.argument)
         ))
 }
 

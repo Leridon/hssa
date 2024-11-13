@@ -28,14 +28,6 @@ extension [A](self: Set[A]) {
     def filterIsInstance[B](implicit c: Class[B]): Set[B] = self.filter(c.isInstance).map(c.cast)
 }
 
-def AtPosition[T](pos: SourcePosition)(exp: => T): T = try {
-    exp
-} catch {
-    case e: LanguageError =>
-        if (e.position == null) e.position = pos
-        throw e
-}
-
 def isSet[A](collection: Seq[A]): Boolean = collection.toSet.size == collection.size
 
 def counts[A, K](collection: Seq[A], key: A => K): Map[K, Int] = collection.groupBy(key).view.mapValues(_.size).toMap.withDefaultValue(0)

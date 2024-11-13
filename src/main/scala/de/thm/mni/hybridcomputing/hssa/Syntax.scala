@@ -8,11 +8,15 @@ import de.thm.mni.hybridcomputing.util.parsing.Positioned
 object Syntax {
     sealed trait Node extends Positioned
     
+    case class Identifier(name: String) extends Node {
+        override def toString: String = name
+    }
+    
     sealed abstract class Expression extends Node
     
     object Expression {
         case class Literal(value: Value) extends Expression
-        case class Variable(name: String) extends Expression
+        case class Variable(name: Identifier) extends Expression
         case class Pair(a: Expression, b: Expression) extends Expression
         case class Invert(a: Expression) extends Expression
         case class Unit() extends Expression
@@ -26,18 +30,20 @@ object Syntax {
                            source: Expression
                          ) extends Statement
     
-    case class Exit(labels: Seq[String], argument: Expression) extends Statement
-    case class Entry(initialized: Expression, labels: Seq[String]) extends Statement
+    case class Exit(labels: Seq[Identifier], argument: Expression) extends Statement
+    case class Entry(initialized: Expression, labels: Seq[Identifier]) extends Statement
     
     case class Block(entry: Entry, assignments: Seq[Assignment], exit: Exit) extends Node {
         lazy val sequence: Seq[Statement] = Seq(entry) ++ assignments ++ Seq(exit)
     }
     
-    case class Relation(name: String, parameter: Expression, blocks: Seq[Block]) extends Node
+    case class Relation(name: Identifier, parameter: Expression, blocks: Seq[Block]) extends Node
     
     case class Program(definitions: List[Relation]) extends Node
     
     object Extensions {
+        implicit def string2ident(s: String): Identifier = Identifier(s)
+        
         extension (self: Syntax.Statement)
             def isExit: Boolean = self.isInstanceOf[Exit]
             
@@ -58,7 +64,7 @@ object Syntax {
         
         
         extension (self: Syntax.Exit | Syntax.Entry) {
-            def labels: List[String] = self match {
+            def labels: List[Identifier] = self match {
                 case Syntax.Entry(initialized, target) => target.toList
                 case Syntax.Exit(target, argument) => target.toList
             }

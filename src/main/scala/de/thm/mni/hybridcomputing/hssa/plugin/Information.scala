@@ -8,11 +8,11 @@ object Information extends Plugin {
     override def builtins: Seq[Plugin.Builtin] = Seq(
         Plugin.Builtin("discard", Value.BuiltinRelation(
             { case Basic.Unit => _ => Basic.Unit },
-            { case Basic.Unit => _ => throw HSSAError.nondeterminism("Cannot execute inverted discard (aka oracle)") }
+            { case Basic.Unit => _ => HSSAError.nondeterminism("Cannot execute inverted discard (aka oracle)").raise() }
         )),
         Plugin.Builtin("id", Value.BuiltinRelation(
-            {case Basic.Unit => value => value},
-            {case Basic.Unit => value => value},
+            { case Basic.Unit => value => value },
+            { case Basic.Unit => value => value },
         )),
         Plugin.Builtin("dup", Value.BuiltinRelation(
             value => {
