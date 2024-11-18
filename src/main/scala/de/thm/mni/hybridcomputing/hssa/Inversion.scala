@@ -39,78 +39,68 @@ object Inversion {
     
     object Global {
         
-        private class Adjuster(context: SymbolTable.View[Unit], val inverted_relations: Set[String]) {
+        private class Adjuster(val inverted_relations: Set[Identifier]) {
             
-            private def inContext(context: SymbolTable.View[Unit]): Adjuster = Adjuster(context, inverted_relations)
-            
-            private def must_invert(context: SymbolTable.View[Unit], name: String): Boolean = {
-                context.lookup(name) match
-                    case Some(entry) => entry.scope.`type` == SymbolTable.ScopeType.Global && inverted_relations.contains(name)
-                    case None => false
+            private def must_invert(context: BindingTree.Block, name: Identifier): Boolean = {
+                context.lookup_variable(name.name) match
+                    case Some(BindingTree.GlobalRelationVariable(_, _, relation)) if relation.syntax.name == name => inverted_relations.contains(name)
+                    case _ => false
             }
             
-            def apply(expression: Syntax.Expression): Expression = expression match {
+            def apply(context: BindingTree.Block, expression: Syntax.Expression): Expression = expression match {
                 case Expression.Invert(v@Expression.Variable(name)) if this.must_invert(context, name.name) => v
                 case v@Expression.Variable(name) if this.must_invert(context, name.name) => Expression.Invert(v)
-                case Expression.Invert(a) => Expression.Invert(apply(a))
-                case Expression.Pair(a, b) => Expression.Pair(apply(a), apply(b))
+                case Expression.Invert(a) => Expression.Invert(apply(context, a))
+                case Expression.Pair(a, b) => Expression.Pair(apply(context, a), apply(context, b))
                 case e => e
             }
             
-            def apply(entry: Syntax.Entry): Syntax.Entry = entry match {
+            def apply(context: BindingTree.Block, entry: Syntax.Entry): Syntax.Entry = entry match {
                 case Syntax.Entry(target, labels) =>
-                    Syntax.Entry(apply(target), labels)
+                    Syntax.Entry(apply(context, target), labels)
             }
             
-            def apply(entry: Syntax.Exit): Syntax.Exit = entry match {
+            def apply(context: BindingTree.Block, entry: Syntax.Exit): Syntax.Exit = entry match {
                 case Syntax.Exit(labels, initialized) =>
-                    Syntax.Exit(labels, apply(initialized))
+                    Syntax.Exit(labels, apply(context, initialized))
             }
             
-            def apply(statement: Syntax.Assignment): Syntax.Assignment = statement match {
+            def apply(context: BindingTree.Block, statement: Syntax.Assignment): Syntax.Assignment = statement match {
                 case Syntax.Assignment(target, relation, instance_argument, source) =>
-                    Syntax.Assignment(apply(target), apply(relation), apply(instance_argument), apply(source))
+                    Syntax.Assignment(apply(context, target), apply(context, relation), apply(context, instance_argument), apply(context, source))
             }
             
-            def apply(relation: Syntax.Relation): Syntax.Relation = {
+            def apply(relation: BindingTree.Relation): Syntax.Relation = {
                 val new_body = relation.blocks.map(block => {
-                    val child = this.inContext(this.context.getSubContext(block.entry.labels.head.name).get)
-                    
                     Syntax.Block(
-                        child.apply(block.entry),
-                        block.assignments.map(child.apply),
-                        child.apply(block.exit)
+                        apply(block, block.syntax.entry),
+                        block.syntax.assignments.map(a => apply(block, a)),
+                        apply(block, block.syntax.exit)
                     )
                 })
                 
-                Syntax.Relation(relation.name,
-                    this.apply(relation.parameter),
+                Syntax.Relation(relation.syntax.name,
+                    relation.syntax.parameter,
                     new_body
                 )
             }
             
-            def apply(program: Program): Program = {
-                
+            def apply(program: BindingTree.Program): Program = {
                 Program(
-                    program.definitions.map(rel => {
-                        this.inContext(context.getSubContext(rel.name.name).get).apply(rel)
-                    }),
-                    program.language
+                    program.relations.map(_.relation).map(this.apply),
+                    program.syntax.language
                 )
-                
             }
         }
         
-        def invert(program: Program): Syntax.Program = invert(program, program.definitions.map(_.name.name).toSet)
-        def invert(program: Program, relations: Set[String]): Syntax.Program = {
+        def invert(program: Program): Syntax.Program = invert(program, program.definitions.map(_.name).toSet)
+        def invert(program: Program, relations: Set[Identifier]): Syntax.Program = {
             val transformed = Syntax.Program(program.definitions.map(rel => {
                 if (relations.contains(rel.name.name)) Local.invert(rel)
                 else rel
             }), program.language)
             
-            val table = StaticEnvironment.SymbolTabl(program)
-            
-            Adjuster(TableConstruction(Language.Empty).construct(transformed), relations).apply(transformed)
+            Adjuster(relations).apply(BindingTree.init(transformed))
         }
     }
 }

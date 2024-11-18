@@ -1,15 +1,14 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hybridcomputing.hssa.StaticEnvironment.BlockLocalTable.VariableUsage
-import de.thm.mni.hybridcomputing.hssa.StaticEnvironment.RelLocalTable.LabelUsage
-import de.thm.mni.hybridcomputing.hssa.StaticEnvironment.SymbolTabl.RelationSymbol
+import de.thm.mni.hybridcomputing.hssa.BindingTree.Block.VariableUsage
+import de.thm.mni.hybridcomputing.hssa.BindingTree.Relation.LabelUsage
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity
 
 class Wellformedness(language: Language) {
     
     private object Internal {
-        def check(context: StaticEnvironment.BlockLocalTable, errors: LanguageError.Collector): Unit = {
+        def check(context: BindingTree.Block, errors: LanguageError.Collector): Unit = {
             context.block_local_variables.foreach(variable => {
                 val inits = context.initializations.getAll(variable)
                 val finals = context.finalizations.getAll(variable)
@@ -51,7 +50,7 @@ class Wellformedness(language: Language) {
             })
         }
         
-        def check(context: StaticEnvironment.RelLocalTable, errors: LanguageError.Collector): Unit = {
+        def check(context: BindingTree.Relation, errors: LanguageError.Collector): Unit = {
             context.parameter_variables.entries().foreach({
                 case (name, definitions) =>
                     val original = definitions.head
@@ -66,31 +65,31 @@ class Wellformedness(language: Language) {
                 val entries = context.getAllEntries(label)
                 val exits = context.getAllExits(label)
                 
-                if (context.getEntryByLabel(Language.BeginLabel).isEmpty) errors.add(Wellformedness.BeginMissing(context.relation))
-                if (context.getEntryByLabel(Language.EndLabel).isEmpty) errors.add(Wellformedness.EndMissing(context.relation))
+                if (context.getEntryByLabel(Language.BeginLabel).isEmpty) errors.add(Wellformedness.BeginMissing(context.syntax))
+                if (context.getEntryByLabel(Language.EndLabel).isEmpty) errors.add(Wellformedness.EndMissing(context.syntax))
                 
-                if (entries.isEmpty && label != Language.EndLabel) errors.add(Wellformedness.LabelMissingEntry(context.relation, label))
-                if (exits.isEmpty && label != Language.BeginLabel) errors.add(Wellformedness.LabelMissingExit(context.relation, label))
+                if (entries.isEmpty && label != Language.EndLabel) errors.add(Wellformedness.LabelMissingEntry(context.syntax, label))
+                if (exits.isEmpty && label != Language.BeginLabel) errors.add(Wellformedness.LabelMissingExit(context.syntax, label))
                 
-                if (entries.length > 1) errors.add(Wellformedness.LabelUsedInMultipleEntries(context.relation, label, entries))
-                if (exits.length > 1) errors.add(Wellformedness.LabelUsedInMultipleExits(context.relation, label, exits))
+                if (entries.length > 1) errors.add(Wellformedness.LabelUsedInMultipleEntries(context.syntax, label, entries))
+                if (exits.length > 1) errors.add(Wellformedness.LabelUsedInMultipleExits(context.syntax, label, exits))
             })
             
             context.blocks.foreach(block => this.check(block, errors))
         }
         
-        def check(table: StaticEnvironment.SymbolTabl, errors: LanguageError.Collector): Unit = {
+        def check(table: BindingTree.Program, errors: LanguageError.Collector): Unit = {
             table.names().foreach(name => {
-                table.getAll(name).tail.map(_.asInstanceOf[RelationSymbol])
-                  .foreach({ case StaticEnvironment.SymbolTabl.RelationSymbol(duplicate) => errors.add(Wellformedness.ConflictingDefinition(duplicate.relation)) })
+                table.getAll(name).tail.map(_.asInstanceOf[BindingTree.GlobalRelationVariable])
+                  .foreach({ case BindingTree.GlobalRelationVariable(_, _, duplicate) => errors.add(Wellformedness.ConflictingDefinition(duplicate.syntax)) })
             })
             
-            table.relations.foreach(rel => check(rel.localContext, errors))
+            table.relations.foreach(rel => check(rel.relation, errors))
         }
     }
     
     def check(program: Syntax.Program): LanguageError.Collector = {
-        val augmented = StaticEnvironment.SymbolTabl(program)
+        val augmented = BindingTree.Program(program)
         
         val collector = LanguageError.Collector()
         
@@ -108,19 +107,19 @@ object Wellformedness {
     case class LabelMissingExit(rel: Syntax.Relation, label: String) extends HSSAError(LanguageError.Severity.Error, s"Label '$label' never used in exit position in relation '${rel.name}'.", rel.position)
     
     case class LabelUsedInMultipleEntries(rel: Syntax.Relation, label: String, usages: Seq[LabelUsage]) extends HSSAError(LanguageError.Severity.Error, s"Label '$label' used in ${usages.length} entry positions (only 1 is allowed).", rel.position) {
-        this.addRelatedPosition(usages.map(use => use.block.block.entry.labels(use.index).position) *)
+        this.addRelatedPosition(usages.map(use => use.block.syntax.entry.labels(use.index).position) *)
     }
     case class LabelUsedInMultipleExits(rel: Syntax.Relation, label: String, usages: Seq[LabelUsage]) extends HSSAError(LanguageError.Severity.Error, s"Label '$label' used in ${usages.length} exit positions (only 1 is allowed).", rel.position) {
-        this.addRelatedPosition(usages.map(use => use.block.block.exit.labels(use.index).position) *)
+        this.addRelatedPosition(usages.map(use => use.block.syntax.exit.labels(use.index).position) *)
     }
     
     case class ConflictingDefinition(rel: Syntax.Relation) extends HSSAError(LanguageError.Severity.Error, s"'${rel.name}' is already defined.")
     
-    case class VariableReinitialization(usage: StaticEnvironment.BlockLocalTable.VariableUsage, first_initialization: StaticEnvironment.BlockLocalTable.VariableUsage) extends HSSAError(LanguageError.Severity.Error, s"Reinitialization of variable ${usage.variable.name}. First assigned at ${first_initialization.variable.position.from}", usage.variable.position)
-    case class VariableRefinalization(usage: StaticEnvironment.BlockLocalTable.VariableUsage, first_finalization: StaticEnvironment.BlockLocalTable.VariableUsage) extends HSSAError(LanguageError.Severity.Error, s"Refinalization of variable ${usage.variable.name}. First finalized at ${first_finalization.variable.position.from}", usage.variable.position)
+    case class VariableReinitialization(usage: BindingTree.Block.VariableUsage, first_initialization: BindingTree.Block.VariableUsage) extends HSSAError(LanguageError.Severity.Error, s"Reinitialization of variable ${usage.variable.name}. First assigned at ${first_initialization.variable.position.from}", usage.variable.position)
+    case class VariableRefinalization(usage: BindingTree.Block.VariableUsage, first_finalization: BindingTree.Block.VariableUsage) extends HSSAError(LanguageError.Severity.Error, s"Refinalization of variable ${usage.variable.name}. First finalized at ${first_finalization.variable.position.from}", usage.variable.position)
     
-    case class VariableNeverInitialized(finalization: StaticEnvironment.BlockLocalTable.VariableUsage) extends HSSAError(LanguageError.Severity.Error, s"Finalized variable '${finalization.variable.name}' was never initialized.", finalization.variable.position)
-    case class VariableNeverFinalized(initialization: StaticEnvironment.BlockLocalTable.VariableUsage) extends HSSAError(LanguageError.Severity.Error, s"Initialized variable '${initialization.variable.name}' is never finalized.", initialization.variable.position)
+    case class VariableNeverInitialized(finalization: BindingTree.Block.VariableUsage) extends HSSAError(LanguageError.Severity.Error, s"Finalized variable '${finalization.variable.name}' was never initialized.", finalization.variable.position)
+    case class VariableNeverFinalized(initialization: BindingTree.Block.VariableUsage) extends HSSAError(LanguageError.Severity.Error, s"Initialized variable '${initialization.variable.name}' is never finalized.", initialization.variable.position)
     case class VariableFinalizedBeforeInitialized(initialization: VariableUsage, finalization: VariableUsage) extends HSSAError(Severity.Error, s"Variable '${initialization.variable.name}' is finalized before it's initialized.")
     
     case class VariableUsedBeforeInitialization(usage: VariableUsage, initialization: VariableUsage) extends HSSAError(Severity.Error, s"Variable '${usage.variable.name}' used before it's initialized.", usage.variable.position)

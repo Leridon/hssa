@@ -7,17 +7,7 @@ import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
 class Language(val plugins: Seq[Language.Plugin]) {
     val builtins: Seq[Plugin.Builtin] = plugins.flatMap(_.builtins)
-    
-    def table(): SymbolTable[Unit] = {
-        val global = SymbolTable.init[Unit]()
         
-        builtins.foreach(b => {
-            global.add((b.name, ()))
-        })
-        
-        global
-    }
-    
     def areDependenciesFulfilled(): Boolean = ???
 }
 
