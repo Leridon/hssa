@@ -21,13 +21,47 @@ class Wellformedness(language: Language) {
                 if (finals.isEmpty) errors.add(Wellformedness.VariableNeverFinalized(inits.head))
                 
                 if (inits.length == 1 && finals.length == 1 && finals.head.variable.position < inits.head.variable.position)
-                    Wellformedness.VariableFinalizedBeforeInitialized(inits.head, finals.head)
+                    errors.add(Wellformedness.VariableFinalizedBeforeInitialized(inits.head, finals.head))
+            })
+            
+            context.usages.keys().foreach(variable => {
                 
-                // TODO: Check usages
+                val initialization = context.initializations.get(variable)
+                val finalization = context.finalizations.get(variable)
+                
+                val is_block_local = initialization.isDefined || finalization.isDefined
+                
+                context.usages.getAll(variable).foreach(usage => {
+                    if (is_block_local) {
+                        if (initialization.isDefined && usage.statement_index <= initialization.get.statement_index) {
+                            errors.add(Wellformedness.VariableUsedBeforeInitialization(usage, initialization.get))
+                        }
+                        
+                        if (finalization.isDefined && usage.statement_index >= finalization.get.statement_index) {
+                            errors.add(Wellformedness.VariableUsedAfterFinalization(usage, finalization.get))
+                            
+                        }
+                    } else {
+                        if (context.lookup_variable(usage.variable.name.name).isEmpty) {
+                            errors.add(Wellformedness.UseOfUndefinedVariable(usage))
+                            
+                        }
+                    }
+                })
             })
         }
         
         def check(context: StaticEnvironment.RelLocalTable, errors: LanguageError.Collector): Unit = {
+            context.parameter_variables.entries().foreach({
+                case (name, definitions) =>
+                    val original = definitions.head
+                    
+                    val duplicates = definitions.tail
+                    
+                    duplicates.foreach(duplicate => errors.add(Wellformedness.ConflictingDefinitionsOfRelationParameter(duplicate, original)))
+            })
+            
+            
             context.labels.foreach(label => {
                 val entries = context.getAllEntries(label)
                 val exits = context.getAllExits(label)
@@ -88,4 +122,10 @@ object Wellformedness {
     case class VariableNeverInitialized(finalization: StaticEnvironment.BlockLocalTable.VariableUsage) extends HSSAError(LanguageError.Severity.Error, s"Finalized variable '${finalization.variable.name}' was never initialized.", finalization.variable.position)
     case class VariableNeverFinalized(initialization: StaticEnvironment.BlockLocalTable.VariableUsage) extends HSSAError(LanguageError.Severity.Error, s"Initialized variable '${initialization.variable.name}' is never finalized.", initialization.variable.position)
     case class VariableFinalizedBeforeInitialized(initialization: VariableUsage, finalization: VariableUsage) extends HSSAError(Severity.Error, s"Variable '${initialization.variable.name}' is finalized before it's initialized.")
+    
+    case class VariableUsedBeforeInitialization(usage: VariableUsage, initialization: VariableUsage) extends HSSAError(Severity.Error, s"Variable '${usage.variable.name}' used before it's initialized.", usage.variable.position)
+    case class VariableUsedAfterFinalization(usage: VariableUsage, finalization: VariableUsage) extends HSSAError(Severity.Error, s"Variable '${usage.variable.name}' used after it's finalized.", usage.variable.position)
+    case class UseOfUndefinedVariable(usage: VariableUsage) extends HSSAError(Severity.Error, s"Use of undefined variable '${usage.variable.name}'.", usage.variable.position)
+    
+    case class ConflictingDefinitionsOfRelationParameter(duplicate: Syntax.Expression.Variable, first: Syntax.Expression.Variable) extends HSSAError(Severity.Error, s"")
 }

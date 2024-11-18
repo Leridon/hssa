@@ -9,23 +9,17 @@ import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 
 object StaticEnvironment {
     class MultiMap[Key, Value](initialdata: (Key, Value)*) {
-        private val data = mutable.Map[Key, ListBuffer[Value]]()
+        private val data = initialdata.groupBy(_._1).map(kv => kv._1 -> kv._2.map(_._2))
         
-        this.add(initialdata *)
+        def contains(key: Key): Boolean = this.data.contains(key)
         
-        def keys(): Set[Key] = data.keySet.toSet
+        def keys(): Set[Key] = data.keySet
         
-        def add(pair: (Key, Value)*): Unit = {
-            pair.foreach({
-                case (key, value) => this.data.getOrElseUpdate(key, new ListBuffer[Value]()).addOne(value)
-            })
-        }
+        def entries(): Seq[(Key, Seq[Value])] = data.toSeq
         
         def getAll(key: Key): Seq[Value] = this.data.get(key).map(_.toSeq).getOrElse(Seq())
         
         def get(key: Key, filter: Value => Boolean = _ => true): Option[Value] = this.data.get(key).map(_.toSeq).getOrElse(Seq()).find(filter)
-        
-        def all: Map[Key, Seq[Value]] = this.data.toMap.view.mapValues(_.toSeq).toMap
     }
     
     def init(language: Language, program: Syntax.Program) = SymbolTabl(language, program)
@@ -36,11 +30,8 @@ object StaticEnvironment {
         })
         
         private val entries: MultiMap[String, SymbolTabl.RelationSymbol | SymbolTabl.BuiltinSymbol] = MultiMap(
-            language.builtins.map(b => b.name -> SymbolTabl.BuiltinSymbol(b)) *
-        )
-        
-        this.entries.add(
-            program.definitions.map(rel => {
+            language.builtins.map(b => b.name -> SymbolTabl.BuiltinSymbol(b))
+              ++ program.definitions.map(rel => {
                 rel.name.name -> SymbolTabl.RelationSymbol(RelLocalTable(this, rel))
             }) *
         )
@@ -52,9 +43,16 @@ object StaticEnvironment {
         def get(name: String): Option[SymbolTabl.VarSymbol] = entries.getAll(name).headOption
         
         def names(): Set[String] = this.entries.keys()
+        
+        def lookup_variable(name: String): Option[Variable] = {
+            if this.names().contains(name) then Some(GlobalVariable(name, this))
+            else None
+        }
     }
     
     class RelLocalTable(val parent: SymbolTabl, val relation: Syntax.Relation) {
+        val parameter_variables = MultiMap(relation.parameter.variables.map(v => v.name -> v) *)
+        
         val blocks: Seq[BlockLocalTable] = relation.blocks.map(block => BlockLocalTable(this, block))
         
         private val entries: MultiMap[String, RelLocalTable.LabelUsage] = MultiMap(blocks.flatMap(block => block.block.entry.labels.zipWithIndex.map(l => l._1.name -> RelLocalTable.LabelUsage(l._2, block))) *)
@@ -67,6 +65,11 @@ object StaticEnvironment {
         
         def getAllEntries(label: String): Seq[RelLocalTable.LabelUsage] = entries.getAll(label)
         def getAllExits(label: String): Seq[RelLocalTable.LabelUsage] = exits.getAll(label)
+        
+        def lookup_variable(name: String): Option[Variable] = {
+            if this.parameter_variables.contains(name) then Some(ParameterVaiable(name, this))
+            else this.parent.lookup_variable(name)
+        }
     }
     
     object RelLocalTable {
@@ -104,6 +107,11 @@ object StaticEnvironment {
         )
         
         val block_local_variables: Set[String] = initializations.keys() ++ finalizations.keys()
+        
+        def lookup_variable(name: String): Option[Variable] = {
+            if this.block_local_variables.contains(name) then Some(BlockVariable(name, this))
+            else this.parent.lookup_variable(name)
+        }
     }
     
     object BlockLocalTable {
@@ -127,6 +135,10 @@ object StaticEnvironment {
         case class VariableSymbol(variable: Syntax.Expression.Variable) extends VarSymbol
     }
     
+    class Variable(val name: String)
+    class BlockVariable(name: String, val block: BlockLocalTable) extends Variable(name)
+    class ParameterVaiable(name: String, val relation: RelLocalTable) extends Variable(name)
+    class GlobalVariable(name: String, val program: SymbolTabl) extends Variable(name)
 }
 
 
