@@ -90,7 +90,7 @@ class Wellformedness(language: Language) {
     }
     
     def check(program: Syntax.Program): LanguageError.Collector = {
-        val augmented = StaticEnvironment.SymbolTabl(language, program)
+        val augmented = StaticEnvironment.SymbolTabl(program)
         
         val collector = LanguageError.Collector()
         

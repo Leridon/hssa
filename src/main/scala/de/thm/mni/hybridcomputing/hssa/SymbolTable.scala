@@ -22,15 +22,15 @@ object StaticEnvironment {
         def get(key: Key, filter: Value => Boolean = _ => true): Option[Value] = this.data.get(key).map(_.toSeq).getOrElse(Seq()).find(filter)
     }
     
-    def init(language: Language, program: Syntax.Program) = SymbolTabl(language, program)
+    def init(program: Syntax.Program) = SymbolTabl(program)
     
-    class SymbolTabl(language: Language, program: Syntax.Program) {
+    class SymbolTabl(program: Syntax.Program) {
         val relations: Seq[SymbolTabl.RelationSymbol] = program.definitions.map(rel => {
             SymbolTabl.RelationSymbol(RelLocalTable(this, rel))
         })
         
         private val entries: MultiMap[String, SymbolTabl.RelationSymbol | SymbolTabl.BuiltinSymbol] = MultiMap(
-            language.builtins.map(b => b.name -> SymbolTabl.BuiltinSymbol(b))
+            program.language.builtins.map(b => b.name -> SymbolTabl.BuiltinSymbol(b))
               ++ program.definitions.map(rel => {
                 rel.name.name -> SymbolTabl.RelationSymbol(RelLocalTable(this, rel))
             }) *

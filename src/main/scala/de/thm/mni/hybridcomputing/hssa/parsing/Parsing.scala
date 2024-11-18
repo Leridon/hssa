@@ -72,7 +72,7 @@ object Parsing {
         }
         
         def program: P[Syntax.Program] = posi {
-            phrase(rep(procedure) ^^ Syntax.Program.apply)
+            phrase(rep(procedure) ^^ (procedures => Syntax.Program(procedures, language)))
         }
     }
 }

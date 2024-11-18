@@ -39,7 +39,7 @@ object Syntax {
     
     case class Relation(name: Identifier, parameter: Expression, blocks: Seq[Block]) extends Node
     
-    case class Program(definitions: List[Relation]) extends Node
+    case class Program(definitions: List[Relation], language: Language) extends Node
     
     object Extensions {
         implicit def string2ident(s: String): Identifier = Identifier(s)

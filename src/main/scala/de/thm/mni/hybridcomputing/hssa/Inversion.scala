@@ -94,7 +94,8 @@ object Inversion {
                 Program(
                     program.definitions.map(rel => {
                         this.inContext(context.getSubContext(rel.name.name).get).apply(rel)
-                    })
+                    }),
+                    program.language
                 )
                 
             }
@@ -105,7 +106,9 @@ object Inversion {
             val transformed = Syntax.Program(program.definitions.map(rel => {
                 if (relations.contains(rel.name.name)) Local.invert(rel)
                 else rel
-            }))
+            }), program.language)
+            
+            val table = StaticEnvironment.SymbolTabl(program)
             
             Adjuster(TableConstruction(Language.Empty).construct(transformed), relations).apply(transformed)
         }
