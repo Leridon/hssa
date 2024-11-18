@@ -10,7 +10,7 @@ object Formatting {
             case Expression.Literal(value) => value.toString
             case Expression.Pair(a, b) => s"(${format(a)}, ${format(b)})"
             case Expression.Unit() => "()"
-            case Expression.Variable(name) => name
+            case Expression.Variable(name) => name.toString
             case Expression.Invert(sub) => s"~${format(sub)}"
     }
     
@@ -28,7 +28,7 @@ object Formatting {
     }
     
     def format(rel: Syntax.Relation): String = {
-        val rows = rel.body.map(stm => (stm, formatInColumns(stm)))
+        val rows = rel.blocks.flatMap(_.sequence).map(stm => (stm, formatInColumns(stm)))
         
         val column_widths = Array(0, 1, 2, 3, 4)
           .map(i => rows.map(r => r._2(i).length).max)

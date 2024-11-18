@@ -1,13 +1,12 @@
 package de.thm.mni.hybridcomputing.hssa.parsing
 
-import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
+import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program}
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.{AtPosition, Errors, Formatting, Language, Syntax}
-import de.thm.mni.hybridcomputing.hssa.Syntax.Program
-import de.thm.mni.hybridcomputing.util.parsing.{ParserUtilities, Positioned, SourceFile, SourcePosition, Token}
-import de.thm.mni.hybridcomputing.util.reversibility.Direction
+import de.thm.mni.hybridcomputing.hssa.{Language, Syntax}
+import de.thm.mni.hybridcomputing.util.errors.LanguageError
+import de.thm.mni.hybridcomputing.util.parsing
+import de.thm.mni.hybridcomputing.util.parsing.{ParserUtilities, SourceFile, SourcePosition, Token}
 
-import scala.collection.mutable
 import scala.util.parsing.combinator.ImplicitConversions
 import scala.util.parsing.input.Reader
 
@@ -20,9 +19,10 @@ case class Parsing(language: Language) {
         
         this.grammar.program(token_reader) match {
             case grammar.Success(prog, _) => prog
-            case grammar.NoSuccess(msg, rest) => AtPosition(rest.pos) {
-                throw Errors.SyntaxError(msg)
-            }
+            case grammar.NoSuccess(msg, rest) =>
+                val r = rest.asInstanceOf[parsing.TokenReader[?]]
+                
+                LanguageError.SyntaxError(msg).setPosition(SourcePosition(r.file, r.position, null)).raise()
             case grammar.Failure(_, _) => ???
             case grammar.Error(_, _) => ???
         }
@@ -34,13 +34,14 @@ object Parsing {
     
     class Grammar(language: Language) extends ParserUtilities[Lexing.Tokens.TokenClass] with ImplicitConversions {
         
-        import de.thm.mni.hybridcomputing.util.parsing
-        
         import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.Tokens.TokenClass.*
+        import de.thm.mni.hybridcomputing.util.parsing
         
         private type P[T] = this.Parser[T]
         
-        private def ident: P[String] = valueToken(IDENT)(classOf[String])
+        private def ident: P[Syntax.Identifier] = posi {
+            valueToken(IDENT)(classOf[String]) ^^ Syntax.Identifier.apply
+        }
         private def intlit: P[Int] = valueToken(INTLIT)(classOf[Integer]).map(_.intValue())
         
         def expression: P[Syntax.Expression] = posi {
@@ -52,14 +53,22 @@ object Parsing {
               | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
         }
         
-        def statement: P[Syntax.Statement] = posi {
-            RARROW ~~ rep1sep(ident, COMMA) ~~ ASGN ~~ expression ^^ Syntax.Exit.apply |
-              expression ~~ ASGN ~~ rep1sep(ident, COMMA) ~~ LARROW ^^ Syntax.Entry.apply |
-              expression ~~ ASGN ~~ expression ~~ expression ~~ ASGN ~~ expression ^^ Syntax.Assignment.apply
+        def entry: Parser[Syntax.Entry] = posi {
+            expression ~~ ASGN ~~ rep1sep(ident, COMMA) ~~ LARROW ^^ Syntax.Entry.apply
+        }
+        def exit: Parser[Syntax.Exit] = posi {
+            RARROW ~~ rep1sep(ident, COMMA) ~~ ASGN ~~ expression ^^ Syntax.Exit.apply
+        }
+        def assignment: Parser[Syntax.Assignment] = posi {
+            expression ~~ ASGN ~~ expression ~~ expression ~~ ASGN ~~ expression ^^ Syntax.Assignment.apply
+        }
+        
+        def block: P[Syntax.Block] = posi {
+            entry ~~ rep(assignment) ~~ exit ^^ Syntax.Block.apply
         }
         
         def procedure: P[Syntax.Relation] = posi {
-            RELATION ~~ ident ~~ expression ~~ rep(statement) ^^ Syntax.Relation.apply
+            RELATION ~~ ident ~~ expression ~~ rep(block) ^^ Syntax.Relation.apply
         }
         
         def program: P[Syntax.Program] = posi {

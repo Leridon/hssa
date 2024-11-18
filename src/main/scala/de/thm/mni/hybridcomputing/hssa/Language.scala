@@ -24,6 +24,9 @@ class Language(val plugins: Seq[Language.Plugin]) {
 object Language {
     val Empty = Language(Seq())
     
+    val BeginLabel = "begin"
+    val EndLabel = "end"
+    
     trait Plugin {
         def requirements: Seq[Plugin] = Seq(Basic)
         
@@ -34,9 +37,9 @@ object Language {
     
     object Plugin {
         case class Builtin(
-                       name: String,
-                       //`type`: Types.ParameterizedRelation,
-                       value: Value.BuiltinRelation
-                     )
+                            name: String,
+                            //`type`: Types.ParameterizedRelation,
+                            value: Value.BuiltinRelation
+                          )
     }
 }

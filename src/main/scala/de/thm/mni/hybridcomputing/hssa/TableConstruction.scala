@@ -10,27 +10,25 @@ case class TableConstruction(language: Language) {
         val global = language.table()
         
         program.definitions.foreach(rel => {
-            global.add((rel.name, ()))
+            global.add((rel.name.name, ()))
             
-            val local = global.addSubScope(Proc, rel.name)
+            val local = global.addSubScope(Proc, rel.name.name)
             
             rel.parameter.variables.foreach(v => {
-                local.add((v.name, ()))
+                local.add((v.name.name, ()))
             })
             
-            val blocks = new BlockIndex(rel)
-            
-            blocks.blocks.foreach(block => {
-                val block_local = local.addSubScope(Block, block.entry.labels *)
+            rel.blocks.foreach(block => {
+                val block_local = local.addSubScope(Block, block.entry.labels.map(_.name) *)
                 
                 block.sequence.zipWithIndex.foreach((stm, index) => {
                     
                     stm.initializes.variables.foreach(v => {
-                        block_local.addInitialization(v.name, (), index)
+                        block_local.addInitialization(v.name.name, (), index)
                     })
                     
                     stm.finalizes.variables.foreach(v => {
-                        block_local.addFinalization(v.name, (), index)
+                        block_local.addFinalization(v.name.name, (), index)
                     })
                 })
             })
