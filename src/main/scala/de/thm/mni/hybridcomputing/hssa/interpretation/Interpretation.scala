@@ -8,6 +8,8 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Value.{BuiltinRelation, Us
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.{HSSAError, Inversion, Language, Syntax}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity
+import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 import de.thm.mni.hybridcomputing.util.reversibility
 import de.thm.mni.hybridcomputing.util.reversibility.Direction
 import de.thm.mni.hybridcomputing.util.reversibility.Direction.FORWARDS
@@ -50,7 +52,7 @@ case class Interpretation(language: Language) {
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) => assign(pat_1, val_a) ++ assign(pat_2, val_b)
             case (Expression.Invert(sub), UserRelation(fw, bw)) => assign(sub, UserRelation(bw, fw))
             case (Expression.Invert(sub), BuiltinRelation(forwards, backwards)) => assign(sub, BuiltinRelation(backwards, forwards))
-            case _ => HSSAError.violation(s"$value does not match $pattern").raise()
+            case _ => Interpretation.Errors.ReversibilityViolation(s"$value does not match $pattern").raise()
         }
     }
     
@@ -142,7 +144,7 @@ case class Interpretation(language: Language) {
                 
                 continuation._1
             case _ =>
-                HSSAError.violation(s"$rel is not a relation").raise()
+                Interpretation.Errors.ReversibilityViolation(s"$rel is not a relation").raise()
         }
     }
     
@@ -176,6 +178,13 @@ object Interpretation {
         val labels: Set[Syntax.Identifier] = {
             relation.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet
         }
+    }
+    
+    object Errors {
+        class RuntimeError(message: String, position: SourcePosition  = null) extends HSSAError(Severity.Error, message, position)
+        
+        case class ReversibilityViolation(message: String) extends RuntimeError(s"Reversibility violation: $message")
+        case class Nondeterminism(message: String) extends RuntimeError(s"Nondeterminism error: $message")
     }
     
     case class ValueContext(parent: Option[ValueContext], values: mutable.Map[String, Value] = mutable.Map()) {
