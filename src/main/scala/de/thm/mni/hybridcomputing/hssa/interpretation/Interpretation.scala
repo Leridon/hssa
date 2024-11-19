@@ -18,13 +18,8 @@ case class Interpretation(language: Language) {
     
     import Interpretation.*
     
-    val builtins: ValueContext = {
-        val context = ValueContext(None)
-        
-        context.define(language.plugins.flatMap(_.builtins).map(b => b.name -> b.value))
-        
-        context
-    }
+    val builtins: ValueContext = ValueContext(None)
+      .define(language.plugins.flatMap(_.builtins).map(b => b.name -> b.value))
     
     def evaluate(exp: Expression, context: ValueContext): Value = {
         exp match {
@@ -49,25 +44,21 @@ case class Interpretation(language: Language) {
     
     private def assign(pattern: Expression, value: Value): Map[String, Value] = {
         (pattern, value) match {
-            case (Expression.Variable(name), value) =>
-                Map(name.name -> value)
+            case (Expression.Variable(name), value) => Map(name.name -> value)
             case (Expression.Unit(), Basic.Unit) => Map()
             case (Expression.Literal(v), value) if v == value => Map()
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) => assign(pat_1, val_a) ++ assign(pat_2, val_b)
             case (Expression.Invert(sub), UserRelation(fw, bw)) => assign(sub, UserRelation(bw, fw))
             case (Expression.Invert(sub), BuiltinRelation(forwards, backwards)) => assign(sub, BuiltinRelation(backwards, forwards))
-            case _ =>
-                HSSAError.violation(s"$value does not match $pattern").raise()
+            case _ => HSSAError.violation(s"$value does not match $pattern").raise()
         }
     }
     
     def evaluate(rel: Value, instance_argument: Value, relation_argument: Value): Value = {
         rel match {
-            case Value.BuiltinRelation(forwards, backwards) =>
+            case Value.BuiltinRelation(forwards, _) =>
                 forwards(instance_argument)(relation_argument)
             case UserRelation(rel, _) =>
-                // println(s"${rel._1.name} ${instance_argument} : $relation_argument")
-                
                 val execution_context = rel._2
                 
                 val relation_context = ValueContext(Some(execution_context))
@@ -135,8 +126,6 @@ case class Interpretation(language: Language) {
                             
                             val result = evaluate(called_rel, instantiationArg, consumedArg)
                             
-                            // println(s"Back in ${rel._1.name}")
-                            
                             block_context.define(assign(target, result))
                     }
                     
@@ -148,17 +137,13 @@ case class Interpretation(language: Language) {
                 var continuation = (relation_argument, "begin")
                 
                 while (continuation._2 != "end") {
-                    //if (rel._1.name == "main") println(continuation._2)
                     continuation = executeBlock(block_index.byEntryLabel(continuation._2), continuation._2, continuation._1)
                 }
-                
-                // if(rel._1.name == "main") println(continuation._2)
                 
                 continuation._1
             case _ =>
                 HSSAError.violation(s"$rel is not a relation").raise()
         }
-        
     }
     
     def interpret(program: Program, relation_name: String = "main", instance_argument: Value = Basic.Unit, relation_argument: Value = Basic.Unit, direction: Direction = Direction.FORWARDS): Value = {
@@ -194,19 +179,23 @@ object Interpretation {
     }
     
     case class ValueContext(parent: Option[ValueContext], values: mutable.Map[String, Value] = mutable.Map()) {
-        def define(values: Map[String, Value]): Unit = this.define(values.toSeq)
-        def define(values: Seq[(String, Value)]): Unit = {
+        def define(values: Map[String, Value]): this.type = this.define(values.toSeq)
+        def define(values: Seq[(String, Value)]): this.type = {
             // TODO: check if all of them are defined
             
             this.values.addAll(values)
+            
+            this
         }
         
-        def undefine(values: List[String]): Unit = {
+        def undefine(values: List[String]): this.type = {
             // TODO: check if all of them are defined
             
             values.foreach(key => {
                 this.values.remove(key)
             })
+            
+            this
         }
         
         def get(name: String): Option[Value] = {

@@ -7,8 +7,8 @@ import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
 class Language(val plugins: Seq[Language.Plugin]) {
     val builtins: Seq[Plugin.Builtin] = plugins.flatMap(_.builtins)
-        
-    def areDependenciesFulfilled(): Boolean = ???
+    
+    def areDependenciesFulfilled(): Boolean = plugins.forall(p => p.requirements.forall(plugins.contains))
 }
 
 object Language {

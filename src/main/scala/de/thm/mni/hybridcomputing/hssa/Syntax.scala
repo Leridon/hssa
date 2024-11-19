@@ -5,6 +5,8 @@ import de.thm.mni.hybridcomputing.hssa.Syntax.Expression.Variable
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value
 import de.thm.mni.hybridcomputing.util.parsing.Positioned
 
+import scala.language.implicitConversions
+
 object Syntax {
     sealed trait Node extends Positioned
     
@@ -78,6 +80,7 @@ object Syntax {
                     case v: Variable => List(v)
                     case Expression.Pair(a, b) => a.variables ++ b.variables
                     case Expression.Unit() => Nil
+                    case Expression.Invert(inner) => inner.variables
             }
     }
 }

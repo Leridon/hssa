@@ -1,8 +1,7 @@
 package de.thm.mni.hybridcomputing.hssa
 
-import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Identifier, Program, Relation}
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
-import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
+import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Identifier, Program, Relation}
 
 object Inversion {
     
