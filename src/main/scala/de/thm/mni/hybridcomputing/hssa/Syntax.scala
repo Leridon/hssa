@@ -33,7 +33,9 @@ object Syntax {
         case class Unit() extends Expression
     }
     
-    abstract sealed class Statement extends Node
+    abstract sealed class Statement extends Node {
+        override def toString: String = Formatting.format(this)
+    }
     case class Assignment(
                            target: Expression,
                            relation: Expression,

@@ -40,10 +40,7 @@ object BindingTree {
         
         def names(): Set[String] = this.entries.keys()
         
-        def lookup_variable(name: String): Option[Variable] = {
-            if this.names().contains(name) then Some(GlobalVariable(name, this))
-            else None
-        }
+        def lookup_variable(name: String): Option[Variable] = this.entries.get(name)
     }
     
     class Relation(val parent: Program, val syntax: Syntax.Relation) {
@@ -127,7 +124,7 @@ object BindingTree {
     class Variable(val name: String)
     case class BlockVariable(override val name: String, val block: Block) extends Variable(name)
     case class ParameterVaiable(override val name: String, val relation: Relation) extends Variable(name)
-    class GlobalVariable(name: String, val program: Program) extends Variable(name)
+    abstract class GlobalVariable(name: String, val program: Program) extends Variable(name)
     case class GlobalRelationVariable(override val name: String, override val program: Program, relation: BindingTree.Relation) extends GlobalVariable(name, program)
     case class GlobalBuiltinVariable(override val name: String, override val program: Program, builtin: Language.Plugin.Builtin) extends GlobalVariable(name, program)
 }
