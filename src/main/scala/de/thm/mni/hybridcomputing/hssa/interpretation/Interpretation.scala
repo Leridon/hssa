@@ -52,7 +52,8 @@ case class Interpretation(language: Language) {
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) => assign(pat_1, val_a) ++ assign(pat_2, val_b)
             case (Expression.Invert(sub), UserRelation(fw, bw)) => assign(sub, UserRelation(bw, fw))
             case (Expression.Invert(sub), BuiltinRelation(forwards, backwards)) => assign(sub, BuiltinRelation(backwards, forwards))
-            case _ => Interpretation.Errors.ReversibilityViolation(s"$value does not match $pattern").raise()
+            case _ =>
+                Interpretation.Errors.ReversibilityViolation(s"$value does not match $pattern").raise()
         }
     }
     
@@ -114,7 +115,7 @@ case class Interpretation(language: Language) {
                     val block_context = ValueContext(Some(relation_context))
                     
                     block_context.define(
-                        assign(block.entry.initialized, Value.Pair(entry_value, Basic.Int(block.entry.labels.indexOf(entered_by))))
+                        assign(block.entry.initialized, Value.Pair(entry_value, Basic.Int(block.entry.labels.indexWhere(_.name == entered_by))))
                     )
                     
                     block.assignments.foreach {
@@ -172,8 +173,8 @@ case class Interpretation(language: Language) {
 object Interpretation {
     class BlockIndex(relation: Relation) {
         
-        def byEntryLabel(label: String): Syntax.Block = relation.blocks.find(b => b.entry.labels.contains(label)).get
-        def byExitLabel(label: String): Syntax.Block = relation.blocks.find(b => b.exit.labels.contains(label)).get
+        def byEntryLabel(label: String): Syntax.Block = relation.blocks.find(b => b.entry.labels.exists(_.name == label)).get
+        def byExitLabel(label: String): Syntax.Block = relation.blocks.find(b => b.exit.labels.exists(_.name == label)).get
         
         val labels: Set[Syntax.Identifier] = {
             relation.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet

@@ -12,9 +12,18 @@ object Syntax {
     
     case class Identifier(name: String) extends Node {
         override def toString: String = name
+        
+        override def equals(obj: Any): Boolean = {
+            obj match {
+                case obj: String => name == obj
+                case obj: Identifier => name == obj.name
+            }
+        }
     }
     
-    sealed abstract class Expression extends Node
+    sealed abstract class Expression extends Node {
+        override def toString: String = Formatting.format(this)
+    }
     
     object Expression {
         case class Literal(value: Value) extends Expression

@@ -75,9 +75,13 @@ object MyMain {
             
             val input = Parsing(language).parseLiteral("(4, (1, 1, 0, 1, ()))")
             
+            println("RTM fw")
             println(Interpretation(language).interpret(rtm_int, "main", inc_rtm, input, FORWARDS))
+            println("RTM bw")
             println(Interpretation(language).interpret(rtm_int, "main", inc_rtm, input, BACKWARDS))
+            println("TM fw")
             println(Interpretation(language).interpret(tm_int, "main", inc_tm, input, FORWARDS))
+            println("TM bw")
             println(Interpretation(language).interpret(tm_int, "main", inc_tm, input, BACKWARDS))
             //println(Interpretation.interpret(prog, "main", Value.Unit, Value.Int(5)))
             
