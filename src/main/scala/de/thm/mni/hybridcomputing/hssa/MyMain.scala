@@ -1,7 +1,7 @@
 package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.optimization.EliminateNondeterminism
+import de.thm.mni.hybridcomputing.hssa.optimization.{EliminateNondeterminism, LocalConstantPropagation}
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Basic, Information}
@@ -17,7 +17,7 @@ object MyMain {
         try {
             //            lex(Paths.get("draft.hssa"))              .readAll().map(_.asStringWithPosition).foreach(println)
             
-            val language = Language(Seq(Basic, Arithmetic, Information))
+            val language = Language(Seq(Basic, Arithmetic, Information), Language.Canon.semantics)
             
             var prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/rtm.hssa"))))
             
@@ -26,8 +26,8 @@ object MyMain {
             println("Original:")
             println(Formatting.format(prog))
             
-            // println("Inverted:")
-            //println(Formatting.format(Inversion.Global.invert(prog)))
+            println("Inverted:")
+            println(Formatting.format(Inversion.Global.invert(prog)))
             
             /*println(Interpretation(language).interpret(prog, "factorial", Basic.Unit, Basic.Int(5), FORWARDS))
             println(Interpretation(language).interpret(prog, "factorial", Basic.Unit, Basic.Int(120), BACKWARDS))

@@ -31,7 +31,6 @@ object Inversion {
         
         def invert(block: Syntax.Block): Syntax.Block = Syntax.Block(this.invert(block.exit), block.assignments.map(this.invert).reverse, this.invert(block.entry))
         
-        
         def invert(relation: Relation): Relation = Relation(relation.name, relation.parameter, relation.blocks.map(invert).reverse)
         
     }

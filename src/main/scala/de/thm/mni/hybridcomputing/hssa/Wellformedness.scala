@@ -66,7 +66,7 @@ class Wellformedness(language: Language) {
                 val exits = context.getAllExits(label)
                 
                 if (context.getEntryByLabel(Language.BeginLabel).isEmpty) errors.add(Wellformedness.BeginMissing(context.syntax))
-                if (context.getEntryByLabel(Language.EndLabel).isEmpty) errors.add(Wellformedness.EndMissing(context.syntax))
+                if (context.getExitByLabel(Language.EndLabel).isEmpty) errors.add(Wellformedness.EndMissing(context.syntax))
                 
                 if (entries.isEmpty && label != Language.EndLabel) errors.add(Wellformedness.LabelMissingEntry(context.syntax, label))
                 if (exits.isEmpty && label != Language.BeginLabel) errors.add(Wellformedness.LabelMissingExit(context.syntax, label))

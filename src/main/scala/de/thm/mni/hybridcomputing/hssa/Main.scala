@@ -1,6 +1,7 @@
 package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
+import de.thm.mni.hybridcomputing.hssa.optimization.LocalConstantPropagation
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Basic, Information}
@@ -13,13 +14,17 @@ object Main {
     
     def main(args: Array[String]): Unit = {
         try {
-            val file = "programs/errors/begin_missing.hssa"
+            val file = "programs/optimizations/propagated_constant.hssa"
             
-            val language = Language(Seq(Basic, Arithmetic, Information))
+            val language = Language(Seq(Basic, Arithmetic, Information), Language.Semantics(true))
             
-            val prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get(file))))
+            var prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get(file))))
             
             Wellformedness(language).check(prog).raiseIfNonEmpty()
+            
+            prog = LocalConstantPropagation(LanguageError.Collector()).apply(prog)
+            
+            println(Formatting.format(prog))
             
             Interpretation(language).interpret(prog)
         } catch {

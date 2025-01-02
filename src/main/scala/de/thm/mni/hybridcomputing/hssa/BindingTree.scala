@@ -3,7 +3,15 @@ package de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 
+trait BindingTree {
+    def root: BindingTree.Program
+    def lookup_variable(name: String): Option[BindingTree.Variable]
+    
+    final def program: Syntax.Program = this.root.syntax
+}
+
 object BindingTree {
+    
     class MultiMap[Key, Value](initialdata: (Key, Value)*) {
         private val data = initialdata.groupBy(_._1).map(kv => kv._1 -> kv._2.map(_._2))
         
@@ -20,7 +28,7 @@ object BindingTree {
     
     def init(program: Syntax.Program) = Program(program)
     
-    class Program(val syntax: Syntax.Program) {
+    class Program(val syntax: Syntax.Program) extends BindingTree {
         val relations: Seq[GlobalRelationVariable] = syntax.definitions.map(rel => {
             GlobalRelationVariable(rel.name.name, this, Relation(this, rel))
         })
@@ -41,9 +49,10 @@ object BindingTree {
         def names(): Set[String] = this.entries.keys()
         
         def lookup_variable(name: String): Option[Variable] = this.entries.get(name)
+        override def root: Program = this
     }
     
-    class Relation(val parent: Program, val syntax: Syntax.Relation) {
+    class Relation(val parent: Program, val syntax: Syntax.Relation) extends BindingTree {
         val parameter_variables = MultiMap(syntax.parameter.variables.map(v => v.name -> v) *)
         
         val blocks: Seq[Block] = syntax.blocks.map(block => Block(this, block))
@@ -63,6 +72,8 @@ object BindingTree {
             if this.parameter_variables.contains(name) then Some(ParameterVaiable(name, this))
             else this.parent.lookup_variable(name)
         }
+        
+        override def root: Program = this.parent
     }
     
     object Relation {
@@ -73,7 +84,7 @@ object BindingTree {
             case Exit
     }
     
-    class Block(val parent: Relation, val syntax: Syntax.Block) {
+    class Block(val parent: Relation, val syntax: Syntax.Block) extends BindingTree {
         val initializations = MultiMap(
             syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.initializes.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Init)) })
               .map(u => u.variable.name.name -> u) *
@@ -105,6 +116,8 @@ object BindingTree {
             if this.block_local_variables.contains(name) then Some(BlockVariable(name, this))
             else this.parent.lookup_variable(name)
         }
+        
+        override def root: Program = this.parent.root
     }
     
     object Block {

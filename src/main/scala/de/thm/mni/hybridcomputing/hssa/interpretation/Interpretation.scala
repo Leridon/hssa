@@ -57,7 +57,7 @@ case class Interpretation(language: Language) {
         }
     }
     
-    def evaluate(rel: Value, instance_argument: Value, relation_argument: Value): Value = {
+    def evaluateApplication(rel: Value, instance_argument: Value, relation_argument: Value): Value = {
         rel match {
             case Value.BuiltinRelation(forwards, _) =>
                 forwards(instance_argument)(relation_argument)
@@ -127,7 +127,7 @@ case class Interpretation(language: Language) {
                             
                             val called_rel: Value.Relation = evaluate(relation, block_context).asInstanceOf[Value.Relation]
                             
-                            val result = evaluate(called_rel, instantiationArg, consumedArg)
+                            val result = evaluateApplication(called_rel, instantiationArg, consumedArg)
                             
                             block_context.define(assign(target, result))
                     }
@@ -163,10 +163,10 @@ case class Interpretation(language: Language) {
         
         
         val rel: Value.Relation = (if (direction == Direction.FORWARDS) context else inverse_context).get(relation_name)
-          .getOrElse(new HSSAError(LanguageError.Severity.Error, "Entrypoint $relation_name does not exist").raise())
+          .getOrElse(new HSSAError(LanguageError.Severity.Error, s"Entrypoint ${relation_name} does not exist").raise())
           .asInstanceOf[Value.Relation]
         
-        evaluate(rel, instance_argument, relation_argument)
+        evaluateApplication(rel, instance_argument, relation_argument)
     }
 }
 
@@ -182,7 +182,7 @@ object Interpretation {
     }
     
     object Errors {
-        class RuntimeError(message: String, position: SourcePosition  = null) extends HSSAError(Severity.Error, message, position)
+        class RuntimeError(message: String, position: SourcePosition = null) extends HSSAError(Severity.Error, message, position)
         
         case class ReversibilityViolation(message: String) extends RuntimeError(s"Reversibility violation: $message")
         case class Nondeterminism(message: String) extends RuntimeError(s"Nondeterminism error: $message")

@@ -5,14 +5,14 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Value
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
-class Language(val plugins: Seq[Language.Plugin]) {
+class Language(val plugins: Seq[Language.Plugin], val semantics: Language.Semantics) {
     val builtins: Seq[Plugin.Builtin] = plugins.flatMap(_.builtins)
     
     def areDependenciesFulfilled(): Boolean = plugins.forall(p => p.requirements.forall(plugins.contains))
 }
 
 object Language {
-    val Empty = Language(Seq())
+    val Canon = Language(Seq(), Semantics(true))
     
     val BeginLabel = "begin"
     val EndLabel = "end"
@@ -32,4 +32,8 @@ object Language {
                             value: Value.BuiltinRelation
                           )
     }
+    
+    class Semantics(
+                     val runtime_violations_are_undefined: Boolean
+                   )
 }
