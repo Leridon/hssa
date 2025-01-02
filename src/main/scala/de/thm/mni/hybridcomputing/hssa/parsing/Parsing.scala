@@ -44,11 +44,18 @@ object Parsing {
         }
         private def intlit: P[Int] = valueToken(INTLIT)(classOf[Integer]).map(_.intValue())
         
+        def flat_tuple: P[Syntax.Expression] = posi {
+            expression ~~ opt(COMMA ~~ flat_tuple) ^^ {
+                case first ~ Some(second) => Expression.Pair(first, second)
+                case first ~ None => first
+            }
+        }
+        
         def expression: P[Syntax.Expression] = posi {
             language.plugins.map(_.literal_parser(this)).foldLeft(failure(""))((a, b) => a | b).map(Expression.Literal(_))
               | ident ^^ Syntax.Expression.Variable.apply
-              | LPAREN ~~ expression ~~ COMMA ~~ rep1sep(expression, COMMA) ~~ RPAREN ^^ { case first ~ rest =>
-                Expression.Pair(first, rest.reduceRight((a, b) => Expression.Pair(a, b)))
+              | LPAREN ~~ expression ~~ COMMA ~~ flat_tuple ~~ RPAREN ^^ { case first ~ second =>
+                Expression.Pair(first, second)
             } | TILDE ~~ expression ^^ Syntax.Expression.Invert.apply
               | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
         }
