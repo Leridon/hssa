@@ -1,7 +1,7 @@
 package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
-import de.thm.mni.hybridcomputing.hssa.optimization.LocalConstantPropagation
+import de.thm.mni.hybridcomputing.hssa.optimization.{Inlining, LocalConstantPropagation}
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Basic, Information}
@@ -23,6 +23,10 @@ object Main {
             Wellformedness(language).check(prog).raiseIfNonEmpty()
             
             prog = LocalConstantPropagation(LanguageError.Collector()).apply(prog)
+            
+            val flattened = Inlining.flatten(BindingTree.init(prog).getRelation("test").get.relation)
+            
+            println(Formatting.format(flattened))
             
             println(Formatting.format(prog))
             
