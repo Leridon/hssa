@@ -22,7 +22,7 @@ object Syntax {
     }
     
     sealed abstract class Expression extends Node {
-        override def toString: String = Formatting.format(this)
+        override def toString: String = Formatting.format(this, true)
     }
     
     object Expression {

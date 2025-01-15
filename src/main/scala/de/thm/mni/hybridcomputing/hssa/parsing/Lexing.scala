@@ -21,6 +21,7 @@ object Lexing {
             case ASGN
             case TILDE
             case EOF
+            case IMPORT
             
             override def toString: String = this match
                 case IDENT => "IDENT"
@@ -34,6 +35,7 @@ object Lexing {
                 case ASGN => "ASGN"
                 case TILDE => "TILDE"
                 case COLON => "COLON"
+                case IMPORT => "IMPORT"
                 case EOF => "<eof>"
         }
     }
@@ -57,6 +59,7 @@ object Lexing {
                 "~" ^^^ symbol(TILDE) |
                 ":" ^^^ symbol(COLON) |
                 "rel" ^^^ symbol(Tokens.TokenClass.RELATION) |
+                "import" ^^^ symbol(Tokens.TokenClass.IMPORT) |
                 "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
                 "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ (l => symbol(IDENT, l))
               )(in).map(_(in.pos))
