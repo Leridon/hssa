@@ -21,7 +21,7 @@ case class Interpretation(language: Language) {
     import Interpretation.*
     
     val builtins: ValueContext = ValueContext(None)
-      .define(language.plugins.flatMap(_.builtins).map(b => b.name -> b.value))
+      .define(language.plugins.flatMap(_.builtins).map(b => b.value.name -> b.value))
     
     def evaluate(exp: Expression, context: ValueContext): Value = {
         exp match {
@@ -32,7 +32,7 @@ case class Interpretation(language: Language) {
             case Expression.Unit() => Basic.Unit
             case Expression.Invert(sub) => evaluate(sub, context) match
                 case UserRelation(fw, bw) => UserRelation(bw, fw)
-                case Value.BuiltinRelation(forwards, backwards) => Value.BuiltinRelation(backwards, forwards)
+                case Value.BuiltinRelation(name, forwards, backwards) => Value.BuiltinRelation(name, backwards, forwards)
         }
     }
     
@@ -51,7 +51,7 @@ case class Interpretation(language: Language) {
             case (Expression.Literal(v), value) if v == value => Map()
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) => assign(pat_1, val_a) ++ assign(pat_2, val_b)
             case (Expression.Invert(sub), UserRelation(fw, bw)) => assign(sub, UserRelation(bw, fw))
-            case (Expression.Invert(sub), BuiltinRelation(forwards, backwards)) => assign(sub, BuiltinRelation(backwards, forwards))
+            case (Expression.Invert(sub), BuiltinRelation(name, forwards, backwards)) => assign(sub, BuiltinRelation(name, backwards, forwards))
             case _ =>
                 Interpretation.Errors.ReversibilityViolation(s"$value does not match $pattern").raise()
         }
@@ -59,8 +59,12 @@ case class Interpretation(language: Language) {
     
     def evaluateApplication(rel: Value, instance_argument: Value, relation_argument: Value): Value = {
         rel match {
-            case Value.BuiltinRelation(forwards, _) =>
-                forwards(instance_argument)(relation_argument)
+            case Value.BuiltinRelation(name, forwards, _) =>
+                try {
+                    forwards(instance_argument)(relation_argument)
+                } catch
+                    case _: MatchError =>
+                        Interpretation.Errors.ReversibilityViolation(s"${name} cannot be applied to ${instance_argument} and ${relation_argument}").raise()
             case UserRelation(rel, _) =>
                 val execution_context = rel._2
                 

@@ -6,15 +6,18 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
 
 object Information extends Plugin {
     override def builtins: Seq[Plugin.Builtin] = Seq(
-        Plugin.Builtin("discard", Value.BuiltinRelation(
+        Plugin.Builtin(Value.BuiltinRelation(
+            "discard",
             { case Basic.Unit => _ => Basic.Unit },
             { case Basic.Unit => _ => Interpretation.Errors.Nondeterminism("Cannot execute inverted discard (aka oracle)").raise() }
         )),
-        Plugin.Builtin("id", Value.BuiltinRelation(
+        Plugin.Builtin(Value.BuiltinRelation(
+            "id",
             { case Basic.Unit => value => value },
             { case Basic.Unit => value => value },
         )),
-        Plugin.Builtin("dup", Value.BuiltinRelation(
+        Plugin.Builtin(Value.BuiltinRelation(
+            "dup",
             value => {
                 case Basic.Unit => value
             },

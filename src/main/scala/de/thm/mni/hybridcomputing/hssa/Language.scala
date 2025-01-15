@@ -27,7 +27,6 @@ object Language {
     
     object Plugin {
         case class Builtin(
-                            name: String,
                             //`type`: Types.ParameterizedRelation,
                             value: Value.BuiltinRelation
                           )

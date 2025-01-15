@@ -7,6 +7,8 @@ case class SourcePosition(file: SourceFile, from: SourcePosition.Position, to: S
     @targetName("lessthan")
     def <(other: SourcePosition): Boolean = this.from < other.from
     
+    lazy val string: String = file.getSlice(from, to)
+    
     override def toString: String = {
         val builder = new StringBuilder()
         

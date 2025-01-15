@@ -14,23 +14,24 @@ object Main {
     
     def main(args: Array[String]): Unit = {
         try {
-            val file = "programs/optimizations/propagated_constant.hssa"
+            val file = "programs/fibpair.hssa"
             
             val language = Language(Seq(Basic, Arithmetic, Information), Language.Semantics(true))
             
             var prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get(file))))
             
+            println(Formatting.format(prog))
+            
             Wellformedness(language).check(prog).raiseIfNonEmpty()
             
             prog = LocalConstantPropagation(LanguageError.Collector()).apply(prog)
             
-            val flattened = Inlining.flatten(BindingTree.init(prog).getRelation("test").get.relation)
+            //val flattened = Inlining.flatten(BindingTree.init(prog).getRelation("test").get.relation)
             
-            println(Formatting.format(flattened))
+            //println(Formatting.format(flattened))
             
-            println(Formatting.format(prog))
             
-            Interpretation(language).interpret(prog)
+            println(Interpretation(language).interpret(prog))
         } catch {
             case e: LanguageError.AbortDueToErrors =>
                 e.errors.foreach(e => {

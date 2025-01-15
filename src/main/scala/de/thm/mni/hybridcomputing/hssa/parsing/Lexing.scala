@@ -16,6 +16,7 @@ object Lexing {
             case LARROW
             case RARROW
             case COMMA
+            case COLON
             case INTLIT
             case ASGN
             case TILDE
@@ -32,6 +33,7 @@ object Lexing {
                 case INTLIT => "INTLIT"
                 case ASGN => "ASGN"
                 case TILDE => "TILDE"
+                case COLON => "COLON"
                 case EOF => "<eof>"
         }
     }
@@ -53,6 +55,7 @@ object Lexing {
                 ":=" ^^^ symbol(ASGN) |
                 "," ^^^ symbol(COMMA) |
                 "~" ^^^ symbol(TILDE) |
+                ":" ^^^ symbol(COLON) |
                 "rel" ^^^ symbol(Tokens.TokenClass.RELATION) |
                 "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
                 "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ (l => symbol(IDENT, l))

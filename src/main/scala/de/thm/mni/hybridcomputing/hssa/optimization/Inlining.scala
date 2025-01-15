@@ -1,6 +1,7 @@
 package de.thm.mni.hybridcomputing.hssa.optimization
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Identifier}
+import de.thm.mni.hybridcomputing.hssa.util.RelationBuilder
 import de.thm.mni.hybridcomputing.hssa.{BindingTree, Syntax}
 
 object Inlining {
@@ -87,7 +88,13 @@ object Inlining {
     }
     
     
-    def inline(): Unit = {
-    
+    def inline(rel: BindingTree.Relation): Unit = {
+        /*val builder = RelationBuilder(rel)
+        
+        rel.blocks.foreach(block => {
+            block.syntax.assignments.foreach(asgn => {
+            
+            })
+        })*/
     }
 }

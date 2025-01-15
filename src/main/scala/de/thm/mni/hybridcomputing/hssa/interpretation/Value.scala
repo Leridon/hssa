@@ -12,6 +12,7 @@ object Value {
     sealed trait Relation extends Value
     case class UserRelation(forwards: (Syntax.Relation, Interpretation.ValueContext), backwards: (Syntax.Relation, Interpretation.ValueContext)) extends Relation
     case class BuiltinRelation(
+                                name: String,
                                 forwards: Value => Value => Value,
                                 backwards: Value => Value => Value,
                               ) extends Relation

@@ -8,14 +8,16 @@ object IO extends Plugin {
     object IOToken extends Value
     
     override def builtins: Seq[Plugin.Builtin] = Seq(
-        Builtin("io.new",
+        Builtin(
             Value.BuiltinRelation(
+                "io.new",
                 {case Basic.Unit => {case Basic.Unit => IOToken}},
                 {case Basic.Unit => {case IOToken => Basic.Unit}},
             )
         ),
-        Builtin("io.read",
+        Builtin(
             Value.BuiltinRelation(
+                "io.read",
                 {case Basic.Unit => {case IOToken => Value.Pair(IOToken, Basic.Int(-1))}},
                 {case Basic.Unit => {case Value.Pair(IOToken, Basic.Int(-1)) => IOToken}},
             )

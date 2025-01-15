@@ -7,6 +7,19 @@ import scala.util.parsing.input.{CharSequenceReader, Reader}
 
 case class SourceFile(content: String, path: Option[Path]) {
     def reader: Reader[Char] = new CharSequenceReader(content)
+    
+    val line_starts: Seq[Int] = 0 +: content.indices.filter(i => content.charAt(i) == '\n')
+      .map(_ + 1)
+    
+    def indexOf(position: SourcePosition.Position): Int = line_starts(position.line - 1) + position.column - 1
+    
+    def getSlice(from: SourcePosition.Position, to: SourcePosition.Position): String = {
+        val start = indexOf(from)
+        
+        if (start >= content.length) return ""
+        
+        content.substring(indexOf(from), indexOf(to))
+    }
 }
 
 

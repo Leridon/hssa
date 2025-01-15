@@ -34,7 +34,7 @@ object BindingTree {
         })
         
         private val entries: MultiMap[String, GlobalRelationVariable | GlobalBuiltinVariable] = MultiMap(
-            syntax.language.builtins.map(b => b.name -> GlobalBuiltinVariable(b.name, this, b))
+            syntax.language.builtins.map(b => b.value.name -> GlobalBuiltinVariable(b.value.name, this, b))
               ++ relations.map(rel => {
                 rel.name.name -> rel
             }) *

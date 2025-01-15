@@ -46,7 +46,7 @@ class LocalConstantPropagation(collector: LanguageError.Collector = LanguageErro
                 builtin.value
             case Expression.Pair(a, b) => Value.Pair(a.staticValue(context), b.staticValue(context))
             case Expression.Invert(a) => a.staticValue(context) match
-                case Value.BuiltinRelation(fw, bw) => Value.BuiltinRelation(bw, fw)
+                case Value.BuiltinRelation(name, fw, bw) => Value.BuiltinRelation(name, bw, fw)
             case Expression.Unit() => Basic.Unit
     }
     
