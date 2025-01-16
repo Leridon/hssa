@@ -1,0 +1,26 @@
+// This file is not a valid roopl++ program and merely serves as testing of the lexer
+class clas clazz classs
+inherits inherit
+method
+int integer
+if then else fi
+from do loop until
+construct constructor desconstruct
+local delocal
+new delete
+copy uncopy
+call uncall
+skip nil
+hugendubel123_'
+Beluga_17
+Zwoelf'12
+[]()
++= -= ^= <=> ::
++ - ^ * / %
+&& || & |
+!= = <= >=
+< >
+123456789
+-1337
+-42
++42
