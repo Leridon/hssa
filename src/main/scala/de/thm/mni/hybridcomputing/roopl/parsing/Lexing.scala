@@ -13,6 +13,7 @@ object Lexing {
             case CLASS
             case INHERITS
             case METHOD
+            case COMMA
             case INTEGER
             case LBRACK
             case RBRACK
@@ -67,6 +68,7 @@ object Lexing {
                 case CLASS => "CLASS"
                 case INHERITS => "INHERITS"
                 case METHOD => "METHOD"
+                case COMMA => "COMMA"
                 case INTEGER => "INTEGER"
                 case LBRACK => "LBRACK"
                 case RBRACK => "RBRACK"
@@ -155,6 +157,7 @@ object Lexing {
                     case "nil" => symbol(NIL)
                     case l => symbol(IDENT, l)
                 }) |
+                "," ^^^ symbol(COMMA) |
                 "[" ^^^ symbol(LBRACK) |
                 "]" ^^^ symbol(RBRACK) |
                 "(" ^^^ symbol(LPAR) |
