@@ -128,10 +128,33 @@ object Lexing {
         
         def token: Parser[Symbol] = (in: Input) =>
             (
-                "class" ^^^ symbol(CLASS) |
-                "inherits" ^^^ symbol(INHERITS) |
-                "method" ^^^ symbol(METHOD) |
-                "int" ^^^ symbol(INTEGER) |
+                "[a-zA-Z][a-zA-Z_0-9']*".r ^^ ({
+                    case "class" => symbol(CLASS)
+                    case "inherits" => symbol(INHERITS)
+                    case "method" => symbol(METHOD)
+                    case "int" => symbol(INTEGER)
+                    case "if" => symbol(IF)
+                    case "then" => symbol(THEN)
+                    case "else" => symbol(ELSE)
+                    case "fi" => symbol(FI)
+                    case "from" => symbol(FROM)
+                    case "do" => symbol(DO)
+                    case "loop" => symbol(LOOP)
+                    case "until" => symbol(UNTIL)
+                    case "construct" => symbol(CONSTRUCT)
+                    case "destruct" => symbol(DESTRUCT)
+                    case "local" => symbol(LOCAL)
+                    case "delocal" => symbol(DELOCAL)
+                    case "new" => symbol(NEW)
+                    case "delete" => symbol(DELETE)
+                    case "copy" => symbol(COPY)
+                    case "uncopy" => symbol(UNCOPY)
+                    case "call" => symbol(CALL)
+                    case "uncall" => symbol(UNCALL)
+                    case "skip" => symbol(SKIP)
+                    case "nil" => symbol(NIL)
+                    case l => symbol(IDENT, l)
+                }) |
                 "[" ^^^ symbol(LBRACK) |
                 "]" ^^^ symbol(RBRACK) |
                 "(" ^^^ symbol(LPAR) |
@@ -140,27 +163,8 @@ object Lexing {
                 "-=" ^^^ symbol(ASGN_SUB) |
                 "^=" ^^^ symbol(ASGN_XOR) |
                 "<=>" ^^^ symbol(SWAP) |
-                "if" ^^^ symbol(IF) |
-                "then" ^^^ symbol(THEN) |
-                "else" ^^^ symbol(ELSE) |
-                "fi" ^^^ symbol(FI) |
-                "from" ^^^ symbol(FROM) |
-                "do" ^^^ symbol(DO) |
-                "loop" ^^^ symbol(LOOP) |
-                "until" ^^^ symbol(UNTIL) |
-                "construct" ^^^ symbol(CONSTRUCT) |
-                "destruct" ^^^ symbol(DESTRUCT) |
-                "local" ^^^ symbol(LOCAL) |
-                "delocal" ^^^ symbol(DELOCAL) |
-                "new" ^^^ symbol(NEW) |
-                "delete" ^^^ symbol(DELETE) |
-                "copy" ^^^ symbol(COPY) |
-                "uncopy" ^^^ symbol(UNCOPY) |
-                "call" ^^^ symbol(CALL) |
-                "uncall" ^^^ symbol(UNCALL) |
                 "::" ^^^ symbol(DBLCOLON) |
-                "skip" ^^^ symbol(SKIP) |
-                "nil" ^^^ symbol(NIL) |
+                "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
                 "+" ^^^ symbol(ADD) |
                 "-" ^^^ symbol(SUB) |
                 "^" ^^^ symbol(XOR) |
@@ -176,11 +180,8 @@ object Lexing {
                 ">=" ^^^ symbol(GREATEREQUAL) |
                 "<" ^^^ symbol(LESSTHAN) |
                 ">" ^^^ symbol(GREATERTHAN) |
-                "=" ^^^ symbol(EQUAL) |
-                "eof" ^^^ symbol(EOF) |
-                "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
-                "[a-zA-Z][a-zA-Z_0-9']*".r ^^ (l => symbol(IDENT, l))
-              )(in).map(_(in.pos))
+                "=" ^^^ symbol(EQUAL)
+              ){in}.map(_(in.pos))
         
         
     }
