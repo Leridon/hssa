@@ -9,6 +9,10 @@ class Language(val plugins: Seq[Language.Plugin], val semantics: Language.Semant
     val builtins: Seq[Plugin.Builtin] = plugins.flatMap(_.builtins)
     
     def areDependenciesFulfilled(): Boolean = plugins.forall(p => p.requirements.forall(plugins.contains))
+    
+    lazy val parsing: Parsing = Parsing(this)
+    lazy val wellformedness: Wellformedness = Wellformedness(this)
+    lazy val chains: Chains = Chains(this)
 }
 
 object Language {

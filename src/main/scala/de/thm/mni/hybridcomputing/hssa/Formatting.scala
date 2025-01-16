@@ -22,7 +22,7 @@ object Formatting {
     }
     
     
-    def format(exp: Syntax.Expression): String = {
+    def format(exp: Syntax.Expression, force_parens: Boolean = false): String = {
         val inner = exp match
             case Expression.Literal(Basic.Unit) => ""
             case Expression.Literal(value) => value.toString
@@ -31,8 +31,7 @@ object Formatting {
             case Expression.Variable(name) => name.toString
             case Expression.Invert(sub) => s"~${format(sub)}"
         
-        if (exp.checkSource(s => s.startsWith("(") && s.endsWith(")")))
-            s"($inner)"
+        if (force_parens || exp.checkSource(s => s.startsWith("(") && s.endsWith(")"))) s"($inner)"
         else inner
     }
     

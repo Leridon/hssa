@@ -35,3 +35,9 @@ trait LexicalGrammarUtilities[T] extends RegexParsers {
     
     def eof: Position => Token[T]
 }
+
+object LexicalGrammarUtilities {
+    case class Comment(lexem: String) extends Positioned
+}
+
+

@@ -50,7 +50,12 @@ object Lexing {
         
         def token: Parser[Symbol] = (in: Input) =>
             (
-              "->" ^^^ symbol(RARROW) |
+              "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ {
+                  case "rel" => symbol(Tokens.TokenClass.RELATION)
+                  case "import" => symbol(Tokens.TokenClass.IMPORT)
+                  case l => symbol(IDENT, l)
+              } |
+                "->" ^^^ symbol(RARROW) |
                 "<-" ^^^ symbol(LARROW) |
                 "(" ^^^ symbol(LPAREN) |
                 ")" ^^^ symbol(RPAREN) |
@@ -58,13 +63,8 @@ object Lexing {
                 "," ^^^ symbol(COMMA) |
                 "~" ^^^ symbol(TILDE) |
                 ":" ^^^ symbol(COLON) |
-                "rel" ^^^ symbol(Tokens.TokenClass.RELATION) |
-                "import" ^^^ symbol(Tokens.TokenClass.IMPORT) |
-                "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
-                "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ (l => symbol(IDENT, l))
+                "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt))
               )(in).map(_(in.pos))
-        
-        
     }
     
     def lex(file: SourceFile): TokenReader[Tokens.TokenClass] = TokenReader(file, file.reader, LexicalGrammar)

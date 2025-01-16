@@ -1,5 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa
 
+import de.thm.mni.hybridcomputing.hssa.Syntax.Program
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
 import de.thm.mni.hybridcomputing.hssa.optimization.{Inlining, LocalConstantPropagation}
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex

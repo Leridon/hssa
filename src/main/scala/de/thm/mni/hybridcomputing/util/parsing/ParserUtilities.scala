@@ -1,5 +1,6 @@
 package de.thm.mni.hybridcomputing.util.parsing
 
+import scala.language.implicitConversions
 import scala.util.parsing.combinator.Parsers
 
 trait ParserUtilities[TokenClass] extends Parsers {
@@ -27,11 +28,13 @@ trait ParserUtilities[TokenClass] extends Parsers {
         def ~~![T](other: => IgnoredParser): IgnoredParser = ignore(this ~! other)
     }
     
-    implicit def acc(token: TokenClass): IgnoredParser = ignore(super.acceptIf(_.typ == token)(elem => s"Expected $token, but got $elem"))
+    implicit def acc(token: TokenClass): IgnoredParser = ignore(super.acceptIf(_.typ == token)(elem =>
+        
+        s"Expected $token, but got $elem"))
     
     def valueToken[T](token: TokenClass)(implicit c: Class[T]): Parser[T] = {
         acceptMatch(token.toString, {
-            case tok@Token(t, Some(i)) if t == token && c == i.getClass => i.asInstanceOf[T]
+            case tok@Token(t, Some(i)) if t == token && c.isInstance(i) => i.asInstanceOf[T]
         })
     }
     
