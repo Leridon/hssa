@@ -36,8 +36,11 @@ in a Reversible Object-Oriented Programming Language
 
 package de.thm.mni.hybridcomputing.roopl
 
+import de.thm.mni.hybridcomputing.util.parsing.Positioned
+import javax.xml.crypto.Data
+
 object Syntax {
-    sealed trait Node
+    sealed trait Node extends Positioned
 
     sealed abstract class Identifier(name: String) extends Node {
         override def toString: String = name
@@ -57,7 +60,7 @@ object Syntax {
     
     case class Program(definitions: Seq[ClassDefinition]) extends Node
     
-    case class ClassDefinition(name: ClassIdentifier, inherits: Option[ClassIdentifier], variableDefinitions: Seq[VariableDefinition], methodDefinitions: Seq[MethodDefinitions])
+    case class ClassDefinition(name: ClassIdentifier, inherits: Option[ClassIdentifier], variableDefinitions: Seq[VariableDefinition], methodDefinitions: Seq[MethodDefinition]) extends Node
     
     case class VariableDefinition(typ: DataType, name: VariableIdentifier) extends Node
     
@@ -68,15 +71,7 @@ object Syntax {
         case class ClassType(name: ClassIdentifier) extends DataType
     }
 
-
-    case class MethodDefinitions(name: MethodIdentifier, parameters: Seq[VariableDefinition], body: Statement) extends Node
-
-    sealed abstract class VariableLiteral extends Node
-
-    object VariableLiteral {
-        case class Variable(name: VariableIdentifier) extends VariableLiteral
-        case class ArrayVariable(name: VariableIdentifier, index: Expression) extends VariableLiteral
-    }
+    case class MethodDefinition(name: MethodIdentifier, parameters: Seq[VariableDefinition], body: Statement) extends Node
 
     sealed abstract class Statement extends Node
 
@@ -87,12 +82,24 @@ object Syntax {
         case class Loop(test: Expression, doStatement: Statement, loopStatement: Statement, assertion: Expression) extends Statement
         // alloc and dealloc must always be the same, no?
         case class ObjectBlock(typ: ClassIdentifier, alloc: VariableIdentifier, body: Statement, dealloc: VariableIdentifier) extends Statement
+        case class LocalBlock(initType: DataType, initName: VariableIdentifier, initValue: Expression, statement: Statement, deInitType: DataType, deInitName: VariableIdentifier, deInitValue: Expression) extends Statement
+        case class New(typ: DataType, name: VariableLiteral) extends Statement
+        case class Delete(typ: DataType, name: VariableLiteral) extends Statement
+        case class Copy(typ: DataType, from: VariableLiteral, to: VariableLiteral) extends Statement
+        case class UnCopy(typ: DataType, from: VariableLiteral, to: VariableLiteral) extends Statement
         case class CallLocal(method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class UncallLocal(method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class Call(callee: VariableIdentifier, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class Uncall(callee: VariableIdentifier, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class Skip() extends Statement
         case class Sequence(left: Statement, right: Statement) extends Statement
+    }
+
+    sealed abstract class VariableLiteral extends Node
+
+    object VariableLiteral {
+        case class Variable(name: VariableIdentifier) extends VariableLiteral
+        case class ArrayVariable(name: VariableIdentifier, index: Expression) extends VariableLiteral
     }
 
     sealed abstract class Expression extends Node
