@@ -1,5 +1,10 @@
 package de.thm.mni.hybridcomputing.roopl.parsing
 
+import de.thm.mni.hybridcomputing.util.parsing.{FileReader, LexicalGrammarUtilities, SourceFile, Token, TokenReader}
+
+import java.nio.file.Path
+import scala.util.parsing.input.{CharSequenceReader, Position}
+
 object Lexing {
     object Tokens {
 
@@ -112,4 +117,73 @@ object Lexing {
                 case EOF => "EOF"
         }
     }
+
+    object LexicalGrammar extends LexicalGrammarUtilities[Tokens.TokenClass] {
+        
+        import Tokens.TokenClass.*
+        
+        lazy val whitespace: Parser[Any] = """(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))*""".r
+        
+        def eof: Position => Token[Tokens.TokenClass] = symbol(EOF)
+        
+        def token: Parser[Symbol] = (in: Input) =>
+            (
+                "class" ^^^ symbol(CLASS) |
+                "inherits" ^^^ symbol(INHERITS) |
+                "method" ^^^ symbol(METHOD) |
+                "int" ^^^ symbol(INTEGER) |
+                "[" ^^^ symbol(LBRACK) |
+                "]" ^^^ symbol(RBRACK) |
+                "(" ^^^ symbol(LPAR) |
+                ")" ^^^ symbol(RPAR) |
+                "+=" ^^^ symbol(ASGN_ADD) |
+                "-=" ^^^ symbol(ASGN_SUB) |
+                "^=" ^^^ symbol(ASGN_XOR) |
+                "<=>" ^^^ symbol(SWAP) |
+                "if" ^^^ symbol(IF) |
+                "then" ^^^ symbol(THEN) |
+                "else" ^^^ symbol(ELSE) |
+                "fi" ^^^ symbol(FI) |
+                "from" ^^^ symbol(FROM) |
+                "do" ^^^ symbol(DO) |
+                "loop" ^^^ symbol(LOOP) |
+                "until" ^^^ symbol(UNTIL) |
+                "construct" ^^^ symbol(CONSTRUCT) |
+                "destruct" ^^^ symbol(DESTRUCT) |
+                "local" ^^^ symbol(LOCAL) |
+                "delocal" ^^^ symbol(DELOCAL) |
+                "new" ^^^ symbol(NEW) |
+                "delete" ^^^ symbol(DELETE) |
+                "copy" ^^^ symbol(COPY) |
+                "uncopy" ^^^ symbol(UNCOPY) |
+                "call" ^^^ symbol(CALL) |
+                "uncall" ^^^ symbol(UNCALL) |
+                "::" ^^^ symbol(DBLCOLON) |
+                "skip" ^^^ symbol(SKIP) |
+                "nil" ^^^ symbol(NIL) |
+                "+" ^^^ symbol(ADD) |
+                "-" ^^^ symbol(SUB) |
+                "^" ^^^ symbol(XOR) |
+                "*" ^^^ symbol(MUL) |
+                "/" ^^^ symbol(DIV) |
+                "%" ^^^ symbol(MOD) |
+                "&&" ^^^ symbol(LOGAND) |
+                "||" ^^^ symbol(LOGOR) |
+                "&" ^^^ symbol(BITAND) |
+                "|" ^^^ symbol(BITOR) |
+                "!=" ^^^ symbol(NOTEQUAL) |
+                "<=" ^^^ symbol(LESSEQUAL) |
+                ">=" ^^^ symbol(GREATEREQUAL) |
+                "<" ^^^ symbol(LESSTHAN) |
+                ">" ^^^ symbol(GREATERTHAN) |
+                "=" ^^^ symbol(EQUAL) |
+                "eof" ^^^ symbol(EOF) |
+                "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
+                "[a-zA-Z][a-zA-Z_0-9']*".r ^^ (l => symbol(IDENT, l))
+              )(in).map(_(in.pos))
+        
+        
+    }
+    
+    def lex(file: SourceFile): TokenReader[Tokens.TokenClass] = TokenReader(file, file.reader, LexicalGrammar)
 }
