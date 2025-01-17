@@ -76,45 +76,49 @@ object Syntax {
     sealed abstract class Statement extends Node
 
     object Statement {
-        case class Assignment(assignee: VariableLiteral, op: AssignmentOperator, value: Expression) extends Statement
-        case class Swap(left: VariableLiteral, right: VariableLiteral) extends Statement
+        case class Assignment(assignee: VariableReference, op: AssignmentOperator, value: Expression) extends Statement
+        case class Swap(left: VariableReference, right: VariableReference) extends Statement
         case class Conditional(test: Expression, thenStatement: Statement, elseStatement: Statement, assertion: Expression) extends Statement
         case class Loop(test: Expression, doStatement: Statement, loopStatement: Statement, assertion: Expression) extends Statement
         // alloc and dealloc must always be the same, no?
         case class ObjectBlock(typ: ClassIdentifier, alloc: VariableIdentifier, body: Statement, dealloc: VariableIdentifier) extends Statement
         case class LocalBlock(initType: DataType, initName: VariableIdentifier, initValue: Expression, statement: Statement, deInitType: DataType, deInitName: VariableIdentifier, deInitValue: Expression) extends Statement
-        case class New(typ: DataType, name: VariableLiteral) extends Statement
-        case class Delete(typ: DataType, name: VariableLiteral) extends Statement
-        case class Copy(typ: DataType, from: VariableLiteral, to: VariableLiteral) extends Statement
-        case class UnCopy(typ: DataType, from: VariableLiteral, to: VariableLiteral) extends Statement
+        case class New(typ: DataType, name: VariableReference) extends Statement
+        case class Delete(typ: DataType, name: VariableReference) extends Statement
+        case class Copy(typ: DataType, from: VariableReference, to: VariableReference) extends Statement
+        case class Uncopy(typ: DataType, from: VariableReference, to: VariableReference) extends Statement
         case class CallLocal(method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class UncallLocal(method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
-        case class Call(callee: VariableIdentifier, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
-        case class Uncall(callee: VariableIdentifier, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
+        case class Call(callee: VariableReference, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
+        case class Uncall(callee: VariableReference, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class Skip() extends Statement
-        case class Sequence(left: Statement, right: Statement) extends Statement
+        // Since statements are always executed one by one there is no reason to store them binarily (Also makes parsing easier by removing recursion)
+        case class Sequence(list: Seq[Statement]) extends Statement
     }
 
-    sealed abstract class VariableLiteral extends Node
+    sealed abstract class VariableReference extends Node
 
-    object VariableLiteral {
-        case class Variable(name: VariableIdentifier) extends VariableLiteral
-        case class ArrayVariable(name: VariableIdentifier, index: Expression) extends VariableLiteral
+    object VariableReference {
+        case class Variable(name: VariableIdentifier) extends VariableReference
+        case class Array(name: VariableIdentifier, index: Expression) extends VariableReference
     }
 
     sealed abstract class Expression extends Node
 
     object Expression {
         case class Literal(value: Int) extends Expression
-        case class VariableExpression(variable: VariableIdentifier) extends Expression
-        case class ArrayExpression(array: VariableIdentifier, index: Expression)
+        case class Variable(variable: VariableIdentifier) extends Expression
+        case class Array(array: VariableIdentifier, index: Expression) extends Expression
         case class Nil() extends Expression
-        case class BinaryExpression(left: Expression, right: Expression, op: Operator) extends Expression
+        case class Binary(left: Expression, op: Operator, right: Expression) extends Expression
     }
 
     sealed abstract class Operator extends Node
 
     object Operator {
+        case class Add() extends Operator
+        case class Sub() extends Operator
+        case class Xor() extends Operator
         case class Mul() extends Operator
         case class Div() extends Operator
         case class Mod() extends Operator
@@ -124,12 +128,12 @@ object Syntax {
         case class LogAnd() extends Operator
         case class LogOr() extends Operator
         case class LogXor() extends Operator
-        case class Less() extends Operator
-        case class Greater() extends Operator
-        case class Equals() extends Operator
-        case class NotEquals() extends Operator
         case class LessThan() extends Operator
         case class GreaterThan() extends Operator
+        case class Equal() extends Operator
+        case class NotEqual() extends Operator
+        case class LessEqual() extends Operator
+        case class GreaterEqual() extends Operator
 
     }
 
