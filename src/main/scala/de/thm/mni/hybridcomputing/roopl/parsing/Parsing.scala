@@ -2,14 +2,34 @@ package de.thm.mni.hybridcomputing.roopl.parsing
 
 import de.thm.mni.hybridcomputing.util.parsing.Token
 import scala.util.parsing.input.Reader
+import de.thm.mni.hybridcomputing.util.parsing
 import de.thm.mni.hybridcomputing.util.parsing.ParserUtilities
+import de.thm.mni.hybridcomputing.util.parsing.ImplicitConversionsExtended
 import scala.util.parsing.combinator.ImplicitConversions
 import de.thm.mni.hybridcomputing.roopl.Syntax
+import de.thm.mni.hybridcomputing.roopl.Syntax.Program
+import de.thm.mni.hybridcomputing.util.errors.LanguageError
+import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 
 object Parsing {
     type TokenReader = Reader[Token[Lexing.Tokens.TokenClass]]
 
-    class Grammar extends ParserUtilities[Lexing.Tokens.TokenClass] with ImplicitConversions {
+    val grammar = new Parsing.Grammar()
+
+    def parse(token_reader: Parsing.TokenReader): Program = {
+        
+        this.grammar.program(token_reader) match {
+            case grammar.Success(prog, _) => prog
+            case grammar.NoSuccess(msg, rest) =>
+                val r = rest.asInstanceOf[parsing.TokenReader[?]]
+                
+                LanguageError.SyntaxError(msg).setPosition(SourcePosition(r.file, r.position, null)).raise()
+            case grammar.Failure(_, _) => ???
+            case grammar.Error(_, _) => ???
+        }
+    }
+
+    class Grammar extends ParserUtilities[Lexing.Tokens.TokenClass] with ImplicitConversions with ImplicitConversionsExtended {
         import de.thm.mni.hybridcomputing.roopl.parsing.Lexing.Tokens.TokenClass.*
         import de.thm.mni.hybridcomputing.util.parsing
 
@@ -47,7 +67,6 @@ object Parsing {
         def methodDefinition: P[Syntax.MethodDefinition] = posi {
             METHOD ~~ methodIdent ~~ LPAR ~~ rep(variableDefinition) ~~ RPAR ~~ statement ^^ Syntax.MethodDefinition.apply
         }
-
 
         def statement: P[Syntax.Statement] = posi {
             variableLiteral ~~ assignmentOperator ~~ expression ^^ Syntax.Statement.Assignment.apply
