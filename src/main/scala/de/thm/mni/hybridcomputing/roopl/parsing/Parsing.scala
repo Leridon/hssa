@@ -90,6 +90,12 @@ object Parsing {
             | SKIP ^^ (_ => Syntax.Statement.Skip.apply())
         }
 
+        def assignmentOperator: P[Syntax.AssignmentOperator] = posi {
+            ASGN_ADD ^^ (_ => Syntax.AssignmentOperator.Add.apply())
+            | ASGN_SUB ^^ (_ => Syntax.AssignmentOperator.Sub.apply())
+            | ASGN_XOR ^^ (_ => Syntax.AssignmentOperator.Xor.apply())
+        }
+
         def variableLiteral: P[Syntax.VariableReference] = posi {
             variableIdent ^^ Syntax.VariableReference.Variable.apply
             | variableIdent ~~ LBRACK ~~ expression ~~ RBRACK ^^ Syntax.VariableReference.Array.apply
@@ -127,10 +133,5 @@ object Parsing {
             | GREATEREQUAL ^^ (_ => Syntax.Operator.GreaterEqual.apply())
         }
 
-        def assignmentOperator: P[Syntax.AssignmentOperator] = posi {
-            ASGN_ADD ^^ (_ => Syntax.AssignmentOperator.Add.apply())
-            | ASGN_SUB ^^ (_ => Syntax.AssignmentOperator.Sub.apply())
-            | ASGN_XOR ^^ (_ => Syntax.AssignmentOperator.Xor.apply())
-        }
     }
 }
