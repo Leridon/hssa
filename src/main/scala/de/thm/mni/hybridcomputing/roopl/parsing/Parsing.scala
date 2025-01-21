@@ -10,6 +10,7 @@ import de.thm.mni.hybridcomputing.roopl.Syntax
 import de.thm.mni.hybridcomputing.roopl.Syntax.Program
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
+import de.thm.mni.hybridcomputing.roopl.Syntax.Expression
 
 object Parsing {
     type TokenReader = Reader[Token[Lexing.Tokens.TokenClass]]
@@ -108,29 +109,91 @@ object Parsing {
             | NIL ^^ (_ => Syntax.Expression.Nil.apply())
         }
 
-        def expression: P[Syntax.Expression] = posi {
-            simple_expression ~~ rep(operator ~~ simple_expression) ^^ (x => x._2.foldLeft(x._1)((e, oe) => Syntax.Expression.Binary.apply(e, oe._1, oe._2)))
+        def fold_exp(exp: Syntax.Expression ~ List[Syntax.Operator ~ Syntax.Expression]): Syntax.Expression = {
+            exp._2.foldLeft(exp._1)((e, oe) => Syntax.Expression.Binary.apply(e, oe._1, oe._2))
         }
 
-        // TODO: Operator precedence isn't formally specified for roopl++ but the original implementation of it uses C's operator precedence
-
-        def operator: P[Syntax.Operator] = posi {
-            ADD ^^ (_ => Syntax.Operator.Add.apply())
-            | SUB ^^ (_ => Syntax.Operator.Sub.apply())
-            | XOR ^^ (_ => Syntax.Operator.Xor.apply())
-            | MUL ^^ (_ => Syntax.Operator.Mul.apply())
+        def expression: P[Syntax.Expression] = posi {
+            term ~~ rep(term_op ~~ term) ^^ fold_exp
+        }
+        
+        def term_op: P [Syntax.Operator] = posi {
+            MUL ^^ (_ => Syntax.Operator.Mul.apply())
             | DIV ^^ (_ => Syntax.Operator.Div.apply())
             | MOD ^^ (_ => Syntax.Operator.Mod.apply())
-            | BITAND ^^ (_ => Syntax.Operator.BitAnd.apply())
-            | BITOR ^^ (_ => Syntax.Operator.BitOr.apply())
-            | LOGAND ^^ (_ => Syntax.Operator.LogAnd.apply())
-            | LOGOR ^^ (_ => Syntax.Operator.LogOr.apply())
-            | LESSTHAN ^^ (_ => Syntax.Operator.LessThan.apply())
+        }
+        
+        def term: P[Syntax.Expression] = posi {
+            factor ~~ rep(factor_op ~~ factor) ^^ fold_exp
+        }
+
+        def factor_op: P [Syntax.Operator] = posi {
+            ADD ^^ (_ => Syntax.Operator.Add.apply())
+            | SUB ^^ (_ => Syntax.Operator.Sub.apply())
+        }
+        
+        def factor: P[Syntax.Expression] = posi {
+            comp ~~ rep(comp_op ~~ comp) ^^ fold_exp
+        }
+
+        def comp_op: P [Syntax.Operator] = posi {
+            LESSTHAN ^^ (_ => Syntax.Operator.LessThan.apply())
             | GREATERTHAN ^^ (_ => Syntax.Operator.GreaterThan.apply())
-            | EQUAL ^^ (_ => Syntax.Operator.Equal.apply())
-            | NOTEQUAL ^^ (_ => Syntax.Operator.NotEqual.apply())
             | LESSEQUAL ^^ (_ => Syntax.Operator.LessEqual.apply())
             | GREATEREQUAL ^^ (_ => Syntax.Operator.GreaterEqual.apply())
+        }
+        
+        def comp: P[Syntax.Expression] = posi {
+            equal ~~ rep(equal_op ~~ equal) ^^ fold_exp
+        }
+
+        def equal_op: P [Syntax.Operator] = posi {
+            EQUAL ^^ (_ => Syntax.Operator.Equal.apply())
+            | NOTEQUAL ^^ (_ => Syntax.Operator.NotEqual.apply())
+        }
+        
+        def equal: P[Syntax.Expression] = posi {
+            bitand ~~ rep(bitand_op ~~ bitand) ^^ fold_exp
+        }
+
+        def bitand_op: P [Syntax.Operator] = posi {
+            BITAND ^^ (_ => Syntax.Operator.BitAnd.apply())
+        }
+        
+        def bitand: P[Syntax.Expression] = posi {
+            xor ~~ rep(xor_op ~~ xor) ^^ fold_exp
+        }
+
+        def xor_op: P [Syntax.Operator] = posi {
+            XOR ^^ (_ => Syntax.Operator.Xor.apply())
+        }
+        
+        def xor: P[Syntax.Expression] = posi {
+            bitor ~~ rep(bitor_op ~~ bitor) ^^ fold_exp
+        }
+
+        def bitor_op: P [Syntax.Operator] = posi {
+            BITOR ^^ (_ => Syntax.Operator.BitOr.apply())
+        }
+        
+        def bitor: P[Syntax.Expression] = posi {
+            logand ~~ rep(logand_op ~~ logand) ^^ fold_exp
+        }
+
+        def logand_op: P [Syntax.Operator] = posi {
+            LOGAND ^^ (_ => Syntax.Operator.LogAnd.apply())
+        }
+        
+        def logand: P[Syntax.Expression] = posi {
+            logor ~~ rep(logor_op ~~ logor) ^^ fold_exp
+        }
+
+        def logor_op: P [Syntax.Operator] = posi {
+            LOGOR ^^ (_ => Syntax.Operator.LogOr.apply())
+        }
+        
+        def logor: P[Syntax.Expression] = posi {
+            ??? ~~ rep(equal_op ~~ ???) ^^ fold_exp
         }
 
     }
