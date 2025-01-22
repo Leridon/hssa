@@ -11,7 +11,7 @@ import de.thm.mni.hybridcomputing.util.errors.LanguageError
 
 object RooplMain {
   def main(args: Array[String]): Unit = {
-    val file = "programs/roopl/LinkedList.rplpp"
+    val file = "programs/roopl/ParserTest.rplpp"
 
     val tokenStream: TokenReader[TokenClass] = lex(SourceFile.fromFile(Paths.get(file)))
 
@@ -22,9 +22,10 @@ object RooplMain {
     */
 
     try {
-      var prog = Parsing.parse(tokenStream)
+      val prog = Parsing.parse(tokenStream)
+      val formatter = Formatting(new Formatting.Options(parenthesizeExpressions = false, indentBy = 4))
       println("Success!")
-      println(prog)
+      println(formatter.format(prog))
     } catch {
         case e: LanguageError.AbortDueToErrors =>
             e.errors.foreach(e => {

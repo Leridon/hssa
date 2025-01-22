@@ -1,0 +1,91 @@
+// Source: Design and Implementation of Dynamic Memory Management in a Reversible Object Oriented Programming Language
+
+class Cell
+    Cell next
+    int data
+
+    method constructor(int value)
+        data ^= value
+        data += ((5 + 3) * 2) / (1 - 5)
+        data += 5 + (3 * (2 / 1)) - 5
+        data += 5 + ((3 * 2) / 1) - 5
+        data += 5 + 3 * 2 / 1 - 5
+        data += 10 - 5 - 3
+        data += 10 - (5 - 3)
+        data -= 10 - (5 * 3)
+        data -= (10 - 5) * 3
+        data += 1 + 1 + 1
+        data += 1 + (1 + 1)
+        data += (1 + 1) + 1
+
+    method append(Cell cell, Cell cell2, Cell cell3)
+        if next = nil & cell != nil then
+            next <=> cell // Store as next cell if current cell is end of list
+            blub += 5
+        else skip
+        fi next != nil & cell = nil
+
+        if next != nil then
+            call next::append(cell) // Recusively search until we reach end of list
+        else skip
+        fi next != nil
+
+class LinkedList
+    Cell head
+    int listLength
+
+    method insertHead(Cell cell)
+        if head = nil & cell != nil then
+            head <=> cell // Set cell as head of list if list is empty
+        else skip
+        fi head != nil & cell = nil
+
+    method appendCell(Cell cell)
+        call insertHead(cell) // Insert as head if empty list
+
+        if head != nil then
+            call head::append(cell) // Iterate list until we reach the end, then insert the node
+        else skip
+        fi head != nil
+
+        listLength += 1 // Increment lenght
+
+    method prependCell(Cell cell)
+        call insertHead(cell) // Insert as head if empty list
+
+        if cell != nil & head != nil then
+            call cell::append(head) // Set cell.next = head. head = nil after execution
+        else skip
+        fi cell != nil & head = nil
+
+        if cell != nil & head = nil then
+            cell <=> head // Set head = cell. Cell is nil after execution
+        else skip
+        fi cell = nil & head != nil
+
+        listLength += 1 // Increment length
+
+    method length(int result)
+        result ^= listLength
+
+class Program
+    LinkedList linkedList
+    int sumResult
+    int listLength
+
+    method main()
+        new LinkedList linkedList // Init new linked linkedList
+        listLength += 10
+
+        local int x = 0
+        from x = 0 do
+            skip
+        loop
+            local Cell cell = nil
+            new Cell cell // Instantiate new cell
+            call cell::constructor(x) // Set value of cell
+            call linkedList::appendCell(cell) // Append it to the linkedList
+            delocal Cell cell = nil
+            x += 1
+        until x = listLength
+        delocal int x = listLength
