@@ -38,23 +38,23 @@ class LinkedList
 
         listLength += 1 // Increment lenght
 
-        method prependCell(Cell cell)
-            call insertHead(cell) // Insert as head if empty list
+    method prependCell(Cell cell)
+        call insertHead(cell) // Insert as head if empty list
 
-            if cell != nil & head != nil then
-                call cell::append(head) // Set cell.next = head. head = nil after execution
-            else skip
-            fi cell != nil & head = nil
+        if cell != nil & head != nil then
+            call cell::append(head) // Set cell.next = head. head = nil after execution
+        else skip
+        fi cell != nil & head = nil
 
-            if cell != nil & head = nil then
-                cell <=> head // Set head = cell. Cell is nil after execution
-            else skip
-            fi cell = nil & head != nil
+        if cell != nil & head = nil then
+            cell <=> head // Set head = cell. Cell is nil after execution
+        else skip
+        fi cell = nil & head != nil
 
-            listLength += 1 // Increment length
+        listLength += 1 // Increment length
 
-        method length(int result)
-            result ^= listLength
+    method length(int result)
+        result ^= listLength
 
 class Program
     LinkedList linkedList
@@ -63,7 +63,7 @@ class Program
 
     method main()
         new LinkedList linkedList // Init new linked linkedList
-            listLength += 10
+        listLength += 10
 
         local int x = 0
         from x = 0 do
