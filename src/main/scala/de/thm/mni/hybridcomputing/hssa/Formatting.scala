@@ -21,7 +21,6 @@ object Formatting {
         else s" $inner"
     }
     
-    
     def format(exp: Syntax.Expression, force_parens: Boolean = false): String = {
         val inner = exp match
             case Expression.Literal(Basic.Unit) => ""

@@ -16,6 +16,15 @@ rel fibpair:
                      -> end    :=    (a, b), 0
 
 
+rel fibpair.test:
+(), 0 := begin<-
+in := tests.assert 5 := ()
+out := fibpair := in
+() := tests.assert (1, 3) := out
+       ->end :=(), 0
+
+
+
 rel fibpair.main:
 (), 0 := begin <-
  res  := fibpair  :=   20

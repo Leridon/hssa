@@ -1,13 +1,10 @@
 package de.thm.mni.hybridcomputing.hssa.parsing
 
-import de.thm.mni.hybridcomputing.util.parsing.{FileReader, LexicalGrammarUtilities, SourceFile, Token, TokenReader}
-
-import java.nio.file.Path
-import scala.util.parsing.input.{CharSequenceReader, Position}
+import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, SourceFile, Token, TokenReader}
+import scala.util.parsing.input.Position
 
 object Lexing {
     object Tokens {
-        
         enum TokenClass {
             case IDENT
             case RELATION

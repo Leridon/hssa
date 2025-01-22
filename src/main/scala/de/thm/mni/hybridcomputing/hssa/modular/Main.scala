@@ -7,15 +7,19 @@ import java.nio.file.Path
 
 object Main {
     def main(args: Array[String]): Unit = {
+        val path = Path.of(args.head).toAbsolutePath
+        
         Language.Canon.chains.withErrors(chains => {
-            val (modular_prog, _) = ModularHssa.Parsing(chains.language).parseProject(
-                Path.of("programs"),
-                Identifier("main")
-            )
+            val mChains = Modular.Chains(chains.language)
             
-            val prog = ModularHssa.link(modular_prog)
+            val prog = Modular.Chains(chains.language).parseAndLink(path)
             
-            prog.language.chains.withErrors(_.checkAndExecute(prog))
+            args.tail match
+                case Array("--run-tests") => chains.executeAllTests(prog)
+                case Array("--run", main) => chains.checkAndExecute(prog, main)
+                case Array("--run") => chains.checkAndExecute(prog)
+                case Array("--autoformat") =>
+                case arr => println(s"Unknown command: ${arr.mkString(" ")}")
         })
     }
 }
