@@ -102,7 +102,7 @@ object Parsing {
             | variableIdent ~~ LBRACK ~~ expression ~~ RBRACK ^^ Syntax.VariableReference.Array.apply
         }
 
-        // Parse expressions
+        // Parse expressions, roopl++ uses operator precedence from C
         def gen_bin_exp(op: Syntax.Operator): (Syntax.Expression, Syntax.Expression) => Syntax.Expression = {
             Syntax.Expression.Binary.apply(_, op, _)
         }
