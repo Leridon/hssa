@@ -104,89 +104,89 @@ object Parsing {
 
         // Parse expressions
         def gen_bin_exp(op: Syntax.Operator): (Syntax.Expression, Syntax.Expression) => Syntax.Expression = {
-            (e1, e2) => Syntax.Expression.Binary.apply(e1, op, e2)
+            Syntax.Expression.Binary.apply(_, op, _)
         }
 
         def expression: P[Syntax.Expression] = posi {
-            chainl1(term, term_op)
-        }
-        
-        def term_op: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
-            MUL ^^^ gen_bin_exp(Syntax.Operator.MUL)
-            | DIV ^^^ gen_bin_exp(Syntax.Operator.DIV)
-            | MOD ^^^ gen_bin_exp(Syntax.Operator.MOD)
-        }
-        
-        def term: P[Syntax.Expression] = posi {
-            chainl1(factor, factor_op)
+            chainl1(expression0, expression_op0)
         }
 
-        def factor_op: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
-            ADD ^^^ gen_bin_exp(Syntax.Operator.ADD)
-            | SUB ^^^ gen_bin_exp(Syntax.Operator.SUB)
-        }
-        
-        def factor: P[Syntax.Expression] = posi {
-            chainl1(comp, comp_op)
+        def expression_op0: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
+            LOGOR ^^^ gen_bin_exp(Syntax.Operator.LOGOR)
         }
 
-        def comp_op: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
+        def expression0: P[Syntax.Expression] = posi {
+            chainl1(expression1, expression_op1)
+        }
+
+        def expression_op1: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
+            LOGAND ^^^ gen_bin_exp(Syntax.Operator.LOGAND)
+        }
+
+        def expression1: P[Syntax.Expression] = posi {
+            chainl1(expression2, expression_op2)
+        }
+
+        def expression_op2: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
+            BITOR ^^^ gen_bin_exp(Syntax.Operator.BITOR)
+        }
+
+        def expression2: P[Syntax.Expression] = posi {
+            chainl1(expression3, expression_op3)
+        }
+
+        def expression_op3: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
+            XOR ^^^ gen_bin_exp(Syntax.Operator.XOR)
+        }
+
+        def expression3: P[Syntax.Expression] = posi {
+            chainl1(expression4, expression_op4)
+        }
+
+        def expression_op4: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
+            BITAND ^^^ gen_bin_exp(Syntax.Operator.BITAND)
+        }
+
+        def expression4: P[Syntax.Expression] = posi {
+            chainl1(expression5, expression_op5)
+        }
+
+        def expression_op5: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
+            EQUAL ^^^ gen_bin_exp(Syntax.Operator.EQUAL)
+            | NOTEQUAL ^^^ gen_bin_exp(Syntax.Operator.NOTEQUAL)
+        }
+
+        def expression5: P[Syntax.Expression] = posi {
+            chainl1(expression6, expression_op6)
+        }
+
+        def expression_op6: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
             LESSTHAN ^^^ gen_bin_exp(Syntax.Operator.LESSTHAN)
             | GREATERTHAN ^^^ gen_bin_exp(Syntax.Operator.GREATERTHAN)
             | LESSEQUAL ^^^ gen_bin_exp(Syntax.Operator.LESSEQUAL)
             | GREATEREQUAL ^^^ gen_bin_exp(Syntax.Operator.GREATEREQUAL)
         }
-        
-        def comp: P[Syntax.Expression] = posi {
-            chainl1(equal, equal_op)
+
+        def expression6: P[Syntax.Expression] = posi {
+            chainl1(expression7, expression_op7)
         }
 
-        def equal_op: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
-            EQUAL ^^^ gen_bin_exp(Syntax.Operator.EQUAL)
-            | NOTEQUAL ^^^ gen_bin_exp(Syntax.Operator.NOTEQUAL)
-        }
-        
-        def equal: P[Syntax.Expression] = posi {
-            chainl1(bitand, bitand_op)
+        def expression_op7: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
+            ADD ^^^ gen_bin_exp(Syntax.Operator.ADD)
+            | SUB ^^^ gen_bin_exp(Syntax.Operator.SUB)
         }
 
-        def bitand_op: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
-            BITAND ^^^ gen_bin_exp(Syntax.Operator.BITAND)
-        }
-        
-        def bitand: P[Syntax.Expression] = posi {
-            chainl1(xor, xor_op)
+        def expression7: P[Syntax.Expression] = posi {
+            chainl1(simple_expression, expression_op8)
         }
 
-        def xor_op: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
-            XOR ^^^ gen_bin_exp(Syntax.Operator.XOR)
-        }
-        
-        def xor: P[Syntax.Expression] = posi {
-            chainl1(bitor, bitor_op)
+        def expression_op8: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
+            MUL ^^^ gen_bin_exp(Syntax.Operator.MUL)
+            | DIV ^^^ gen_bin_exp(Syntax.Operator.DIV)
+            | MOD ^^^ gen_bin_exp(Syntax.Operator.MOD)
         }
 
-        def bitor_op: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
-            BITOR ^^^ gen_bin_exp(Syntax.Operator.BITOR)
-        }
-        
-        def bitor: P[Syntax.Expression] = posi {
-            chainl1(logand, logand_op)
-        }
-
-        def logand_op: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
-            LOGAND ^^^ gen_bin_exp(Syntax.Operator.LOGAND)
-        }
-        
-        def logand: P[Syntax.Expression] = posi {
-            chainl1(logor, logor_op)
-        }
-
-        def logor_op: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
-            LOGOR ^^^ gen_bin_exp(Syntax.Operator.LOGOR)
-        }
-        
-        def logor: P[Syntax.Expression] = posi {
+        def simple_expression: P[Syntax.Expression] = posi {
             valueToken(INTLIT)(classOf[Integer]) ^^ (i => Syntax.Expression.Literal.apply(i.intValue()))
             | variableIdent ^^ Syntax.Expression.Variable.apply
             | variableIdent ~~ LBRACK ~~ expression ~~ RBRACK ^^ Syntax.Expression.Array.apply
