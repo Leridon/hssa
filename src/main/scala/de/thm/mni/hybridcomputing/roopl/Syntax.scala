@@ -132,7 +132,6 @@ object Syntax {
         case MOD
         case BITAND
         case BITOR
-        case BITXOR
         case LOGAND
         case LOGOR
         case LESSTHAN
