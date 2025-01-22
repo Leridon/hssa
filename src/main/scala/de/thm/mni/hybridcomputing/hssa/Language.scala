@@ -3,7 +3,7 @@ package de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Language.Plugin
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
+import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Basic, Information}
 
 class Language(val plugins: Seq[Language.Plugin], val semantics: Language.Semantics) {
     val builtins: Seq[Plugin.Builtin] = plugins.flatMap(_.builtins)
@@ -16,7 +16,7 @@ class Language(val plugins: Seq[Language.Plugin], val semantics: Language.Semant
 }
 
 object Language {
-    val Canon = Language(Seq(), Semantics(true))
+    val Canon = Language(Seq(Basic, Arithmetic, Information), Semantics(true))
     
     val BeginLabel = "begin"
     val EndLabel = "end"

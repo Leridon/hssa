@@ -1,10 +1,5 @@
 package de.thm.mni.hybridcomputing.hssa.util
 
-import de.thm.mni.hybridcomputing.util.errors.LanguageError
-import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
-
-import scala.util.parsing.input.{NoPosition, Position}
-
 def TODO(s: String = ""): Nothing = {
     throw new NotImplementedError(s)
 }
