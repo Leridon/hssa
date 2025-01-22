@@ -69,8 +69,8 @@ object Parsing {
             METHOD ~~ methodIdent ~~ LPAR ~~ repsep(variableDefinition, COMMA) ~~ RPAR ~~ block ^^ Syntax.MethodDefinition.apply
         }
 
-        def block: P[Syntax.Statement.Sequence] = posi {
-            rep(statement) ^^ Syntax.Statement.Sequence.apply
+        def block: P[Syntax.Statement.Block] = posi {
+            rep(statement) ^^ Syntax.Statement.Block.apply
         }
 
         def statement: P[Syntax.Statement] = posi {

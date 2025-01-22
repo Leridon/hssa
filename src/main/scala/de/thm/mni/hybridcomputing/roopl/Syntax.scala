@@ -97,7 +97,7 @@ object Syntax {
         case class Uncall(callee: VariableReference, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class Skip() extends Statement
         // Since statements are always executed one by one there is no reason to store them binarily (Also makes parsing easier by removing recursion)
-        case class Sequence(list: Seq[Statement]) extends Statement
+        case class Block(list: Seq[Statement]) extends Statement
     }
 
     enum AssignmentOperator {
