@@ -96,6 +96,12 @@ object Syntax {
         case class Sequence(list: Seq[Statement]) extends Statement
     }
 
+    enum AssignmentOperator {
+        case ADD
+        case SUB
+        case XOR
+    }
+
     sealed abstract class VariableReference extends Node
 
     object VariableReference {
@@ -113,36 +119,24 @@ object Syntax {
         case class Binary(left: Expression, op: Operator, right: Expression) extends Expression
     }
 
-    sealed abstract class Operator extends Node
-
-    object Operator {
-        case class Add() extends Operator
-        case class Sub() extends Operator
-        case class Xor() extends Operator
-        case class Mul() extends Operator
-        case class Div() extends Operator
-        case class Mod() extends Operator
-        case class BitAnd() extends Operator
-        case class BitOr() extends Operator
-        case class BitXor() extends Operator
-        case class LogAnd() extends Operator
-        case class LogOr() extends Operator
-        case class LogXor() extends Operator
-        case class LessThan() extends Operator
-        case class GreaterThan() extends Operator
-        case class Equal() extends Operator
-        case class NotEqual() extends Operator
-        case class LessEqual() extends Operator
-        case class GreaterEqual() extends Operator
-
-    }
-
-    sealed abstract class AssignmentOperator extends Operator
-
-    object AssignmentOperator {
-        case class Add() extends AssignmentOperator
-        case class Sub() extends AssignmentOperator
-        case class Xor() extends AssignmentOperator
-    }
-    
+    enum Operator {
+        case ADD
+        case SUB
+        case XOR
+        case MUL
+        case DIV
+        case MOD
+        case BITAND
+        case BITOR
+        case BITXOR
+        case LOGAND
+        case LOGOR
+        case LOGXOR
+        case LESSTHAN
+        case GREATERTHAN
+        case EQUAL
+        case NOTEQUAL
+        case LESSEQUAL
+        case GREATEREQUAL
+    }    
 }
