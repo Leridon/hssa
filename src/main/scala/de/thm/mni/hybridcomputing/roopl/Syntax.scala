@@ -118,7 +118,7 @@ object Syntax {
     object Expression {
         case class Literal(value: Int) extends Expression
         case class Variable(variable: VariableIdentifier) extends Expression
-        case class Array(array: VariableIdentifier, index: Expression) extends Expression
+        case class Array(name: VariableIdentifier, index: Expression) extends Expression
         case class Nil() extends Expression
         case class Binary(left: Expression, op: Operator, right: Expression) extends Expression
     }
@@ -135,7 +135,6 @@ object Syntax {
         case BITXOR
         case LOGAND
         case LOGOR
-        case LOGXOR
         case LESSTHAN
         case GREATERTHAN
         case EQUAL
