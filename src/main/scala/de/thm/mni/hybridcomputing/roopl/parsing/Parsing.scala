@@ -76,18 +76,18 @@ object Parsing {
         def statement: P[Syntax.Statement] = posi {
             variableLiteral ~~ assignmentOperator ~~ expression ^^ Syntax.Statement.Assignment.apply
             | variableLiteral ~~ SWAP ~~ variableLiteral ^^ Syntax.Statement.Swap.apply
-            | IF ~~ expression ~~ THEN ~~ block ~~ ELSE ~~ block ~~ FI ~~ expression ^^ Syntax.Statement.Conditional.apply
-            | FROM ~~ expression ~~ DO ~~ block ~~ LOOP ~~ block ~~ UNTIL ~~ expression ^^ Syntax.Statement.Loop.apply
-            | CONSTRUCT ~~ classIdent ~~ variableIdent ~~ block ~~ DESTRUCT ~~ variableIdent ^^ Syntax.Statement.ObjectBlock.apply
-            | LOCAL ~~ dataType ~~ variableIdent ~~ EQUAL ~~ expression ~~ block ~~ DELOCAL ~~ dataType ~~ variableIdent ~~ EQUAL ~~ expression ^^ Syntax.Statement.LocalBlock.apply
-            | NEW ~~ dataType ~~ variableLiteral ^^ Syntax.Statement.New.apply
-            | DELETE ~~ dataType ~~ variableLiteral ^^ Syntax.Statement.Delete.apply
-            | COPY ~~ dataType ~~ variableLiteral ~~ variableLiteral ^^ Syntax.Statement.Copy.apply
-            | UNCOPY ~~ dataType ~~ variableLiteral ~~ variableLiteral ^^ Syntax.Statement.Uncopy.apply
-            | CALL ~~ methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.CallLocal.apply
-            | UNCALL ~~ methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.UncallLocal.apply
-            | CALL ~~ variableLiteral ~~ DBLCOLON ~~ methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Call.apply
-            | UNCALL ~~ variableLiteral ~~ DBLCOLON ~~ methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Uncall.apply
+            | IF ~~! expression ~~ THEN ~~ block ~~ ELSE ~~ block ~~ FI ~~ expression ^^ Syntax.Statement.Conditional.apply
+            | FROM ~~! expression ~~ DO ~~ block ~~ LOOP ~~ block ~~ UNTIL ~~ expression ^^ Syntax.Statement.Loop.apply
+            | CONSTRUCT ~~! classIdent ~~ variableIdent ~~ block ~~ DESTRUCT ~~ variableIdent ^^ Syntax.Statement.ObjectBlock.apply
+            | LOCAL ~~! dataType ~~ variableIdent ~~ EQUAL ~~ expression ~~ block ~~ DELOCAL ~~ dataType ~~ variableIdent ~~ EQUAL ~~ expression ^^ Syntax.Statement.LocalBlock.apply
+            | NEW ~~! dataType ~~ variableLiteral ^^ Syntax.Statement.New.apply
+            | DELETE ~~! dataType ~~ variableLiteral ^^ Syntax.Statement.Delete.apply
+            | COPY ~~! dataType ~~ variableLiteral ~~ variableLiteral ^^ Syntax.Statement.Copy.apply
+            | UNCOPY ~~! dataType ~~ variableLiteral ~~ variableLiteral ^^ Syntax.Statement.Uncopy.apply
+            | CALL ~~ methodIdent ~~ LPAR ~~! repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.CallLocal.apply
+            | UNCALL ~~ methodIdent ~~ LPAR ~~! repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.UncallLocal.apply
+            | CALL ~~ variableLiteral ~~ DBLCOLON ~~! methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Call.apply
+            | UNCALL ~~ variableLiteral ~~ DBLCOLON ~~! methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Uncall.apply
             | SKIP ^^^ Syntax.Statement.Skip.apply()
         }
 
