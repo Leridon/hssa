@@ -67,8 +67,12 @@ object Syntax {
     sealed abstract class DataType extends Node
 
     object DataType {
-        case class Integer() extends DataType
-        case class ClassType(name: ClassIdentifier) extends DataType
+        case class Integer() extends DataType {
+            override def toString(): String = "int"
+        }
+        case class ClassType(name: ClassIdentifier) extends DataType {
+            override def toString(): String = name.toString
+        }
     }
 
     case class MethodDefinition(name: MethodIdentifier, parameters: Seq[VariableDefinition], body: Statement) extends Node
