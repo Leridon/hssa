@@ -21,33 +21,34 @@ object RooplMain {
     var file: String = ""
 
     for (arg <- args) {
-        arg match
-            case "--tokens" => showTokens = true 
-            case "--format" => showFormat = true
-            case string => if file == "" then file = string else usage()
+      arg match
+        case "--tokens" => showTokens = true
+        case "--format" => showFormat = true
+        case option if option.startsWith("-") => usage()
+        case string => if file == "" then file = string else usage()
     }
 
     if (file == "") usage()
 
     try {
-        val tokenStream: TokenReader[TokenClass] = lex(SourceFile.fromFile(Paths.get(file)))
-        if showTokens then
-            tokenStream.readAll().foreach(println)
-            sys.exit(0)
+      val tokenStream: TokenReader[TokenClass] = lex(SourceFile.fromFile(Paths.get(file)))
+      if showTokens then
+        tokenStream.readAll().foreach(token => println(s"$token @ ${token.position.toString}"))
+        sys.exit(0)
 
-        val syntax: Program = parse(tokenStream) match
-            case None => sys.exit(2)
-            case Some(prog) => prog
+      val syntax: Program = parse(tokenStream) match
+        case None => sys.exit(2)
+        case Some(prog) => prog
 
-        if showFormat then
-            val formatter = Formatting(new Formatting.Options(parenthesizeExpressions = false, indentBy = 4))
-            formatter.format(syntax)
-            sys.exit(0)
+      if showFormat then
+        val formatter = Formatting(new Formatting.Options(parenthesizeExpressions = false, indentBy = 4))
+        println(formatter.format(syntax))
+        sys.exit(0)
 
         // Run semantic analysis
     } catch {
-        case e: NoSuchFileException =>
-            s"File '$file' does not exist!"
+      case e: NoSuchFileException =>
+        println(s"File '$file' does not exist!")
     }
   }
 
@@ -56,11 +57,8 @@ object RooplMain {
       Some(Parsing.parse(tokenStream))
     } catch {
         case e: LanguageError.AbortDueToErrors =>
-            e.errors.foreach(e => {
-                println(s"An error occurred @ ${e.position}")
-                println(e.msg)
-            })
-            None
+          e.errors.foreach(println)
+          None
     }
   }
 
