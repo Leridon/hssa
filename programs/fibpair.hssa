@@ -13,7 +13,7 @@ rel fibpair:
                       -> L1    := (y1, y2, m2), 0
 
  (a, b, 0), 0   :=    L3 <-
-                     -> end    :=    (a, b), 0
+                     -> end    :=    (a, c), 0
 
 
 rel main:

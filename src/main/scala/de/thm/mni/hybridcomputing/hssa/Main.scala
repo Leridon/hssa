@@ -36,7 +36,7 @@ object Main {
             case e: LanguageError.AbortDueToErrors =>
                 e.errors.foreach(e => {
                     println(s"${e.severity}: ${e.position}")
-                    println(e.msg)
+                    println(e)
                     println()
                 })
         }
