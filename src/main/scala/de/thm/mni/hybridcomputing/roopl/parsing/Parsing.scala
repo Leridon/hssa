@@ -49,11 +49,11 @@ object Parsing {
         }
 
         def program: P[Syntax.Program] = posi {
-            phrase(rep(classDefinition) ^^ (definitions => Syntax.Program(definitions)))
+            phrase(rep1(classDefinition) ^^ (definitions => Syntax.Program(definitions)))
         }
         
         def classDefinition: P[Syntax.ClassDefinition] = posi {
-            CLASS ~~ classIdent ~~ opt(INHERITS ~~ classIdent) ~~ rep(variableDefinition) ~~ rep(methodDefinition) ^^ Syntax.ClassDefinition.apply
+            CLASS ~~ classIdent ~~ opt(INHERITS ~~ classIdent) ~~ rep(variableDefinition) ~~ rep1(methodDefinition) ^^ Syntax.ClassDefinition.apply
         }
 
         def variableDefinition: P[Syntax.VariableDefinition] = posi {
@@ -72,7 +72,7 @@ object Parsing {
         }
 
         def block: P[Syntax.Statement.Block] = posi {
-            rep(statement) ^^ Syntax.Statement.Block.apply
+            rep1(statement) ^^ Syntax.Statement.Block.apply
         }
 
         def statement: P[Syntax.Statement] = posi {
