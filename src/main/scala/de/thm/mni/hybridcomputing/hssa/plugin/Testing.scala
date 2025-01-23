@@ -12,7 +12,7 @@ object Testing extends Language.Plugin {
             _ => TestFailedError().raise())),
         Plugin.Builtin(Value.BuiltinRelation("tests.assert",
             arg => parameter => {
-                if (arg != parameter) Basic.Unit
+                if (arg == parameter) Basic.Unit
                 else TestFailedError().raise()
             },
             arg => {

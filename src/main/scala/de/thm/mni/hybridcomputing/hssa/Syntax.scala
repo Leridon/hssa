@@ -9,6 +9,9 @@ import scala.language.implicitConversions
 
 object Syntax {
     sealed trait Node extends Positioned
+    sealed trait Parenthesised {
+        var paren_count: Int = 0
+    }
     
     case class Identifier(name: String) extends Node {
         override def toString: String = name
@@ -21,7 +24,7 @@ object Syntax {
         }
     }
     
-    sealed abstract class Expression extends Node {
+    sealed abstract class Expression extends Node with Parenthesised {
         override def toString: String = Formatting.format(this, true)
     }
     

@@ -1,7 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa.modular
 
-import de.thm.mni.hybridcomputing.hssa.{Chains, Language}
-import de.thm.mni.hybridcomputing.hssa.Syntax.Identifier
+import de.thm.mni.hybridcomputing.hssa.Language
 
 import java.nio.file.Path
 
@@ -12,13 +11,12 @@ object Main {
         Language.Canon.chains.withErrors(chains => {
             val mChains = Modular.Chains(chains.language)
             
-            val prog = Modular.Chains(chains.language).parseAndLink(path)
-            
             args.tail match
-                case Array("--run-tests") => chains.executeAllTests(prog)
-                case Array("--run", main) => chains.checkAndExecute(prog, main)
-                case Array("--run") => chains.checkAndExecute(prog)
-                case Array("--autoformat") =>
+                case Array("--run-tests") => chains.executeAllTests(mChains.parseAndLink(path))
+                case Array("--run", main) => chains.checkAndExecute(mChains.parseAndLink(path), main)
+                case Array("--run") => chains.checkAndExecute(mChains.parseAndLink(path))
+                case Array("--format") => mChains.parseAndFormat(path)
+                case Array("--autoformat") => mChains.formatProjectInplace(mChains.parseProject(path))
                 case arr => println(s"Unknown command: ${arr.mkString(" ")}")
         })
     }

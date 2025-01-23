@@ -28,13 +28,15 @@ object Arithmetic extends Language.Plugin {
         def binary_preserve_both(name: String, f: (Int, Int) => Int): Builtin = Language.Plugin.Builtin(
             Value.BuiltinRelation(
                 name,
-                { case Value.Pair(Basic.Int(a), Basic.Int(b)) => {
-                    case Basic.Unit => Basic.Int(f(a, b))
-                }
+                arg => in => arg match {
+                    case Value.Pair(Basic.Int(a), Basic.Int(b)) => in match {
+                        case Basic.Unit => Basic.Int(f(a, b))
+                    }
                 },
-                { case Value.Pair(Basic.Int(a), Basic.Int(b)) => {
-                    case Basic.Int(v) if v == f(a, b) => Basic.Unit
-                }
+                arg => in => arg match {
+                    case Value.Pair(Basic.Int(a), Basic.Int(b)) => in match {
+                        case Basic.Int(v) if v == f(a, b) => Basic.Unit
+                    }
                 },
             )
         )
