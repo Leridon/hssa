@@ -14,6 +14,8 @@
     - [ ] Add newlines where sensible
     - [ ] Don't loose comments when formatting (requires comments in Syntax)
 - [-] CLI-usable main
+- [+] Improved Error Handling
+    - [x] Add erroneous source code to error message output
 - [ ] Semantic Analysis
     - ...
 - [ ] Translation into HSSA
