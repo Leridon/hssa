@@ -18,12 +18,9 @@ rel fibpair:
 
 rel fibpair.test:
 (), 0 :=      begin <-               
- in   :=   ~tests.assert 5    :=  ()
- out  :=       fibpair       :=  in  
- ()   := tests.assert (5, 8) :=  out
+ (1, 1)  :=       fibpair       :=  1
+ (1, 2)  :=       fibpair       :=  2
+ (2, 3)  :=       fibpair       :=  3
+ (3, 5)  :=       fibpair       :=  4
+ (5, 8)  :=       fibpair       :=  5
                -> end        := (), 0
-
-rel fibpair.main:
-(), 0 := begin <-          
- res  := fibpair  :=   20  
-          -> end  := res, 0

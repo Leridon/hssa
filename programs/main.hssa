@@ -1,6 +1,0 @@
-import fibpair
-
-rel main:
-(), 0 := begin <-
- res  := fibpair  :=   20
-          -> end  := res, 0

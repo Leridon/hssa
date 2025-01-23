@@ -19,7 +19,7 @@ object MyMain {
             
             val language = Language(Seq(Basic, Arithmetic, Information), Language.Canon.semantics)
             
-            var prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/rtm.hssa"))))
+            var prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/examples/rtm.hssa"))))
             
             prog = EliminateNondeterminism.ControlFlow.apply(prog)
             
@@ -70,15 +70,15 @@ object MyMain {
                   |""".stripMargin
             )
             
-            val rtm_int = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/rtm.hssa"))))
-            val tm_int = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/tm.hssa"))))
+            val rtm_int = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/examples/rtm.hssa"))))
             
             val input = Parsing(language).parseLiteral("(4, (1, 1, 0, 1, ()))")
             
             println("RTM fw")
-            println(Interpretation(language).interpret(rtm_int, "main", inc_rtm, input, FORWARDS))
+            println(Interpretation(language).interpret(rtm_int, "rtm.eval", inc_rtm, input, FORWARDS))
             println("RTM bw")
-            println(Interpretation(language).interpret(rtm_int, "main", inc_rtm, input, BACKWARDS))
+            println(Interpretation(language).interpret(rtm_int, "rtm.eval", inc_rtm, input, BACKWARDS))
+            val tm_int = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/examples/tm.hssa"))))
             println("TM fw")
             println(Interpretation(language).interpret(tm_int, "main", inc_tm, input, FORWARDS))
             println("TM bw")

@@ -23,6 +23,15 @@ rel power x:
                   -> Recur    := (p3, y2), 0
 
 
+rel power.test:
+(),0 := begin <-
+8 := power 2 := 3
+9 := power 3 := 2
+256 := power 4 := 4
+10000 := power 10 := 4
+-> end := (),0
+
+
 rel power.main:
 (), 0 := begin <-
  res  := power 2  :=   10

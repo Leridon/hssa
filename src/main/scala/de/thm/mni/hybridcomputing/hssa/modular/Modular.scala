@@ -47,26 +47,26 @@ object Modular {
             }
         }
         
-        def parseProject(root_folder: Path, root_file: Identifier): (Syntax.Program, LanguageError.Collector) = {
-            def resolve(id: Identifier): Path = root_folder.resolve(id.name.replaceAll("\\.", "/") + ".hssa")
+        def parseProject(root_file: Path): (Syntax.Program, LanguageError.Collector) = {
+            def resolve(relative_to: Path, id: Identifier): Path = relative_to.getParent.resolve(id.name.replaceAll("\\.", "/") + ".hssa")
             
             val programs = new ListBuffer[Syntax.ProgramWithImports]()
             
-            val queue = new mutable.Queue[Identifier]()
+            val queue = new mutable.Queue[Path]()
             
             queue.enqueue(root_file)
             
             while (queue.nonEmpty) {
                 val next = queue.dequeue()
                 
-                val file = resolve(next).toAbsolutePath
+                val file = next.toAbsolutePath
                 
                 if (!programs.exists(_.program.position.file.path.exists(_ == file))) {
                     val program = parse(hssa.parsing.Lexing.lex(SourceFile.fromFile(file)))
                     
                     programs.addOne(program)
                     
-                    queue.enqueueAll(program.imports.map(_.path))
+                    queue.enqueueAll(program.imports.map(i => resolve(file, i.path)))
                 }
             }
             
@@ -88,7 +88,7 @@ object Modular {
         def format(prog: Syntax.ProgramWithImports): String = {
             val imports = prog.imports.mkString("\n")
             
-            if(imports.isEmpty) hssa.Formatting.format(prog.program)
+            if (imports.isEmpty) hssa.Formatting.format(prog.program)
             else imports + "\n\n" + hssa.Formatting.format(prog.program)
         }
     }
@@ -99,19 +99,13 @@ object Modular {
         }
         
         def parseProject(root_file: Path): Syntax.Program = {
-            val (modular_prog, _) = Modular.Parsing(language).parseProject(
-                root_file.getParent,
-                Identifier(root_file.getFileName.toString)
-            )
+            val (modular_prog, _) = Modular.Parsing(language).parseProject(root_file)
             
             modular_prog
         }
         
         def parseAndLink(root_file: Path): hssa.Syntax.Program = {
-            val (modular_prog, _) = Modular.Parsing(language).parseProject(
-                root_file.getParent,
-                Identifier(root_file.getFileName.toString)
-            )
+            val (modular_prog, _) = Modular.Parsing(language).parseProject(root_file)
             
             link(modular_prog)
         }
