@@ -83,7 +83,7 @@ class Formatting(options: Formatting.Options) {
         expression match
             case Literal(value) => value.toString()
             case Variable(variable) => variable.toString
-            case Expression.Array(name, index) => s"${name}[${index}]"
+            case Expression.Array(name, index) => s"${name}[${format(index)}]"
             case Expression.Nil() => "nil"
             case Binary(left, op, right) => {
                 // Must parenthesize subexpressions if their operator has lower or equal precedence than this.op
