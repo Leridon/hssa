@@ -1,13 +1,10 @@
 package de.thm.mni.hybridcomputing.hssa.parsing
 
-import de.thm.mni.hybridcomputing.util.parsing.{FileReader, LexicalGrammarUtilities, SourceFile, Token, TokenReader}
-
-import java.nio.file.Path
-import scala.util.parsing.input.{CharSequenceReader, Position}
+import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, SourceFile, Token, TokenReader}
+import scala.util.parsing.input.Position
 
 object Lexing {
     object Tokens {
-        
         enum TokenClass {
             case IDENT
             case RELATION
@@ -21,6 +18,7 @@ object Lexing {
             case ASGN
             case TILDE
             case EOF
+            case IMPORT
             
             override def toString: String = this match
                 case IDENT => "IDENT"
@@ -34,6 +32,7 @@ object Lexing {
                 case ASGN => "ASGN"
                 case TILDE => "TILDE"
                 case COLON => "COLON"
+                case IMPORT => "IMPORT"
                 case EOF => "<eof>"
         }
     }
@@ -48,7 +47,12 @@ object Lexing {
         
         def token: Parser[Symbol] = (in: Input) =>
             (
-              "->" ^^^ symbol(RARROW) |
+              "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ {
+                  case "rel" => symbol(Tokens.TokenClass.RELATION)
+                  case "import" => symbol(Tokens.TokenClass.IMPORT)
+                  case l => symbol(IDENT, l)
+              } |
+                "->" ^^^ symbol(RARROW) |
                 "<-" ^^^ symbol(LARROW) |
                 "(" ^^^ symbol(LPAREN) |
                 ")" ^^^ symbol(RPAREN) |
@@ -56,12 +60,8 @@ object Lexing {
                 "," ^^^ symbol(COMMA) |
                 "~" ^^^ symbol(TILDE) |
                 ":" ^^^ symbol(COLON) |
-                "rel" ^^^ symbol(Tokens.TokenClass.RELATION) |
-                "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
-                "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ (l => symbol(IDENT, l))
+                "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt))
               )(in).map(_(in.pos))
-        
-        
     }
     
     def lex(file: SourceFile): TokenReader[Tokens.TokenClass] = TokenReader(file, file.reader, LexicalGrammar)

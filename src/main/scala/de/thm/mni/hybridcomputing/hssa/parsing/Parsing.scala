@@ -16,7 +16,6 @@ case class Parsing(language: Language) {
     def parseLiteral(string: String): Value = Interpretation(language).evaluate(this.grammar.expression(Lexing.lex(SourceFile.fromString(string))).get, Interpretation.ValueContext(None))
     
     def parse(token_reader: Parsing.TokenReader): Program = {
-        
         this.grammar.program(token_reader) match {
             case grammar.Success(prog, _) => prog
             case grammar.NoSuccess(msg, rest) =>
@@ -39,7 +38,7 @@ object Parsing {
         
         private type P[T] = this.Parser[T]
         
-        private def ident: P[Syntax.Identifier] = posi {
+        protected def ident: P[Syntax.Identifier] = posi {
             valueToken(IDENT)(classOf[String]) ^^ Syntax.Identifier.apply
         }
         
@@ -48,7 +47,9 @@ object Parsing {
               | ident ^^ Syntax.Expression.Variable.apply
               | LPAREN ~~ expression ~~ RPAREN
               | TILDE ~~ simple_expresion ^^ Syntax.Expression.Invert.apply
-              | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
+              | (in => {
+                Failure(s"Expected simple expression but got ${in.first} at ${in.pos}", in)
+            })
         }
         
         def expression: P[Syntax.Expression] = posi {
@@ -56,14 +57,17 @@ object Parsing {
                 if (exps.isEmpty) Expression.Unit()
                 else exps.init.foldRight(exps.last)((a, b) => Expression.Pair(a, b))
             })
+              | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
         }
         
         def entry: Parser[Syntax.Entry] = posi {
             expression ~~ ASGN ~~ rep1sep(ident, COMMA) ~~ LARROW ^^ Syntax.Entry.apply
         }
+        
         def exit: Parser[Syntax.Exit] = posi {
             RARROW ~~ rep1sep(ident, COMMA) ~~ ASGN ~~ expression ^^ Syntax.Exit.apply
         }
+        
         def assignment: Parser[Syntax.Assignment] = posi {
             expression ~~ ASGN ~~ expression ~~ expression ~~ ASGN ~~ expression ^^ Syntax.Assignment.apply
         }

@@ -1,22 +1,29 @@
 rel fibpair:
-     n, 0       :=  begin <-
-                     -> Fib2   :=  (0, 1, n), 0
+     n, 0       :=  begin <-                     
+                     -> Fib2   :=  (0, 1, n), 0  
 
- (x, y, m), c   := L1,Fib2 <-
-                := ~equal 0, x :=        c
-      c1        :=  less 0, m  :=
-                    -> L3,L2   :=  (x, y, m), c1
+ (x, y, m), c   := L1,Fib2 <-                    
+      ()        := ~equal 0, x :=        c       
+      c1        :=  less 0, m  :=       ()       
+                    -> L3,L2   :=  (x, y, m), c1 
 
-(x1, y1, m1), 0 :=    L2 <-
-      m2        :=   add -1    :=       m1
-      y2        :=   add y1    :=       x1
+(x1, y1, m1), 0 :=    L2 <-                      
+      m2        :=   add -1    :=       m1       
+      y2        :=   add y1    :=       x1       
                       -> L1    := (y1, y2, m2), 0
 
- (a, b, 0), 0   :=    L3 <-
-                     -> end    :=    (a, b), 0
+ (a, b, 0), 0   :=    L3 <-                      
+                     -> end    :=    (a, b), 0   
 
 
-rel main:
-(), 0 := begin <-
- res  := fibpair  :=   20
+rel fibpair.test:
+(), 0 :=      begin <-               
+ in   :=   ~tests.assert 5    :=  ()
+ out  :=       fibpair       :=  in  
+ ()   := tests.assert (5, 8) :=  out
+               -> end        := (), 0
+
+rel fibpair.main:
+(), 0 := begin <-          
+ res  := fibpair  :=   20  
           -> end  := res, 0

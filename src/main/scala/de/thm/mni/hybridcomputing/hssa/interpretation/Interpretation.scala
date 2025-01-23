@@ -8,13 +8,14 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Value.{BuiltinRelation, Us
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.{HSSAError, Inversion, Language, Syntax}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
-import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.{AbortDueToErrors, Severity}
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 import de.thm.mni.hybridcomputing.util.reversibility
 import de.thm.mni.hybridcomputing.util.reversibility.Direction
 import de.thm.mni.hybridcomputing.util.reversibility.Direction.FORWARDS
 
 import scala.collection.mutable
+import scala.util.Try
 
 case class Interpretation(language: Language) {
     
@@ -52,8 +53,7 @@ case class Interpretation(language: Language) {
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) => assign(pat_1, val_a) ++ assign(pat_2, val_b)
             case (Expression.Invert(sub), UserRelation(fw, bw)) => assign(sub, UserRelation(bw, fw))
             case (Expression.Invert(sub), BuiltinRelation(name, forwards, backwards)) => assign(sub, BuiltinRelation(name, backwards, forwards))
-            case _ =>
-                Interpretation.Errors.ReversibilityViolation(s"$value does not match $pattern").raise()
+            case _ => Interpretation.Errors.ReversibilityViolation(s"$value does not match $pattern").setPosition(pattern.position).raise()
         }
     }
     
@@ -64,7 +64,7 @@ case class Interpretation(language: Language) {
                     forwards(instance_argument)(relation_argument)
                 } catch
                     case _: MatchError =>
-                        Interpretation.Errors.ReversibilityViolation(s"${name} cannot be applied to ${instance_argument} and ${relation_argument}").raise()
+                        Interpretation.Errors.ReversibilityViolation(s"$name cannot be applied to $instance_argument and $relation_argument").raise()
             case UserRelation(rel, _) =>
                 val execution_context = rel._2
                 
@@ -123,7 +123,7 @@ case class Interpretation(language: Language) {
                     )
                     
                     block.assignments.foreach {
-                        case Syntax.Assignment(target, relation, instance_argument, source) =>
+                        case asgn@Syntax.Assignment(target, relation, instance_argument, source) =>
                             val consumedArg = evaluate(source, block_context)
                             block_context.undefine(source.variables.map(_.name.name))
                             
@@ -131,7 +131,10 @@ case class Interpretation(language: Language) {
                             
                             val called_rel: Value.Relation = evaluate(relation, block_context).asInstanceOf[Value.Relation]
                             
-                            val result = evaluateApplication(called_rel, instantiationArg, consumedArg)
+                            val result = Try(evaluateApplication(called_rel, instantiationArg, consumedArg)).recoverWith({
+                                case e: AbortDueToErrors =>
+                                    e.errors.foreach(e => e.setPosition(asgn.position).raise()); throw e
+                            }).get
                             
                             block_context.define(assign(target, result))
                     }
