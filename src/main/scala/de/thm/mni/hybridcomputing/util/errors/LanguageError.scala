@@ -3,7 +3,7 @@ package de.thm.mni.hybridcomputing.util.errors
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 
 import scala.collection.mutable.ListBuffer
-import de.thm.mni.hybridcomputing.util.errors.LanguageError.code
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.erroneousSourceCode
 
 class LanguageError(
                      val severity: LanguageError.Severity,
@@ -25,7 +25,7 @@ class LanguageError(
     
     override def toString: String = {
         if (position == null) s"$msg"
-        else s"$severity @ $position\n${position.code()}\n$msg"
+        else s"$severity @ $position\n${position.erroneousSourceCode()}\n$msg"
     }
     
     
@@ -33,23 +33,6 @@ class LanguageError(
 }
 
 object LanguageError {
-    val codePrefix = " > "
-    val codeLines = 3
-
-    extension (position: SourcePosition) {
-        def code(): String = {
-            val builder = new StringBuilder()
-
-            val line = position.file.getLine(position.from.line)
-            (position.from.line - codeLines to position.from.line).foreach(i => if (i > 0) builder.addAll(codePrefix).addAll(position.file.getLine(i)))
-            builder
-                .addAll(" " * codePrefix.length()).addAll(" " * (position.from.column - 1))
-                .addAll("^" * (if position.to != null then position.to.column - position.from.column else line.length() - position.from.column))
-
-            builder.toString()
-        }
-    }
-    
     class Collector {
         private val buffer = ListBuffer[LanguageError]()
         
@@ -74,5 +57,30 @@ object LanguageError {
     def format(errors: Seq[LanguageError]): Unit = {
         val builder = StringBuilder()
         
+    }
+
+    val codePrefix = " > "
+    val codeLines = 3
+
+    extension (position: SourcePosition) {
+        def erroneousSourceCode(): String = {
+            val builder = new StringBuilder()
+
+            // Show affected line and some previous lines to add context
+            (position.from.line - codeLines to position.from.line)
+                .foreach(i => if (i > 0) builder.addAll(codePrefix).addAll(position.file.getLine(i)))
+            // Underline affected position with '^' to highlight the problematic code
+            builder
+                .addAll(" " * codePrefix.length()).addAll(" " * (position.from.column - 1))
+                .addAll("^" * (
+                    if position.to != null then
+                        position.to.column - position.from.column
+                    else
+                        // Underline rest of line if to is unset, should only be the case for syntax errors
+                        position.file.getLine(position.from.line).length() - position.from.column)
+                    )
+
+            builder.toString()
+        }
     }
 }
