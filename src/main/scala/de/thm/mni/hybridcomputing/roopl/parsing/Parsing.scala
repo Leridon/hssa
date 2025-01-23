@@ -76,8 +76,8 @@ object Parsing {
         }
 
         def statement: P[Syntax.Statement] = posi {
-            variableLiteral ~~ assignmentOperator ~~ expression ^^ Syntax.Statement.Assignment.apply
-            | variableLiteral ~~ SWAP ~~ variableLiteral ^^ Syntax.Statement.Swap.apply
+            variableLiteral ~~ assignmentOperator ~~! expression ^^ Syntax.Statement.Assignment.apply
+            | variableLiteral ~~ SWAP ~~! variableLiteral ^^ Syntax.Statement.Swap.apply
             | IF ~~! expression ~~ THEN ~~ block ~~ ELSE ~~ block ~~ FI ~~ expression ^^ Syntax.Statement.Conditional.apply
             | FROM ~~! expression ~~ DO ~~ block ~~ LOOP ~~ block ~~ UNTIL ~~ expression ^^ Syntax.Statement.Loop.apply
             | CONSTRUCT ~~! classIdent ~~ variableIdent ~~ block ~~ DESTRUCT ~~ variableIdent ^^ Syntax.Statement.ObjectBlock.apply
@@ -196,8 +196,8 @@ object Parsing {
 
         def simple_expression: P[Syntax.Expression] = posi {
             valueToken(INTLIT)(classOf[Integer]) ^^ (i => Syntax.Expression.Literal.apply(i.intValue()))
-            | variableIdent ^^ Syntax.Expression.Variable.apply
             | variableIdent ~~ LBRACK ~~ expression ~~ RBRACK ^^ Syntax.Expression.Array.apply
+            | variableIdent ^^ Syntax.Expression.Variable.apply
             | NIL ^^^ Syntax.Expression.Nil.apply()
             | LPAR ~~ expression ~~ RPAR
             | (in => Failure(s"Expected simple expression but got ${in.first} at ${in.pos}", in))
