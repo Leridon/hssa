@@ -34,13 +34,16 @@ object RooplMain {
         if showTokens then
             tokenStream.readAll().foreach(println)
             sys.exit(0)
+
+        val syntax: Program = parse(tokenStream) match
+            case None => sys.exit(2)
+            case Some(prog) => prog
+
         if showFormat then
             val formatter = Formatting(new Formatting.Options(parenthesizeExpressions = false, indentBy = 4))
-            parse(tokenStream) match
-                case Some(prog) => println(formatter.format(prog))
-                case None => ;
+            formatter.format(syntax)
             sys.exit(0)
-        
+
         // Run semantic analysis
     } catch {
         case e: NoSuchFileException =>
