@@ -66,13 +66,29 @@ object Syntax {
     
     sealed abstract class DataType extends Node
 
+    // Types passed to methods and used for variables
     object DataType {
         case class Integer() extends DataType {
             override def toString(): String = "int"
         }
-        case class ClassType(name: ClassIdentifier) extends DataType {
+        case class Class(name: ClassIdentifier) extends DataType {
             override def toString(): String = name.toString
         }
+        case class IntegerArray() extends DataType {
+            override def toString(): String = "int[]"
+        }
+        case class ClassArray(name: ClassIdentifier) extends DataType {
+            override def toString(): String = s"${name.toString}[]"
+        }
+    }
+
+    sealed abstract class ObjectType extends Node
+
+    // Types with known sizes for construction through new and copy
+    object ObjectType {
+        case class Class(name: ClassIdentifier) extends ObjectType
+        case class IntegerArray(size: Expression) extends ObjectType
+        case class ClassArray(name: ClassIdentifier, size: Expression) extends ObjectType
     }
 
     case class MethodDefinition(name: MethodIdentifier, parameters: Seq[VariableDefinition], body: Statement) extends Node
@@ -87,10 +103,10 @@ object Syntax {
         // alloc and dealloc must always be the same, no?
         case class ObjectBlock(typ: ClassIdentifier, alloc: VariableIdentifier, body: Statement, dealloc: VariableIdentifier) extends Statement
         case class LocalBlock(initType: DataType, initName: VariableIdentifier, initValue: Expression, statement: Statement, deInitType: DataType, deInitName: VariableIdentifier, deInitValue: Expression) extends Statement
-        case class New(typ: DataType, name: VariableReference) extends Statement
-        case class Delete(typ: DataType, name: VariableReference) extends Statement
-        case class Copy(typ: DataType, from: VariableReference, to: VariableReference) extends Statement
-        case class Uncopy(typ: DataType, from: VariableReference, to: VariableReference) extends Statement
+        case class New(typ: ObjectType, name: VariableReference) extends Statement
+        case class Delete(typ: ObjectType, name: VariableReference) extends Statement
+        case class Copy(typ: ObjectType, from: VariableReference, to: VariableReference) extends Statement
+        case class Uncopy(typ: ObjectType, from: VariableReference, to: VariableReference) extends Statement
         case class CallLocal(method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class UncallLocal(method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class Call(callee: VariableReference, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement

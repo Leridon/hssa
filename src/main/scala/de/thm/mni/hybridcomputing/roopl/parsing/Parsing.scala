@@ -61,8 +61,10 @@ object Parsing {
         }
 
         def dataType: P[Syntax.DataType] = posi {
-            INTEGER ^^^ Syntax.DataType.Integer.apply()
-            | classIdent ^^ Syntax.DataType.ClassType.apply
+            INTEGER ~~ LBRACK ~~ RBRACK ^^^ Syntax.DataType.IntegerArray.apply()
+            | INTEGER ^^^ Syntax.DataType.Integer.apply()
+            | classIdent ~~ LBRACK ~~ RBRACK ^^ Syntax.DataType.ClassArray.apply
+            | classIdent ^^ Syntax.DataType.Class.apply
         }
 
         def methodDefinition: P[Syntax.MethodDefinition] = posi {
@@ -80,15 +82,21 @@ object Parsing {
             | FROM ~~! expression ~~ DO ~~ block ~~ LOOP ~~ block ~~ UNTIL ~~ expression ^^ Syntax.Statement.Loop.apply
             | CONSTRUCT ~~! classIdent ~~ variableIdent ~~ block ~~ DESTRUCT ~~ variableIdent ^^ Syntax.Statement.ObjectBlock.apply
             | LOCAL ~~! dataType ~~ variableIdent ~~ EQUAL ~~ expression ~~ block ~~ DELOCAL ~~ dataType ~~ variableIdent ~~ EQUAL ~~ expression ^^ Syntax.Statement.LocalBlock.apply
-            | NEW ~~! dataType ~~ variableLiteral ^^ Syntax.Statement.New.apply
-            | DELETE ~~! dataType ~~ variableLiteral ^^ Syntax.Statement.Delete.apply
-            | COPY ~~! dataType ~~ variableLiteral ~~ variableLiteral ^^ Syntax.Statement.Copy.apply
-            | UNCOPY ~~! dataType ~~ variableLiteral ~~ variableLiteral ^^ Syntax.Statement.Uncopy.apply
+            | NEW ~~! objectType ~~ variableLiteral ^^ Syntax.Statement.New.apply
+            | DELETE ~~! objectType ~~ variableLiteral ^^ Syntax.Statement.Delete.apply
+            | COPY ~~! objectType ~~ variableLiteral ~~ variableLiteral ^^ Syntax.Statement.Copy.apply
+            | UNCOPY ~~! objectType ~~ variableLiteral ~~ variableLiteral ^^ Syntax.Statement.Uncopy.apply
             | CALL ~~ methodIdent ~~ LPAR ~~! repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.CallLocal.apply
             | UNCALL ~~ methodIdent ~~ LPAR ~~! repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.UncallLocal.apply
             | CALL ~~ variableLiteral ~~ DBLCOLON ~~! methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Call.apply
             | UNCALL ~~ variableLiteral ~~ DBLCOLON ~~! methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Uncall.apply
             | SKIP ^^^ Syntax.Statement.Skip.apply()
+        }
+
+        def objectType: P[Syntax.ObjectType] = posi {
+            classIdent ~~ LBRACK ~~ expression ~~ RBRACK ^^ Syntax.ObjectType.ClassArray.apply
+            | classIdent ^^ Syntax.ObjectType.Class.apply
+            | INTEGER ~~ LBRACK ~~ expression ~~ RBRACK ^^ Syntax.ObjectType.IntegerArray.apply
         }
 
         def assignmentOperator: P[Syntax.AssignmentOperator] = {
@@ -98,8 +106,8 @@ object Parsing {
         }
 
         def variableLiteral: P[Syntax.VariableReference] = posi {
-            variableIdent ^^ Syntax.VariableReference.Variable.apply
-            | variableIdent ~~ LBRACK ~~ expression ~~ RBRACK ^^ Syntax.VariableReference.Array.apply
+            variableIdent ~~ LBRACK ~~ expression ~~ RBRACK ^^ Syntax.VariableReference.Array.apply
+            | variableIdent ^^ Syntax.VariableReference.Variable.apply
         }
 
         // Parse expressions, roopl++ uses operator precedence from C

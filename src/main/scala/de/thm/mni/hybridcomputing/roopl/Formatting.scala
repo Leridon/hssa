@@ -6,6 +6,8 @@ import de.thm.mni.hybridcomputing.roopl.Syntax.Operator.*
 import de.thm.mni.hybridcomputing.roopl.Syntax.Expression.Literal
 import de.thm.mni.hybridcomputing.roopl.Syntax.Expression.Variable
 import de.thm.mni.hybridcomputing.roopl.Syntax.Expression.Binary
+import de.thm.mni.hybridcomputing.roopl.Syntax.ObjectType.IntegerArray
+import de.thm.mni.hybridcomputing.roopl.Syntax.ObjectType.ClassArray
 
 object Formatting {
     case class Options(parenthesizeExpressions: Boolean = false, indentBy: Int = 4)
@@ -44,12 +46,12 @@ class Formatting(options: Formatting.Options) {
             // Could add a case for else skip to not print skip in a new line
             case Conditional(test, thenStatement, elseStatement, assertion) => s"if ${format(test)} then\n${format(thenStatement, indent + 1)}\n${tab(indent)}else\n${format(elseStatement, indent + 1)}\n${tab(indent)}fi ${format(assertion)}"
             case Loop(test, doStatement, loopStatement, assertion) => s"from ${format(test)} do\n${format(doStatement, indent + 1)}\n${tab(indent)}loop\n${format(loopStatement, indent + 1)}\n${tab(indent)}until ${format(assertion)}" 
-            case ObjectBlock(typ, alloc, body, dealloc) => "construct"
+            case ObjectBlock(typ, alloc, body, dealloc) => s"construct $typ $alloc\n${format(body, indent + 1)}\n${tab(indent)}destruct $dealloc"
             case LocalBlock(initType, initName, initValue, statement, deInitType, deInitName, deInitValue) => s"local $initType $initName = ${format(initValue)}\n${format(statement, indent)}\n${tab(indent)}delocal $deInitType $deInitName = ${format(deInitValue)}"
-            case New(typ, name) => s"new $typ ${format(name)}"
-            case Delete(typ, name) => s"delete $typ ${format(name)}"
-            case Copy(typ, from, to) => s"copy $typ ${format(from)} ${format(to)}"
-            case Uncopy(typ, from, to) => s"uncopy $typ ${format(from)} ${format(to)}"
+            case New(typ, name) => s"new ${format(typ)} ${format(name)}"
+            case Delete(typ, name) => s"delete ${format(typ)} ${format(name)}"
+            case Copy(typ, from, to) => s"copy ${format(typ)} ${format(from)} ${format(to)}"
+            case Uncopy(typ, from, to) => s"uncopy ${format(typ)} ${format(from)} ${format(to)}"
             case CallLocal(method, args) => s"call $method(${args.mkString(", ")})"
             case UncallLocal(method, args) => s"uncall $method(${args.mkString(", ")})"
             case Call(callee, method, args) => s"call ${format(callee)}::$method(${args.mkString(", ")})"
@@ -60,10 +62,17 @@ class Formatting(options: Formatting.Options) {
         )
     }
 
+    def format(objectType: ObjectType): String = {
+        objectType match
+            case ObjectType.Class(name) => name.toString
+            case ObjectType.IntegerArray(size) => s"int[${format(size)}]"
+            case ObjectType.ClassArray(name, size) => s"$name${format(size)}"
+    }
+
     def format(variableReference: VariableReference): String = {
         variableReference match
             case VariableReference.Variable(name) => name.toString
-            case VariableReference.Array(name, index) => s"${name}[${index}]"
+            case VariableReference.Array(name, index) => s"${name}[${format(index)}]"
     }
 
     private def parenthesize(string: String): String = {
