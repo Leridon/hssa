@@ -91,6 +91,7 @@ object Parsing {
             | CALL ~~ variableLiteral ~~ DBLCOLON ~~! methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Call.apply
             | UNCALL ~~ variableLiteral ~~ DBLCOLON ~~! methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Uncall.apply
             | SKIP ^^^ Syntax.Statement.Skip.apply()
+            | (in => Failure(s"Expected statement but got ${in.first}", in))
         }
 
         def objectType: P[Syntax.ObjectType] = posi {
@@ -192,6 +193,7 @@ object Parsing {
             MUL ^^^ gen_bin_exp(Syntax.Operator.MUL)
             | DIV ^^^ gen_bin_exp(Syntax.Operator.DIV)
             | MOD ^^^ gen_bin_exp(Syntax.Operator.MOD)
+            | (in => Failure(s"Expected binary operators but got ${in.first}", in))
         }
 
         def simple_expression: P[Syntax.Expression] = posi {
