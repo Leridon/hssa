@@ -20,17 +20,6 @@ case class SourcePosition(file: SourceFile, from: SourcePosition.Position, to: S
         builder.toString()
     }
 
-    def code(): String = {
-        val builder = new StringBuilder()
-
-        val line = file.getLine(from)
-        builder
-            .addAll(line)
-            .addAll(" " * (from.column))
-            .addAll("^" * (if to != null then to.column - from.column else line.length() - from.column))
-
-        builder.toString()
-    }
 }
 
 object SourcePosition {

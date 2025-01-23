@@ -3,6 +3,7 @@ package de.thm.mni.hybridcomputing.util.errors
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 
 import scala.collection.mutable.ListBuffer
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.code
 
 class LanguageError(
                      val severity: LanguageError.Severity,
@@ -32,6 +33,22 @@ class LanguageError(
 }
 
 object LanguageError {
+    val codePrefix = " > "
+    val codeLines = 3
+
+    extension (position: SourcePosition) {
+        def code(): String = {
+            val builder = new StringBuilder()
+
+            val line = position.file.getLine(position.from.line)
+            (position.from.line - codeLines to position.from.line).foreach(i => if (i > 0) builder.addAll(codePrefix).addAll(position.file.getLine(i)))
+            builder
+                .addAll(" " * codePrefix.length()).addAll(" " * (position.from.column - 1))
+                .addAll("^" * (if position.to != null then position.to.column - position.from.column else line.length() - position.from.column))
+
+            builder.toString()
+        }
+    }
     
     class Collector {
         private val buffer = ListBuffer[LanguageError]()

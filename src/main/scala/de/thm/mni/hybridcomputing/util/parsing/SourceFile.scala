@@ -13,9 +13,9 @@ case class SourceFile(content: String, path: Option[Path]) {
     
     def indexOf(position: SourcePosition.Position): Int = line_starts(position.line - 1) + position.column - 1
 
-    def getLine(at: SourcePosition.Position): String = {
-        val start = line_starts(at.line - 1)
-        val end = line_starts(at.line)
+    def getLine(line: Int): String = {
+        val start = line_starts(line - 1)
+        val end = line_starts(line)
 
         content.substring(start, end)
     }
