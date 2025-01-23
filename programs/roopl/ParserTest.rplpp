@@ -1,7 +1,7 @@
 // Source: Design and Implementation of Dynamic Memory Management in a Reversible Object Oriented Programming Language
 
 class Main
-    int data = 5
+    int data
     A[] as
 
     method main()
