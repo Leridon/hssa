@@ -55,6 +55,8 @@ object RooplMain {
   }
 
   def usage(): Unit = {
+    println("Compile Roopl++ programs to hssa")
+    println()
     println("Usage: <RooplMain> [option]... file")
     println("       --tokens")
     println("           Print tokenstream, then exit")
