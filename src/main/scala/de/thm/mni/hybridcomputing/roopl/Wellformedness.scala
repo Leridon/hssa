@@ -10,7 +10,7 @@ object Wellformedness {
     private object Internal {
         def check(context: BindingTree.Program, errors: LanguageError.Collector): Unit = {
             // No duplicate classNames
-            context.names().foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateClassName(k, c.syntax))))
+            context.names.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateClassName(k, c.syntax))))
             context.classes.foreach(check(_, errors))
         }
 

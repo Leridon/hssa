@@ -19,11 +19,9 @@ object BindingTree {
     class Program(val syntax: Syntax.Program) extends BindingTree {
         val classes: Seq[Class] = syntax.definitions.map(new Class(this, _))
 
-        private val entries: MultiMap[Syntax.ClassIdentifier, Class] = newMap(
+        val names: MultiMap[Syntax.ClassIdentifier, Class] = newMap(
             classes.map(c => c.syntax.name -> c)*
         )
-
-        def names() = this.entries
     }
 
     class Class(val parent: Program, val syntax: Syntax.ClassDefinition) extends BindingTree {
@@ -32,7 +30,7 @@ object BindingTree {
         // Outer option is None if class doesn't inherit
         // Inner is None if inherited class doesn't exist
         def superClass(): Option[(Syntax.ClassIdentifier, Option[Class])] = {
-            syntax.inherits.map(inherit => inherit -> parent.names().get(inherit).map(_.head))
+            syntax.inherits.map(inherit => inherit -> parent.names.get(inherit).map(_.head))
         }
     }
 
