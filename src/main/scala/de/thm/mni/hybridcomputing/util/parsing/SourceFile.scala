@@ -15,7 +15,7 @@ case class SourceFile(content: String, path: Option[Path]) {
 
     def getLine(line: Int): String = {
         val start = line_starts(line - 1)
-        val end = line_starts(line)
+        val end = if line < line_starts.length then line_starts(line) else content.length()
 
         content.substring(start, end)
     }
