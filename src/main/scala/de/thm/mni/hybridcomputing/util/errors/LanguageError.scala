@@ -26,7 +26,7 @@ class LanguageError(
     }
     
     override def toString: String = {
-        if (position == null) s"$msg"
+        if (position == null) s"$severity\n$msg"
         else s"$severity @ $position\n${position.erroneousSourceCode()}\n$msg"
     }
     
