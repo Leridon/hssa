@@ -31,7 +31,7 @@ object BindingTree {
 
         // Outer option is None if class doesn't inherit
         // Inner is None if inherited class doesn't exist
-        def inherit(): Option[(Syntax.ClassIdentifier, Option[Class])] = {
+        def superClass(): Option[(Syntax.ClassIdentifier, Option[Class])] = {
             syntax.inherits.map(inherit => inherit -> parent.names().get(inherit).map(_.head))
         }
     }

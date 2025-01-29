@@ -15,8 +15,8 @@ object Wellformedness {
         }
 
         def check(context: BindingTree.Class, errors: LanguageError.Collector): Unit = {
-            context.inherit() match
-                case None => // Ignore inherit
+            context.superClass() match
+                case None => // Ignore
                 case Some(name, value) => value match
                     // Baseclass must exist
                     case None => errors.add(MissingClass(name))
@@ -31,7 +31,7 @@ object Wellformedness {
             while next.isDefined && !chain.contains(next.get.name) do
                 chain.append(next.get.name)
                 if context == next.get then errors.add(CyclicInheritance(context.name, chain.toList))
-                next = next.get.inherit().flatMap(_._2)
+                next = next.get.superClass().flatMap(_._2)
         }
     }
     
