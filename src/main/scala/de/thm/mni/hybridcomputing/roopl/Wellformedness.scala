@@ -11,7 +11,7 @@ object Wellformedness {
     private object Internal {
         def check(context: BindingTree.Program, errors: LanguageError.Collector): Unit = {
             // No duplicate classNames
-            context.names.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateClassName(k, c.syntax))))
+            context.classesByName.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateClassName(k, c.syntax))))
 
             // Exactly one main with no parameters must exist
             if context.mainClass.isEmpty then
@@ -35,7 +35,13 @@ object Wellformedness {
                     case Some(value) => checkCyclicInheritance(context, value, errors)
             // No duplicate fields or methods
             context.fields.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateFieldName(k, c, context.name))))
-            context.methods.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateMethodName(k, c.syntax, context.name))))
+            context.methodsByName.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateMethodName(k, c.syntax, context.name))))
+
+            context.methods.foreach(check(_, errors))
+        }
+
+        def check(context: BindingTree.Method, errors: LanguageError.Collector): Unit = {
+            
         }
 
         private def checkCyclicInheritance(context: BindingTree.Class, base: BindingTree.Class, errors: LanguageError.Collector): Unit = {

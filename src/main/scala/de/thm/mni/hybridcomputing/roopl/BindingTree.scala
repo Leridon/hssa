@@ -23,8 +23,8 @@ object BindingTree {
         val mainClasses: Seq[Class] = classes.filter(c => c.mainMethod.isDefined)
         val mainClass: Option[Class] = mainClasses.headOption
 
-        val names: MultiMap[Syntax.ClassIdentifier, Class] = newMap(
-            classes.map(c => c.syntax.name -> c)*
+        val classesByName: MultiMap[Syntax.ClassIdentifier, Class] = newMap(
+            classes.map(c => c.name -> c)*
         )
     }
 
@@ -33,17 +33,18 @@ object BindingTree {
         val fields: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = newMap(
             syntax.variableDefinitions.map(v => v.name -> v)*
         )
-        val methods: MultiMap[Syntax.MethodIdentifier, Method] = newMap(
-            syntax.methodDefinitions.map(m => m.name -> Method(this, m))*
+        val methods: Seq[Method] = syntax.methodDefinitions.map(new Method(this, _))
+        val methodsByName: MultiMap[Syntax.MethodIdentifier, Method] = newMap(
+            methods.map(m => m.name -> m)*
         )
         // Get only the first main method for a class since multiple mains must not exist
         // so we don't have to check all of them for Wellformedness
-        val mainMethod: Option[Method] = methods.get(mainIdentifier).map(_.head)
+        val mainMethod: Option[Method] = methodsByName.get(mainIdentifier).map(_.head)
 
         // Outer option is None if class doesn't inherit
         // Inner is None if inherited class doesn't exist
         def superClass(): Option[(Syntax.ClassIdentifier, Option[Class])] = {
-            syntax.inherits.map(inherit => inherit -> parent.names.get(inherit).map(_.head))
+            syntax.inherits.map(inherit => inherit -> parent.classesByName.get(inherit).map(_.head))
         }
     }
 
