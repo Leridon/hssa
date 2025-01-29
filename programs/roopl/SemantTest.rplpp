@@ -5,6 +5,8 @@ class A
     
     method a()
         skip
+    method a()
+        a <=> b
 
 class B inherits Z
     int b

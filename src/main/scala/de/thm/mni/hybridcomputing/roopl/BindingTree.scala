@@ -29,6 +29,9 @@ object BindingTree {
         val fields: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = newMap(
             syntax.variableDefinitions.map(v => v.name -> v)*
         )
+        val methods: MultiMap[Syntax.MethodIdentifier, Syntax.MethodDefinition] = newMap(
+            syntax.methodDefinitions.map(m => m.name -> m)*
+        )
 
         // Outer option is None if class doesn't inherit
         // Inner is None if inherited class doesn't exist
