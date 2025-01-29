@@ -3,6 +3,7 @@ package de.thm.mni.hybridcomputing.roopl
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity.{Error, Warning}
 import scala.collection.mutable.ListBuffer
+import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 
 // Step 2 of semantic analysis
 object Wellformedness {
@@ -11,11 +12,17 @@ object Wellformedness {
         def check(context: BindingTree.Program, errors: LanguageError.Collector): Unit = {
             // No duplicate classNames
             context.names.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateClassName(k, c.syntax))))
-            context.classes.foreach(check(_, errors))
+
+            // Exactly one main with no parameters must exist
             if context.mainClass.isEmpty then
                 errors.add(MissingMain())
             else
-                context.mainClasses.tail.foreach(c => errors.add(MultipleMains(context.mainClass.get.name, c.methods.get(Syntax.MethodIdentifier("main")).get.head)))
+                // Due to previous checks, these gets cannot fail
+                val main = context.mainClass.get.mainMethod.get
+                if !main.parameters.isEmpty then
+                    errors.add(BadMain(main.syntax.parameters))
+                context.mainClasses.tail.foreach(c => errors.add(MultipleMains(context.mainClass.get.name, c.mainMethod.get.syntax)))
+            context.classes.foreach(check(_, errors))
         }
 
         def check(context: BindingTree.Class, errors: LanguageError.Collector): Unit = {
@@ -28,7 +35,7 @@ object Wellformedness {
                     case Some(value) => checkCyclicInheritance(context, value, errors)
             // No duplicate fields or methods
             context.fields.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateFieldName(k, c, context.name))))
-            context.methods.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateMethodName(k, c, context.name))))
+            context.methods.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateMethodName(k, c.syntax, context.name))))
         }
 
         private def checkCyclicInheritance(context: BindingTree.Class, base: BindingTree.Class, errors: LanguageError.Collector): Unit = {
@@ -60,4 +67,5 @@ object Wellformedness {
 
     case class MissingMain() extends RooplError(Error, s"main method needs to be defined.")
     case class MultipleMains(mainClass: Syntax.ClassIdentifier, duplicate: Syntax.MethodDefinition) extends RooplError(Error, s"main method is already defined in class $mainClass.", duplicate.position)
+    case class BadMain(parameters: Seq[Syntax.VariableDefinition]) extends RooplError(Error, s"main method must not declare any parameters.", SourcePosition(parameters.head.position.file, parameters.head.position.from, parameters.last.position.to))
 }

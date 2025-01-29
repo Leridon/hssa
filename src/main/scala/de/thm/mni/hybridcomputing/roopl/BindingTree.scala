@@ -9,6 +9,8 @@ trait BindingTree {
 
 object BindingTree {
     type MultiMap[K, V] = Map[K, Set[V]] & scala.collection.mutable.MultiMap[K, V]
+
+    val mainIdentifier = Syntax.MethodIdentifier("main")
     
     def newMap[K,V](init: (K, V)*): MultiMap[K, V] = {
         val res = new HashMap[K, Set[V]] with scala.collection.mutable.MultiMap[K, V]
@@ -18,7 +20,7 @@ object BindingTree {
 
     class Program(val syntax: Syntax.Program) extends BindingTree {
         val classes: Seq[Class] = syntax.definitions.map(new Class(this, _))
-        val mainClasses: Seq[Class] = classes.filter(c => c.methods.contains(Syntax.MethodIdentifier("main")))
+        val mainClasses: Seq[Class] = classes.filter(c => c.mainMethod.isDefined)
         val mainClass: Option[Class] = mainClasses.headOption
 
         val names: MultiMap[Syntax.ClassIdentifier, Class] = newMap(
@@ -31,15 +33,25 @@ object BindingTree {
         val fields: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = newMap(
             syntax.variableDefinitions.map(v => v.name -> v)*
         )
-        val methods: MultiMap[Syntax.MethodIdentifier, Syntax.MethodDefinition] = newMap(
-            syntax.methodDefinitions.map(m => m.name -> m)*
+        val methods: MultiMap[Syntax.MethodIdentifier, Method] = newMap(
+            syntax.methodDefinitions.map(m => m.name -> Method(this, m))*
         )
+        // Get only the first main method for a class since multiple mains must not exist
+        // so we don't have to check all of them for Wellformedness
+        val mainMethod: Option[Method] = methods.get(mainIdentifier).map(_.head)
 
         // Outer option is None if class doesn't inherit
         // Inner is None if inherited class doesn't exist
         def superClass(): Option[(Syntax.ClassIdentifier, Option[Class])] = {
             syntax.inherits.map(inherit => inherit -> parent.names.get(inherit).map(_.head))
         }
+    }
+
+    class Method(val parent: Class, val syntax: Syntax.MethodDefinition) extends BindingTree {
+        val name = syntax.name
+        val parameters: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = newMap(
+            syntax.parameters.map(p => p.name -> p)*
+        )
     }
 
 }

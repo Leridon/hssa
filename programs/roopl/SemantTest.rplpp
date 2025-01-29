@@ -9,9 +9,7 @@ class A
         a <=> b
 
 class B inherits Z
-    int b
-    
-    method main()
+    method main(B b, B b2)
         skip
 
 class C inherits C
@@ -36,13 +34,6 @@ class A
     int a
     
     method a()
-        skip
-
-
-class D inherits E
-    int d
-    
-    method d()
         skip
 
 class A1 inherits A2
