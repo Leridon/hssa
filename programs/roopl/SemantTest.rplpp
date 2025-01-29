@@ -1,0 +1,58 @@
+class A
+    int a
+    
+    method a()
+        skip
+
+class B inherits Z
+    int b
+    
+    method b()
+        skip
+
+class C inherits C
+    int c
+    
+    method c()
+        skip
+
+class E inherits D
+    int e
+
+    method e()
+        skip 
+
+class D inherits E
+    int d
+    
+    method d()
+        skip
+
+class A
+    int a
+    
+    method a()
+        skip
+
+
+class D inherits E
+    int d
+    
+    method d()
+        skip
+
+class A1 inherits A2
+    method x()
+        skip
+class A2 inherits A3
+    method x()
+        skip
+class A3 inherits A4
+    method x()
+        skip
+class A4 inherits A5
+    method x()
+        skip
+class A5 inherits A1
+    method x()
+        skip
