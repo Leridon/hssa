@@ -57,6 +57,6 @@ class A3 inherits A4
 class A4 inherits A5
     method x()
         skip
-class A5 inherits A1
+class A5     inherits A1
     method x()
         skip

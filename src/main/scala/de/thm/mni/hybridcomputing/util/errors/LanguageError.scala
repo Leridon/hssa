@@ -89,7 +89,7 @@ object LanguageError {
 
         val len =
             if to != null then
-                to.column - from.column - 1
+                to.column - from.column
             else
                 // Underline rest of line if to is unset (should only be the case for syntax errors)
                 file.getLine(from.line).length() - from.column
