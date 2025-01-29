@@ -78,7 +78,7 @@ object Parsing {
         def statement: P[Syntax.Statement] = posi {
             variableLiteral ~~ assignmentOperator ~~! expression ^^ Syntax.Statement.Assignment.apply
             | variableLiteral ~~ SWAP ~~! variableLiteral ^^ Syntax.Statement.Swap.apply
-            | variableLiteral ~~! (in => Error(s"Expected swap or assignment but got ${in.first}", in)) ^^ null
+            | variableLiteral ~>! (in => Error(s"Expected swap or assignment but got ${in.first}", in))
             | IF ~~! expression ~~ THEN ~~ block ~~ ELSE ~~ block ~~ FI ~~ expression ^^ Syntax.Statement.Conditional.apply
             | FROM ~~! expression ~~ DO ~~ block ~~ LOOP ~~ block ~~ UNTIL ~~ expression ^^ Syntax.Statement.Loop.apply
             | CONSTRUCT ~~! classIdent ~~ variableIdent ~~ block ~~ DESTRUCT ~~ variableIdent ^^ Syntax.Statement.ObjectBlock.apply
