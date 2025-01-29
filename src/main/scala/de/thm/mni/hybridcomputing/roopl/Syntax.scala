@@ -44,19 +44,35 @@ object Syntax {
 
     sealed abstract class Identifier(name: String) extends Node {
         override def toString: String = name
-        
+    }
+
+    case class VariableIdentifier(name: String) extends Identifier(name) {
         override def equals(obj: Any): Boolean = {
             obj match {
                 case obj: String => name == obj
-                // Different identifiers (methodName vs className) should probably not be equal
-                //case obj: Identifier => name == obj.name
+                case obj: VariableIdentifier => name == obj.name
+                case _ => false
             }
         }
     }
-
-    case class VariableIdentifier(name: String) extends Identifier(name)
-    case class ClassIdentifier(name: String) extends Identifier(name)
-    case class MethodIdentifier(name: String) extends Identifier(name)
+    case class ClassIdentifier(name: String) extends Identifier(name) {
+        override def equals(obj: Any): Boolean = {
+            obj match {
+                case obj: String => name == obj
+                case obj: ClassIdentifier => name == obj.name
+                case _ => false
+            }
+        }
+    }
+    case class MethodIdentifier(name: String) extends Identifier(name) {
+        override def equals(obj: Any): Boolean = {
+            obj match {
+                case obj: String => name == obj
+                case obj: MethodIdentifier => name == obj.name
+                case _ => false
+            }
+        }
+    }
     
     case class Program(definitions: Seq[ClassDefinition]) extends Node
     

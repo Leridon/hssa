@@ -36,29 +36,21 @@ object RooplMain {
         tokenStream.readAll().foreach(token => println(s"$token @ ${token.position.toString}"))
         sys.exit(0)
 
-      val syntax: Program = parse(tokenStream) match
-        case None => sys.exit(2)
-        case Some(prog) => prog
+      val syntax: Program = Parsing.parse(tokenStream)
 
       if showFormat then
         val formatter = Formatting(new Formatting.Options(parenthesizeExpressions = false, indentBy = 4))
         println(formatter.format(syntax))
         sys.exit(0)
 
-        // Run semantic analysis
+      // Run semantic analysis
+      Wellformedness.check(syntax)
     } catch {
       case e: NoSuchFileException =>
         println(s"File '$file' does not exist!")
-    }
-  }
-
-  def parse(tokenStream: TokenReader[TokenClass]): Option[Program] = {
-    try {
-      Some(Parsing.parse(tokenStream))
-    } catch {
-        case e: LanguageError.AbortDueToErrors =>
-          e.errors.foreach(println)
-          None
+      case e: LanguageError.AbortDueToErrors =>
+        e.errors.foreach(println)
+        sys.exit(2)
     }
   }
 
