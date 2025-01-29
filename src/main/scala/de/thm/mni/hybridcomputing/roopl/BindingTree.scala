@@ -26,6 +26,9 @@ object BindingTree {
 
     class Class(val parent: Program, val syntax: Syntax.ClassDefinition) extends BindingTree {
         val name = syntax.name
+        val fields: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = newMap(
+            syntax.variableDefinitions.map(v => v.name -> v)*
+        )
 
         // Outer option is None if class doesn't inherit
         // Inner is None if inherited class doesn't exist
