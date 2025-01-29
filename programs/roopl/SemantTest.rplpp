@@ -11,13 +11,13 @@ class A
 class B inherits Z
     int b
     
-    method b()
+    method main()
         skip
 
 class C inherits C
     int c
     
-    method c()
+    method main()
         skip
 
 class E inherits D

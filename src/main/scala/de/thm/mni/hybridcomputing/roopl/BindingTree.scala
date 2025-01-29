@@ -18,6 +18,8 @@ object BindingTree {
 
     class Program(val syntax: Syntax.Program) extends BindingTree {
         val classes: Seq[Class] = syntax.definitions.map(new Class(this, _))
+        val mainClasses: Seq[Class] = classes.filter(c => c.methods.contains(Syntax.MethodIdentifier("main")))
+        val mainClass: Option[Class] = mainClasses.headOption
 
         val names: MultiMap[Syntax.ClassIdentifier, Class] = newMap(
             classes.map(c => c.syntax.name -> c)*

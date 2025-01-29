@@ -12,6 +12,10 @@ object Wellformedness {
             // No duplicate classNames
             context.names.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateClassName(k, c.syntax))))
             context.classes.foreach(check(_, errors))
+            if context.mainClass.isEmpty then
+                errors.add(MissingMain())
+            else
+                context.mainClasses.tail.foreach(c => errors.add(MultipleMains(context.mainClass.get.name, c.methods.get(Syntax.MethodIdentifier("main")).get.head)))
         }
 
         def check(context: BindingTree.Class, errors: LanguageError.Collector): Unit = {
@@ -53,4 +57,7 @@ object Wellformedness {
     case class CyclicInheritance(name: Syntax.ClassIdentifier, chain: Seq[Syntax.ClassIdentifier]) extends RooplError(Error, s"class $name inherits in a cycle: $name -> ${chain.mkString(" -> ")}", name.position)
     case class DuplicateFieldName(name: Syntax.VariableIdentifier, definition: Syntax.VariableDefinition, className: Syntax.ClassIdentifier) extends RooplError(Error, s"field $name is already defined in class $className", definition.position)
     case class DuplicateMethodName(name: Syntax.MethodIdentifier, definition: Syntax.MethodDefinition, className: Syntax.ClassIdentifier) extends RooplError(Error, s"method $name is already defined in class $className", definition.position)
+
+    case class MissingMain() extends RooplError(Error, s"main method needs to be defined.")
+    case class MultipleMains(mainClass: Syntax.ClassIdentifier, duplicate: Syntax.MethodDefinition) extends RooplError(Error, s"main method is already defined in class $mainClass.", duplicate.position)
 }
