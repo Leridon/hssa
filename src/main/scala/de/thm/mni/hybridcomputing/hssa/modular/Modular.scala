@@ -120,7 +120,6 @@ object Modular {
         
         def formatProjectInplace(program: Syntax.Program): Unit = {
             program.programs.foreach(prog => {
-                
                 prog.position.file.path.foreach(path => {
                     Files.write(path, Formatting.format(prog).getBytes(StandardCharsets.UTF_8))
                 })

@@ -16,8 +16,7 @@ class Chains(val language: Language) {
         } catch {
             case e: LanguageError.AbortDueToErrors =>
                 e.errors.foreach(e => {
-                    println(s"${e.severity}: ${e.position}")
-                    println(e.msg)
+                    println(e)
                     println()
                 })
                 
@@ -42,8 +41,7 @@ class Chains(val language: Language) {
                     exception match
                         case e: LanguageError.AbortDueToErrors =>
                             e.errors.foreach(e => {
-                                println(s"${e.severity}: ${e.position}")
-                                println(e.msg)
+                                println(e)
                                 println()
                             })
                         case e =>

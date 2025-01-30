@@ -3,6 +3,9 @@ package de.thm.mni.hybridcomputing.util.errors
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 
 import scala.collection.mutable.ListBuffer
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.erroneousSourceCode
+import de.thm.mni.hybridcomputing.util.parsing.SourceFile
+import de.thm.mni.hybridcomputing.util.parsing.SourcePosition.Position
 
 class LanguageError(
                      val severity: LanguageError.Severity,
@@ -23,8 +26,8 @@ class LanguageError(
     }
     
     override def toString: String = {
-        if (position == null) s"error: $msg"
-        else s"$position: error: $msg"
+        if (position == null) s"$severity\n$msg"
+        else s"$severity @ $position\n${position.erroneousSourceCode()}\n$msg"
     }
     
     
@@ -32,7 +35,6 @@ class LanguageError(
 }
 
 object LanguageError {
-    
     class Collector {
         private val buffer = ListBuffer[LanguageError]()
         
@@ -57,5 +59,53 @@ object LanguageError {
     def format(errors: Seq[LanguageError]): Unit = {
         val builder = StringBuilder()
         
+    }
+
+    val codePrefix = " > "
+    val codeLines = 3
+
+    extension (position: SourcePosition) {
+        def erroneousSourceCode(): String = {
+            val builder = new StringBuilder()
+
+            // Underline affected position with '^' to highlight the problematic code
+
+            if position.to == null || position.from.line == position.to.line then
+                underlineLine(builder, position.file, position.from, position.to)
+            else
+                underlineBlock(builder, position.file, position.from, position.to)
+
+            builder.toString()
+        }
+    }
+
+    private def showSourceLines(builder: StringBuilder, file: SourceFile, lines: Range): Unit = {
+        lines.foreach(i => if (i > 0) builder.addAll(codePrefix).addAll(file.getLine(i)))
+    }
+
+    private def underlineLine(builder: StringBuilder, file: SourceFile, from: Position, to: Position): Unit = {
+        // Show affected line and some previous lines to add context
+        showSourceLines(builder, file, (from.line - codeLines to from.line))
+
+        val len =
+            if to != null then
+                to.column - from.column
+            else
+                // Underline rest of line if to is unset (should only be the case for syntax errors)
+                file.getLine(from.line).length() - from.column
+        builder
+            .addAll(" " * codePrefix.length())
+            .addAll(" " * (from.column - 1))
+            .addAll("^" * len)
+    }
+
+    private def underlineBlock(builder: StringBuilder, file: SourceFile, from: Position, to: Position): Unit = {
+        // to mustn't be null
+        showSourceLines(builder, file, (from.line until to.line))
+        val len = (from.line until to.line).map(file.getLine(_).length()).max - (from.column)
+        builder
+            .addAll(" " * codePrefix.length())
+            .addAll(" " * (from.column - 1))
+            .addAll("^" * len)
     }
 }

@@ -13,12 +13,13 @@ case class SourcePosition(file: SourceFile, from: SourcePosition.Position, to: S
         val builder = new StringBuilder()
         
         builder.addAll(from.toString)
-        // if (to != null) builder.addAll(s"-${to.toString}")
+        if (to != null) builder.addAll(s"-${to.toString}")
         
         if (file.path.isDefined) builder.addAll(s" in ${file.path.get.toString}")
         
         builder.toString()
     }
+
 }
 
 object SourcePosition {

@@ -102,8 +102,8 @@ object MyMain {
         } catch {
             case e: LanguageError.AbortDueToErrors =>
                 e.errors.foreach(e => {
-                    println(s"An error occurred @ ${e.position}")
-                    println(e.msg)
+                    println(e)
+                    println()
                 })
         }
     }

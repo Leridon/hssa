@@ -1,0 +1,78 @@
+// Source: Design and Implementation of Dynamic Memory Management in a Reversible Object Oriented Programming Language
+
+class Main
+    int data
+    A[] as
+
+    method main()
+        data ^= 17
+        data += ((5 + 3) * 2) / (1 - 5)
+        data += 5 + (3 * (2 / 1)) - 5
+        data += 5 + ((3 * 2) / 1) - 5
+        data += 5 + 3 * 2 / 1 - 5
+        data += 10 - 5 - 3
+        data += 10 - (5 - 3)
+        data -= 10 - (5 * 3)
+        data -= (10 - 5) * 3
+        data += 1 + 1 + 1
+        data += 1 + (1 + 1)
+        data += (1 + 1) + 1
+
+    method manyArgs(Main first, int second, Hugendubel third)
+        local int[] arr = 0
+        new int[second] arr
+        local int i = 0
+        from i = 0
+        do skip
+        loop
+            arr[i] += i
+            i += 1
+        until i = second
+
+        from i = second
+        do skip
+        loop
+            arr[i] -= i
+            i -= 1
+        until i = 0
+        delocal int i = 0
+        delete int[second] arr
+        delocal int[] arr = 0
+    
+    method noArgs()
+        if 5 > 6 || 7 < 11
+        then
+            local A bVar = 0
+            construct A aVar
+                copy A aVar bVar
+                uncopy A aVar bVar
+            destruct aVar
+            delocal A bVar = 0
+        else skip
+        fi 1 = 1
+    
+    method calls()
+        call noArgs()
+        uncall noArgs()
+
+        new Main main
+        call main::manyArgs(main, test, blub)
+        uncall main::manyArgs(a, b, c)
+
+class A
+    int a
+
+    method a(int x)
+        a ^= x
+
+class B inherits A
+    int b
+
+    method b(int x)
+        b ^= x
+
+class C inherits B
+    int c
+
+    method c(int x)
+        c ^= x

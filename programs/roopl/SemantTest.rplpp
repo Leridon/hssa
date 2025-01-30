@@ -1,0 +1,53 @@
+class A
+    int a
+    int b
+    int[] a
+    
+    method a()
+        skip
+    method a()
+        a <=> b
+
+class B inherits Z
+    method main(B b, B b2)
+        skip
+
+class C inherits C
+    int c
+    
+    method main()
+        skip
+
+class E inherits D
+    int e
+
+    method e()
+        skip 
+
+class D inherits E
+    int d
+    
+    method d()
+        skip
+
+class A
+    int a
+    
+    method a()
+        skip
+
+class A1 inherits A2
+    method x()
+        skip
+class A2 inherits A3
+    method x()
+        skip
+class A3 inherits A4
+    method x()
+        skip
+class A4 inherits A5
+    method x()
+        skip
+class A5     inherits A1
+    method x()
+        skip
