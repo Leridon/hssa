@@ -10,6 +10,7 @@ case class SourceFile(content: String, path: Option[Path]) {
     
     val line_starts: Seq[Int] = 0 +: content.indices.filter(i => content.charAt(i) == '\n')
       .map(_ + 1)
+    val numLines = line_starts.length + 1
     
     def indexOf(position: SourcePosition.Position): Int = line_starts(position.line - 1) + position.column - 1
 
