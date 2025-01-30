@@ -29,7 +29,12 @@ object BindingTree {
     }
 
     class Class(val parent: Program, val syntax: Syntax.ClassDefinition) extends BindingTree {
-        val name = syntax.name
+        val name: Syntax.ClassIdentifier = syntax.name
+        // Outer option is None if class doesn't inherit
+        // Inner is None if inherited class doesn't exist
+        def superClass(): Option[(Syntax.ClassIdentifier, Option[Class])] = {
+            syntax.inherits.map(inherit => inherit -> parent.classesByName.get(inherit).map(_.head))
+        }
         val fields: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = newMap(
             syntax.variableDefinitions.map(v => v.name -> v)*
         )
@@ -40,16 +45,10 @@ object BindingTree {
         // Get only the first main method for a class since multiple mains must not exist
         // so we don't have to check all of them for Wellformedness
         val mainMethod: Option[Method] = methodsByName.get(mainIdentifier).map(_.head)
-
-        // Outer option is None if class doesn't inherit
-        // Inner is None if inherited class doesn't exist
-        def superClass(): Option[(Syntax.ClassIdentifier, Option[Class])] = {
-            syntax.inherits.map(inherit => inherit -> parent.classesByName.get(inherit).map(_.head))
-        }
     }
 
     class Method(val parent: Class, val syntax: Syntax.MethodDefinition) extends BindingTree {
-        val name = syntax.name
+        val name: Syntax.MethodIdentifier = syntax.name
         val parameters: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = newMap(
             syntax.parameters.map(p => p.name -> p)*
         )
