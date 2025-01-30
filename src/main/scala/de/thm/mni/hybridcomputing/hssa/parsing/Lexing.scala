@@ -19,6 +19,9 @@ object Lexing {
             case TILDE
             case EOF
             case IMPORT
+            case LINECOMMENT
+            case WHITESPACE
+            case BLOCKCOMMENT
             
             override def toString: String = this match
                 case IDENT => "IDENT"
@@ -33,7 +36,11 @@ object Lexing {
                 case TILDE => "TILDE"
                 case COLON => "COLON"
                 case IMPORT => "IMPORT"
+                case LINECOMMENT => "LINECOMMENT"
+                case BLOCKCOMMENT => "BLOCKCOMMENT"
+                case WHITESPACE => "WHITESPACE"
                 case EOF => "<eof>"
+                case _ => super.toString
         }
     }
     
@@ -41,7 +48,7 @@ object Lexing {
         
         import Tokens.TokenClass.*
         
-        lazy val whitespace: Parser[Any] = """(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))*""".r
+        lazy val whitespace: Parser[Any] = success(())
         
         def eof: Position => Token[Tokens.TokenClass] = symbol(EOF)
         
@@ -52,6 +59,9 @@ object Lexing {
                   case "import" => symbol(Tokens.TokenClass.IMPORT)
                   case l => symbol(IDENT, l)
               } |
+                "\\s".r ^^^ symbol(WHITESPACE) |
+                """//.*""".r ^^^ symbol(LINECOMMENT) |
+                """/\*[^*]*\*+(?:[^/*][^*]*\*+)*/""".r ^^^ symbol(BLOCKCOMMENT) |
                 "->" ^^^ symbol(RARROW) |
                 "<-" ^^^ symbol(LARROW) |
                 "(" ^^^ symbol(LPAREN) |

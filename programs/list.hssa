@@ -2,7 +2,6 @@ rel nil (())
 () := begin <-
        -> end  := (0, ())
 
-
 rel cons (())
 (head, tail) := begin <-
                  -> end  := (1, (head, tail))

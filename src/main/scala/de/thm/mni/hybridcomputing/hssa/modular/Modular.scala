@@ -76,7 +76,7 @@ object Modular {
     
     object Parsing {
         class Grammar(language: Language) extends hssa.parsing.Parsing.Grammar(language) with ImplicitConversions {
-            def imp: Parser[Syntax.Import] = posi(Lexing.Tokens.TokenClass.IMPORT ~~ this.ident ^^ Syntax.Import.apply)
+            def imp: Parser[Syntax.Import] = posi(Lexing.Tokens.TokenClass.IMPORT ~~! this.ident ^^ Syntax.Import.apply)
             
             def prog: Parser[Syntax.ProgramWithImports] = posi(rep(imp) ~ this.program ^^ { case imports ~ prog => Syntax.ProgramWithImports(imports, prog) })
         }

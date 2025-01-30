@@ -2,6 +2,7 @@ package de.thm.mni.hybridcomputing.hssa.parsing
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program}
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
+import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.Tokens
 import de.thm.mni.hybridcomputing.hssa.{Language, Syntax}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing
@@ -41,6 +42,8 @@ object Parsing {
         import de.thm.mni.hybridcomputing.util.parsing
         
         private type P[T] = this.Parser[T]
+        
+        override def skipTokens: Set[Lexing.Tokens.TokenClass] = Set(WHITESPACE, BLOCKCOMMENT, LINECOMMENT)
         
         protected def ident: P[Syntax.Identifier] = posi {
             valueToken(IDENT)(classOf[String]) ^^ Syntax.Identifier.apply
