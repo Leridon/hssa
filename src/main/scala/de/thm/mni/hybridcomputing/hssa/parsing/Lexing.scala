@@ -47,9 +47,7 @@ object Lexing {
     object LexicalGrammar extends LexicalGrammarUtilities[Tokens.TokenClass] {
         
         import Tokens.TokenClass.*
-        
-        lazy val whitespace: Parser[Any] = success(())
-        
+                
         def eof: Position => Token[Tokens.TokenClass] = symbol(EOF)
         
         def token: Parser[Symbol] = (in: Input) =>

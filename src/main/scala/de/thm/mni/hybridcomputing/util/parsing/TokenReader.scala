@@ -9,8 +9,6 @@ case class TokenReader[T](file: SourceFile,
                          ) extends Reader[Token[T]] {
     private lazy val (parsedToken, r) = grammar(input)
     
-    //lazy val skippedTokens: List[grammar.Symbol] = parsedToken.map(_._1).getOrElse(List())
-    
     override def first: Token[T] = this.parsedToken.getOrElse(grammar.eof(this.pos))
     override def rest: TokenReader[T] = this.copy(input = this.r)
     override def pos: Position = if (atEnd) r.pos else first.position

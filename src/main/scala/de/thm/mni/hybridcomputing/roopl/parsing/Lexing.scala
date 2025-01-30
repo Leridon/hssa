@@ -7,7 +7,7 @@ import scala.util.parsing.input.{CharSequenceReader, Position}
 
 object Lexing {
     object Tokens {
-
+        
         enum TokenClass {
             case IDENT
             case CLASS
@@ -62,7 +62,7 @@ object Lexing {
             case LESSEQUAL
             case GREATEREQUAL
             case EOF
-
+            
             override def toString(): String = this match
                 case IDENT => "IDENT"
                 case CLASS => "CLASS"
@@ -119,44 +119,44 @@ object Lexing {
                 case EOF => "EOF"
         }
     }
-
+    
     object LexicalGrammar extends LexicalGrammarUtilities[Tokens.TokenClass] {
         
         import Tokens.TokenClass.*
         
-        lazy val whitespace: Parser[Any] = """(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))*""".r
+        override lazy val whitespace: Parser[Any] = """(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))*""".r
         
         def eof: Position => Token[Tokens.TokenClass] = symbol(EOF)
         
         def token: Parser[Symbol] = (in: Input) =>
             (
-                "[a-zA-Z][a-zA-Z_0-9']*".r ^^ ({
-                    case "class" => symbol(CLASS)
-                    case "inherits" => symbol(INHERITS)
-                    case "method" => symbol(METHOD)
-                    case "int" => symbol(INTEGER)
-                    case "if" => symbol(IF)
-                    case "then" => symbol(THEN)
-                    case "else" => symbol(ELSE)
-                    case "fi" => symbol(FI)
-                    case "from" => symbol(FROM)
-                    case "do" => symbol(DO)
-                    case "loop" => symbol(LOOP)
-                    case "until" => symbol(UNTIL)
-                    case "construct" => symbol(CONSTRUCT)
-                    case "destruct" => symbol(DESTRUCT)
-                    case "local" => symbol(LOCAL)
-                    case "delocal" => symbol(DELOCAL)
-                    case "new" => symbol(NEW)
-                    case "delete" => symbol(DELETE)
-                    case "copy" => symbol(COPY)
-                    case "uncopy" => symbol(UNCOPY)
-                    case "call" => symbol(CALL)
-                    case "uncall" => symbol(UNCALL)
-                    case "skip" => symbol(SKIP)
-                    case "nil" => symbol(NIL)
-                    case l => symbol(IDENT, l)
-                }) |
+              "[a-zA-Z][a-zA-Z_0-9']*".r ^^ ({
+                  case "class" => symbol(CLASS)
+                  case "inherits" => symbol(INHERITS)
+                  case "method" => symbol(METHOD)
+                  case "int" => symbol(INTEGER)
+                  case "if" => symbol(IF)
+                  case "then" => symbol(THEN)
+                  case "else" => symbol(ELSE)
+                  case "fi" => symbol(FI)
+                  case "from" => symbol(FROM)
+                  case "do" => symbol(DO)
+                  case "loop" => symbol(LOOP)
+                  case "until" => symbol(UNTIL)
+                  case "construct" => symbol(CONSTRUCT)
+                  case "destruct" => symbol(DESTRUCT)
+                  case "local" => symbol(LOCAL)
+                  case "delocal" => symbol(DELOCAL)
+                  case "new" => symbol(NEW)
+                  case "delete" => symbol(DELETE)
+                  case "copy" => symbol(COPY)
+                  case "uncopy" => symbol(UNCOPY)
+                  case "call" => symbol(CALL)
+                  case "uncall" => symbol(UNCALL)
+                  case "skip" => symbol(SKIP)
+                  case "nil" => symbol(NIL)
+                  case l => symbol(IDENT, l)
+              }) |
                 "," ^^^ symbol(COMMA) |
                 "[" ^^^ symbol(LBRACK) |
                 "]" ^^^ symbol(RBRACK) |
@@ -184,7 +184,9 @@ object Lexing {
                 "<" ^^^ symbol(LESSTHAN) |
                 ">" ^^^ symbol(GREATERTHAN) |
                 "=" ^^^ symbol(EQUAL)
-              ){in}.map(_(in.pos))
+              ) {
+                in
+            }.map(_(in.pos))
         
         
     }
