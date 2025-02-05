@@ -19,7 +19,7 @@ object Wellformedness {
             else
                 // Due to previous checks, these gets cannot fail
                 val main = context.mainClass.get.mainMethod.get
-                if !main.parameters.isEmpty then
+                if !main.parametersByName.isEmpty then
                     errors.add(BadMain(main.syntax.parameters))
                 context.mainClasses.tail.foreach(c => errors.add(MultipleMains(context.mainClass.get.name, c.mainMethod.get.syntax)))
             context.classes.foreach(check(_, errors))
@@ -34,14 +34,23 @@ object Wellformedness {
                     // No cyclic inheritance
                     case Some(value) => checkCyclicInheritance(context, value, errors)
             // No duplicate fields or methods
-            context.fields.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateFieldName(k, c, context.name))))
+            context.fieldsByName.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateFieldName(k, c, context.name))))
             context.methodsByName.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateMethodName(k, c.syntax, context.name))))
+
+            // No field overwrite
+            context.fieldsByName.keySet.foreach(f =>
+                context.superClasses().foreach(s =>
+                    if s.fieldsByName.contains(f) then errors.add(FieldOverwrite(s.name, context.fieldsByName.get(f).get.head))))
+
+            // Method signature miss-match
+            context.methodsByName.keySet.foreach(m =>
+                context.superClasses().foreach(s =>
+                    if s.methodsByName.contains(m) then checkSignature(s.methodsByName.get(m).get.head, context.methodsByName.get(m).get.head, errors)))
 
             context.methods.foreach(check(_, errors))
         }
 
         def check(context: BindingTree.Method, errors: LanguageError.Collector): Unit = {
-            
         }
 
         private def checkCyclicInheritance(context: BindingTree.Class, base: BindingTree.Class, errors: LanguageError.Collector): Unit = {
@@ -50,8 +59,29 @@ object Wellformedness {
 
             while next.isDefined && !chain.contains(next.get.name) do
                 chain.append(next.get.name)
-                if context == next.get then errors.add(CyclicInheritance(context.name, chain.toList))
+                if context == next.get then
+                    errors.add(CyclicInheritance(context.name, chain.toList))
+                    context.isCyclicInherit = true
                 next = next.get.superClass().flatMap(_._2)
+        }
+
+        // Method signature must contain the same parameters
+        private def checkSignature(base: BindingTree.Method, overwrite: BindingTree.Method, errors: LanguageError.Collector): Unit = {
+            var missmatch = false
+            overwrite.parametersByName.foreach((i, d) => base.parametersByName.get(i) match
+                case Some(value) =>
+                    if value.head.typ != d.head.typ then
+                        // Type missmatch
+                        missmatch = true
+                // Additional parameter in overwrite
+                case None => missmatch = true
+            )
+            base.parametersByName.foreach((i, d) => overwrite.parametersByName.get(i) match
+                case Some(value) =>
+                // Missing parameter in overwrite
+                case None => missmatch = true
+            )
+            if missmatch then errors.add(BadMethodSignature(overwrite.name, base.parent.name))
         }
     }
     
@@ -65,12 +95,18 @@ object Wellformedness {
         collector.raiseIfNonEmpty()
     }
 
+    // Class errors
     case class DuplicateClassName(name: Syntax.ClassIdentifier, definition: Syntax.ClassDefinition) extends RooplError(Error, s"class $name is already defined.", definition.position)
     case class MissingClass(name: Syntax.ClassIdentifier) extends RooplError(Error, s"class $name is referenced but not defined.", name.position)
-    case class CyclicInheritance(name: Syntax.ClassIdentifier, chain: Seq[Syntax.ClassIdentifier]) extends RooplError(Error, s"class $name inherits in a cycle: $name -> ${chain.mkString(" -> ")}", name.position)
     case class DuplicateFieldName(name: Syntax.VariableIdentifier, definition: Syntax.VariableDefinition, className: Syntax.ClassIdentifier) extends RooplError(Error, s"field $name is already defined in class $className", definition.position)
     case class DuplicateMethodName(name: Syntax.MethodIdentifier, definition: Syntax.MethodDefinition, className: Syntax.ClassIdentifier) extends RooplError(Error, s"method $name is already defined in class $className", definition.position)
 
+    // Inheritance errors
+    case class CyclicInheritance(name: Syntax.ClassIdentifier, chain: Seq[Syntax.ClassIdentifier]) extends RooplError(Error, s"class $name inherits in a cycle: $name -> ${chain.mkString(" -> ")}", name.position)
+    case class FieldOverwrite(parent: Syntax.ClassIdentifier, definition: Syntax.VariableDefinition) extends RooplError(Error, s"field ${definition.name} is already defined in class $parent", definition.position)
+    case class BadMethodSignature(name: Syntax.MethodIdentifier,base: Syntax.ClassIdentifier) extends RooplError(Error, s"method $name does not match signature of overridden method from base class $base", name.position)
+
+    // Main method errors
     case class MissingMain() extends RooplError(Error, s"main method needs to be defined.")
     case class MultipleMains(mainClass: Syntax.ClassIdentifier, duplicate: Syntax.MethodDefinition) extends RooplError(Error, s"main method is already defined in class $mainClass.", duplicate.position)
     case class BadMain(parameters: Seq[Syntax.VariableDefinition]) extends RooplError(Error, s"main method must not declare any parameters.", SourcePosition(parameters.head.position.file, parameters.head.position.from, parameters.last.position.to))

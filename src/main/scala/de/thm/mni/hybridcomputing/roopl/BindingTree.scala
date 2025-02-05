@@ -35,21 +35,32 @@ object BindingTree {
         def superClass(): Option[(Syntax.ClassIdentifier, Option[Class])] = {
             syntax.inherits.map(inherit => inherit -> parent.classesByName.get(inherit).map(_.head))
         }
-        val fields: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = newMap(
+        def superClasses(): Seq[Class] = {
+            // This prevents having to check for cyclic inheritance in many Wellformednesschecks, as long as we use superClasses() only
+            if isCyclicInherit then
+                Seq()
+            else
+                superClass().flatMap(_._2).map(c => c +: c.superClasses()).getOrElse(Seq())
+        }
+        var isCyclicInherit = false
+        val fieldsByName: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = newMap(
             syntax.variableDefinitions.map(v => v.name -> v)*
         )
         val methods: Seq[Method] = syntax.methodDefinitions.map(new Method(this, _))
         val methodsByName: MultiMap[Syntax.MethodIdentifier, Method] = newMap(
             methods.map(m => m.name -> m)*
         )
+
         // Get only the first main method for a class since multiple mains must not exist
         // so we don't have to check all of them for Wellformedness
         val mainMethod: Option[Method] = methodsByName.get(mainIdentifier).map(_.head)
+
+        override def toString(): String = s"Class $name"
     }
 
     class Method(val parent: Class, val syntax: Syntax.MethodDefinition) extends BindingTree {
         val name: Syntax.MethodIdentifier = syntax.name
-        val parameters: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = newMap(
+        val parametersByName: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = newMap(
             syntax.parameters.map(p => p.name -> p)*
         )
     }
