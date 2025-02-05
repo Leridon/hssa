@@ -1,0 +1,19 @@
+class X
+    int x
+    method main()
+        skip
+    method x(X x)
+        skip
+    method y(int a)
+        skip
+class XX inherits X
+    int[] y
+    method x(X x, XX xx)
+        skip
+class XXX inherits XX
+    X x
+    XX y
+    method x()
+        skip
+    method y(XXX a)
+        skip

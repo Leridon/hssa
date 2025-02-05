@@ -30,7 +30,7 @@ class D inherits E
     method d()
         skip
 
-class A
+class A inherits B
     int a
     
     method a()
@@ -50,4 +50,17 @@ class A4 inherits A5
         skip
 class A5     inherits A1
     method x()
+        skip
+
+class I1
+    method y()
+        skip
+class I2 inherits I1
+    method y()
+        skip
+class I3 inherits I2
+    method y()
+        skip
+class I4 inherits I3
+    method y()
         skip
