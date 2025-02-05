@@ -4,6 +4,7 @@ import de.thm.mni.hybridcomputing.hssa.BindingTree.Block.VariableUsage
 import de.thm.mni.hybridcomputing.hssa.BindingTree.Relation.LabelUsage
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity
+import de.thm.mni.hybridcomputing.util.MultiMap.*
 
 class Wellformedness(language: Language) {
     
@@ -23,10 +24,10 @@ class Wellformedness(language: Language) {
                     errors.add(Wellformedness.VariableFinalizedBeforeInitialized(inits.head, finals.head))
             })
             
-            context.usages.keys().foreach(variable => {
+            context.usages.keySet.foreach(variable => {
                 
-                val initialization = context.initializations.get(variable)
-                val finalization = context.finalizations.get(variable)
+                val initialization: Option[VariableUsage] = context.initializations.getFirst(variable)
+                val finalization: Option[VariableUsage] = context.finalizations.getFirst(variable)
                 
                 val is_block_local = initialization.isDefined || finalization.isDefined
                 

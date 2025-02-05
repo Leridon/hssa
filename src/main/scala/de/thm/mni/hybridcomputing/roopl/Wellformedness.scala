@@ -4,6 +4,7 @@ import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity.{Error, Warning}
 import scala.collection.mutable.ListBuffer
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
+import de.thm.mni.hybridcomputing.util.MultiMap.*
 
 // Step 2 of semantic analysis
 object Wellformedness {
@@ -40,12 +41,12 @@ object Wellformedness {
             // No field overwrite
             context.fieldsByName.keySet.foreach(f =>
                 context.superClasses().foreach(s =>
-                    if s.fieldsByName.contains(f) then errors.add(FieldOverwrite(s.name, context.fieldsByName.get(f).get.head))))
+                    if s.fieldsByName.contains(f) then errors.add(FieldOverwrite(s.name, context.fieldsByName.getFirst(f).get))))
 
             // Method signature miss-match
             context.methodsByName.keySet.foreach(m =>
                 context.superClasses().foreach(s =>
-                    if s.methodsByName.contains(m) then checkSignature(s.methodsByName.get(m).get.head, context.methodsByName.get(m).get.head, errors)))
+                    if s.methodsByName.contains(m) then checkSignature(s.methodsByName.getFirst(m).get, context.methodsByName.getFirst(m).get, errors)))
 
             context.methods.foreach(check(_, errors))
         }
@@ -68,15 +69,15 @@ object Wellformedness {
         // Method signature must contain the same parameters
         private def checkSignature(base: BindingTree.Method, overwrite: BindingTree.Method, errors: LanguageError.Collector): Unit = {
             var missmatch = false
-            overwrite.parametersByName.foreach((i, d) => base.parametersByName.get(i) match
+            overwrite.parametersByName.foreach((i, d) => base.parametersByName.getFirst(i) match
                 case Some(value) =>
-                    if value.head.typ != d.head.typ then
+                    if value.typ != d.head.typ then
                         // Type missmatch
                         missmatch = true
                 // Additional parameter in overwrite
                 case None => missmatch = true
             )
-            base.parametersByName.foreach((i, d) => overwrite.parametersByName.get(i) match
+            base.parametersByName.foreach((i, d) => overwrite.parametersByName.getFirst(i) match
                 case Some(value) =>
                 // Missing parameter in overwrite
                 case None => missmatch = true

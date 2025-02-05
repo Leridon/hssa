@@ -2,6 +2,7 @@ package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
+import de.thm.mni.hybridcomputing.util.MultiMap.*
 
 trait BindingTree {
     def root: BindingTree.Program
@@ -11,21 +12,7 @@ trait BindingTree {
 }
 
 object BindingTree {
-    
-    class MultiMap[Key, Value](initialdata: (Key, Value)*) {
-        private val data = initialdata.groupBy(_._1).map(kv => kv._1 -> kv._2.map(_._2))
         
-        def contains(key: Key): Boolean = this.data.contains(key)
-        
-        def keys(): Set[Key] = data.keySet
-        
-        def entries(): Seq[(Key, Seq[Value])] = data.toSeq
-        
-        def getAll(key: Key): Seq[Value] = this.data.get(key).map(_.toSeq).getOrElse(Seq())
-        
-        def get(key: Key, filter: Value => Boolean = _ => true): Option[Value] = this.data.get(key).map(_.toSeq).getOrElse(Seq()).find(filter)
-    }
-    
     def init(program: Syntax.Program) = Program(program)
     
     class Program(val syntax: Syntax.Program) extends BindingTree {
@@ -42,13 +29,13 @@ object BindingTree {
         
         def getAll(name: String): Seq[GlobalVariable] = entries.getAll(name)
         
-        def getRelation(name: String): Option[GlobalRelationVariable] = entries.get(name, _.isInstanceOf[GlobalRelationVariable]).map(_.asInstanceOf[GlobalRelationVariable])
+        def getRelation(name: String): Option[GlobalRelationVariable] = entries.getFirst(name, _.isInstanceOf[GlobalRelationVariable]).map(_.asInstanceOf[GlobalRelationVariable])
         
         def get(name: String): Option[GlobalVariable] = entries.getAll(name).headOption
         
-        def names(): Set[String] = this.entries.keys()
+        def names(): Set[String] = this.entries.keySet
         
-        def lookup_variable(name: String): Option[Variable] = this.entries.get(name)
+        def lookup_variable(name: String): Option[Variable] = this.entries.getFirst(name)
         override def root: Program = this
     }
     
@@ -60,10 +47,10 @@ object BindingTree {
         private val entries: MultiMap[String, Relation.LabelUsage] = MultiMap(blocks.flatMap(block => block.syntax.entry.labels.zipWithIndex.map(l => l._1.name -> Relation.LabelUsage(l._2, block))) *)
         private val exits: MultiMap[String, Relation.LabelUsage] = MultiMap(blocks.flatMap(block => block.syntax.exit.labels.zipWithIndex.map(l => l._1.name -> Relation.LabelUsage(l._2, block))) *)
         
-        lazy val labels: Set[String] = entries.keys() ++ exits.keys()
+        lazy val labels: Set[String] = entries.keySet ++ exits.keySet
         
-        def getEntryByLabel(label: String): Option[Relation.LabelUsage] = entries.get(label)
-        def getExitByLabel(label: String): Option[Relation.LabelUsage] = exits.get(label)
+        def getEntryByLabel(label: String): Option[Relation.LabelUsage] = entries.getFirst(label)
+        def getExitByLabel(label: String): Option[Relation.LabelUsage] = exits.getFirst(label)
         
         def getAllEntries(label: String): Seq[Relation.LabelUsage] = entries.getAll(label)
         def getAllExits(label: String): Seq[Relation.LabelUsage] = exits.getAll(label)
@@ -110,7 +97,7 @@ object BindingTree {
               .map(u => u.variable.name.name -> u) *
         )
         
-        val block_local_variables: Set[String] = initializations.keys() ++ finalizations.keys()
+        val block_local_variables: Set[String] = initializations.keySet ++ finalizations.keySet
         
         def lookup_variable(name: String): Option[Variable] = {
             if this.block_local_variables.contains(name) then Some(BlockVariable(name, this))
