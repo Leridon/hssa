@@ -82,6 +82,9 @@ object Wellformedness {
             else
                 if variableInExpression(statement.assignee, statement.value) then
                     errors.add(IrreversibleAssignment(assignee.get, statement))
+                // assignee get typ doesn't account for indexed arrays, the array type logic needs some rethinking in general
+                if !Typing.checkType(context, assignee.get.typ, Typing.typeOf(statement.value, context).get) then
+                    errors.add(BadTyping(assignee.get.typ, Typing.typeOf(statement.value, context).get, statement))
         }
 
         private def variableInExpression(variable: Syntax.VariableReference, expression: Syntax.Expression): Boolean = {
@@ -173,6 +176,7 @@ object Wellformedness {
     case class BadMain(parameters: Seq[Syntax.VariableDefinition]) extends RooplError(Error, s"main method must not declare any parameters.", SourcePosition(parameters.head.position.file, parameters.head.position.from, parameters.last.position.to))
 
     // Reference errors
-    case class VariableDoesntExit(variable: BindingTree.Variable, definition: Syntax.Node) extends RooplError(Error, s"referenced variable ${variable.name} is not in scope.", definition.position)
-    case class IrreversibleAssignment(variable: BindingTree.Variable, definition: Syntax.Statement.Assignment) extends RooplError(Error, s"irreversible assignment of variable ${variable.name}. Assignee must not occur on the right-hand side of assignment.", definition.position)
+    case class VariableDoesntExit(variable: BindingTree.Variable, usage: Syntax.Node) extends RooplError(Error, s"referenced variable ${variable.name} is not in scope.", usage.position)
+    case class IrreversibleAssignment(variable: BindingTree.Variable, usage: Syntax.Statement.Assignment) extends RooplError(Error, s"irreversible assignment of variable ${variable.name}. Assignee must not occur on the right-hand side of assignment.", usage.position)
+    case class BadTyping(expected: Syntax.DataType, actual: Syntax.DataType, usage: Syntax.Node) extends RooplError(Error, s"expected type to satisfy $expected, got $actual instead.", usage.position)
 }

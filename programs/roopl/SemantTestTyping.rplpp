@@ -1,0 +1,28 @@
+/* Beispiel für Hellwig?
+
+class A
+class A1 inherits A
+
+class B
+    method x(a: A)
+class B1 inherits B
+    method x(a: A1)
+
+method main()
+    A a
+    B b
+    a = new A()
+    b = new B1()
+    b::x(a)
+
+*/
+
+/* Array types
+
+A[] x
+A1[] y
+
+x = y ??
+
+
+*/

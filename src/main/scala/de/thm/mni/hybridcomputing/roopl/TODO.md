@@ -17,7 +17,8 @@
 - [+] Improved Error Handling
     - [x] Add erroneous source code to error message output
 - [-] Semantic Analysis
-    - [-] BindingTree as a helpful datastructure to write wellformedness checks easier
+    - [x] BindingTree as a helpful datastructure to write wellformedness checks easier
     - [-] Wellformedness checks
+    - [-] Type checking
 - [ ] Translation into HSSA
     - ...
