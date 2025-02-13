@@ -4,7 +4,7 @@ import de.thm.mni.hybridcomputing.util.MultiMap.*
 
 // Step 1 of semantic analysis
 trait BindingTree {
-    
+    def lookupVariable(name: Syntax.VariableIdentifier): Option[BindingTree.Variable]
 }
 
 object BindingTree {
@@ -18,6 +18,8 @@ object BindingTree {
         val classesByName: MultiMap[Syntax.ClassIdentifier, Class] = MultiMap(
             classes.map(c => c.name -> c)*
         )
+        // No global variables
+        override def lookupVariable(name: Syntax.VariableIdentifier): Option[Variable] = None
     }
 
     class Class(val parent: Program, val syntax: Syntax.ClassDefinition) extends BindingTree {
@@ -47,6 +49,11 @@ object BindingTree {
         // so we don't have to check all of them for Wellformedness
         val mainMethod: Option[Method] = methodsByName.getFirst(mainIdentifier)
 
+        override def lookupVariable(name: Syntax.VariableIdentifier): Option[FieldVariable] = {
+            if fieldsByName.contains(name) then Some(FieldVariable(name, this))
+            else None
+        }
+
         override def toString(): String = s"Class $name"
     }
 
@@ -55,6 +62,32 @@ object BindingTree {
         val parametersByName: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = MultiMap(
             syntax.parameters.map(p => p.name -> p)*
         )
+
+        override def lookupVariable(name: Syntax.VariableIdentifier): Option[Variable] = {
+            if parametersByName.contains(name) then Some(ParameterVariable(name, this))
+            else parent.lookupVariable(name)
+        }
     }
 
+    // Since object blocks are only syntactic sugar it might simplify things to get rid of them in the Syntax after formatting?
+    class Block(val parent: Method | Block, val syntax: Syntax.Statement.ObjectBlock | Syntax.Statement.LocalBlock) extends BindingTree {
+        val alloc: Variable = syntax match
+            case ob: Syntax.Statement.ObjectBlock => ObjectBlockVariable(ob.alloc, this)
+            case lb: Syntax.Statement.LocalBlock => LocalBlockVariable(lb.initName, this)
+        val dealloc: Variable = syntax match
+            case ob: Syntax.Statement.ObjectBlock => ObjectBlockVariable(ob.dealloc, this)
+            case lb: Syntax.Statement.LocalBlock => LocalBlockVariable(lb.deInitName, this)
+
+        override def lookupVariable(name: Syntax.VariableIdentifier): Option[Variable] = {
+            if alloc.name == name then return Some(alloc)
+            else parent.lookupVariable(name)
+        }
+    }
+
+    abstract class Variable(val name: Syntax.VariableIdentifier)
+    case class FieldVariable(override val name: Syntax.VariableIdentifier, val owner: Class) extends Variable(name)
+    case class ParameterVariable(override val name: Syntax.VariableIdentifier, val owner: Method) extends Variable(name)
+    case class ObjectBlockVariable(override val name: Syntax.VariableIdentifier, val owner: Block) extends Variable(name)
+    // Maybe these can be the same?
+    case class LocalBlockVariable(override val name: Syntax.VariableIdentifier, val owner: Block) extends Variable(name)
 }

@@ -52,6 +52,36 @@ object Wellformedness {
         }
 
         def check(context: BindingTree.Method, errors: LanguageError.Collector): Unit = {
+            check(context.syntax.body, context, errors)
+        }
+
+        def check(statement: Syntax.Statement, context: BindingTree.Method, errors: LanguageError.Collector): Unit = {
+            statement match
+                case Syntax.Statement.Assignment(assignee, op, value) => 
+                case Syntax.Statement.Swap(left, right) =>
+                case Syntax.Statement.Conditional(test, thenStatement, elseStatement, assertion) =>
+                case Syntax.Statement.Loop(test, doStatement, loopStatement, assertion) =>
+                case Syntax.Statement.ObjectBlock(typ, alloc, body, dealloc) =>
+                case Syntax.Statement.LocalBlock(initType, initName, initValue, statement, deInitType, deInitName, deInitValue) =>
+                case Syntax.Statement.New(typ, name) =>
+                case Syntax.Statement.Delete(typ, name) =>
+                case Syntax.Statement.Copy(typ, from, to) =>
+                case Syntax.Statement.Uncopy(typ, from, to) =>
+                case Syntax.Statement.CallLocal(method, args) =>
+                case Syntax.Statement.UncallLocal(method, args) =>
+                case Syntax.Statement.Call(callee, method, args) =>
+                case Syntax.Statement.Uncall(callee, method, args) =>
+                case Syntax.Statement.Skip() =>
+                case Syntax.Statement.Block(list) => list.foreach(check(_, context, errors))
+        }
+
+        private def variableInExpression(variable: BindingTree.Variable, expression: Syntax.Expression): Boolean = {
+            expression match
+                case Syntax.Expression.Literal(value) => false
+                case Syntax.Expression.Variable(reference) => ???
+                case Syntax.Expression.Array(name, index) => ???
+                case Syntax.Expression.Nil() => false
+                case Syntax.Expression.Binary(left, op, right) => variableInExpression(variable, left) || variableInExpression(variable, right)
         }
 
         private def checkCyclicInheritance(context: BindingTree.Class, base: BindingTree.Class, errors: LanguageError.Collector): Unit = {
