@@ -84,13 +84,13 @@ object Syntax {
 
     // Types passed to methods and used for variables
     object DataType {
-        case class Integer() extends DataType {
+        case object Integer extends DataType {
             override def toString(): String = "int"
         }
         case class Class(name: ClassIdentifier) extends DataType {
             override def toString(): String = name.toString
         }
-        case class IntegerArray() extends DataType {
+        case object IntegerArray extends DataType {
             override def toString(): String = "int[]"
         }
         case class ClassArray(name: ClassIdentifier) extends DataType {

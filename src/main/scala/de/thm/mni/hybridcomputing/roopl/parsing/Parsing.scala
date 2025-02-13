@@ -61,8 +61,8 @@ object Parsing {
         }
 
         def dataType: P[Syntax.DataType] = posi {
-            INTEGER ~~ LBRACK ~~ RBRACK ^^^ Syntax.DataType.IntegerArray.apply()
-            | INTEGER ^^^ Syntax.DataType.Integer.apply()
+            INTEGER ~~ LBRACK ~~ RBRACK ^^^ Syntax.DataType.IntegerArray
+            | INTEGER ^^^ Syntax.DataType.Integer
             | classIdent ~~ LBRACK ~~ RBRACK ^^ Syntax.DataType.ClassArray.apply
             | classIdent ^^ Syntax.DataType.Class.apply
         }
