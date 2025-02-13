@@ -71,7 +71,7 @@ object Wellformedness {
                 case statement: Syntax.Statement.UncallLocal => check(statement, context, errors)
                 case statement: Syntax.Statement.Call => check(statement, context, errors)
                 case statement: Syntax.Statement.Uncall => check(statement, context, errors)
-                case statement: Syntax.Statement.Skip => ()
+                case Syntax.Statement.Skip => ()
                 case Syntax.Statement.Block(list) => list.foreach(check(_, context, errors))
         }
 
@@ -80,9 +80,26 @@ object Wellformedness {
             if assignee.isEmpty then
                 errors.add(VariableDoesntExit(assignee.get, statement))
             else
-                if variableInExpression(statement.assignee, context, statement.value) then
+                if variableInExpression(statement.assignee, statement.value) then
                     errors.add(IrreversibleAssignment(assignee.get, statement))
         }
+
+        private def variableInExpression(variable: Syntax.VariableReference, expression: Syntax.Expression): Boolean = {
+            expression match
+                case Syntax.Expression.Literal(value) => false
+                case Syntax.Expression.Nil => false
+                case Syntax.Expression.Binary(left, op, right) => variableInExpression(variable, left) || variableInExpression(variable, right)
+                case Syntax.Expression.Reference(reference) => {
+                    variable == reference
+                    || (reference match
+                        // y[x] += x
+                        case Syntax.VariableReference.Variable(name) => variable.isInstanceOf[Syntax.VariableReference.Array] && variableInExpression(reference, variable.asInstanceOf[Syntax.VariableReference.Array].index)
+                        // x += y[x]
+                        case Syntax.VariableReference.Array(name, index) => variable.isInstanceOf[Syntax.VariableReference.Variable] && variableInExpression(variable, index)
+                    )
+                }
+        }
+
         def check(statement: Syntax.Statement.Swap, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
         def check(statement: Syntax.Statement.Conditional, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
         def check(statement: Syntax.Statement.Loop, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
@@ -96,22 +113,6 @@ object Wellformedness {
         def check(statement: Syntax.Statement.UncallLocal, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
         def check(statement: Syntax.Statement.Call, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
         def check(statement: Syntax.Statement.Uncall, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
-
-        private def variableInExpression(variable: Syntax.VariableReference, context: BindingTree.Method | BindingTree.Block, expression: Syntax.Expression): Boolean = {
-            expression match
-                case Syntax.Expression.Literal(value) => false
-                case Syntax.Expression.Nil() => false
-                case Syntax.Expression.Binary(left, op, right) => variableInExpression(variable, context, left) || variableInExpression(variable, context, right)
-                case Syntax.Expression.Reference(reference) => {
-                    variable == reference
-                    || (reference match
-                        // y[x] += x
-                        case Syntax.VariableReference.Variable(name) => variable.isInstanceOf[Syntax.VariableReference.Array] && variableInExpression(reference, context, variable.asInstanceOf[Syntax.VariableReference.Array].index)
-                        // x += y[x]
-                        case Syntax.VariableReference.Array(name, index) => variable.isInstanceOf[Syntax.VariableReference.Variable] && variableInExpression(variable, context, index)
-                    )
-                }
-        }
 
         private def checkCyclicInheritance(context: BindingTree.Class, base: BindingTree.Class, errors: LanguageError.Collector): Unit = {
             val chain: ListBuffer[Syntax.ClassIdentifier] = ListBuffer()
