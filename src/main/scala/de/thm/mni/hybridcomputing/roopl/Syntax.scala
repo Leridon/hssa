@@ -138,19 +138,18 @@ object Syntax {
         case XOR
     }
 
-    sealed abstract class VariableReference extends Node
+    sealed abstract class VariableReference(val name: VariableIdentifier) extends Node
 
     object VariableReference {
-        case class Variable(name: VariableIdentifier) extends VariableReference
-        case class Array(name: VariableIdentifier, index: Expression) extends VariableReference
+        case class Variable(override val name: VariableIdentifier) extends VariableReference(name)
+        case class Array(override val name: VariableIdentifier, index: Expression) extends VariableReference(name)
     }
 
     sealed abstract class Expression extends Node
 
     object Expression {
         case class Literal(value: Int) extends Expression
-        case class Variable(variable: VariableIdentifier) extends Expression
-        case class Array(name: VariableIdentifier, index: Expression) extends Expression
+        case class Reference(ref: VariableReference) extends Expression
         case class Nil() extends Expression
         case class Binary(left: Expression, op: Operator, right: Expression) extends Expression
     }

@@ -199,8 +199,7 @@ object Parsing {
 
         def simple_expression: P[Syntax.Expression] = posi {
             valueToken(INTLIT)(classOf[Integer]) ^^ (i => Syntax.Expression.Literal.apply(i.intValue()))
-            | variableIdent ~~ LBRACK ~~ expression ~~ RBRACK ^^ Syntax.Expression.Array.apply
-            | variableIdent ^^ Syntax.Expression.Variable.apply
+            | variableLiteral ^^ Syntax.Expression.Reference.apply
             | NIL ^^^ Syntax.Expression.Nil.apply()
             | LPAR ~~ expression ~~ RPAR
             | (in => Failure(s"Expected simple expression but got ${in.first} at ${in.pos}", in))

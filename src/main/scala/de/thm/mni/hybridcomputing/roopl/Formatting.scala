@@ -4,7 +4,7 @@ import de.thm.mni.hybridcomputing.roopl.Syntax.*
 import de.thm.mni.hybridcomputing.roopl.Syntax.Statement.*
 import de.thm.mni.hybridcomputing.roopl.Syntax.Operator.*
 import de.thm.mni.hybridcomputing.roopl.Syntax.Expression.Literal
-import de.thm.mni.hybridcomputing.roopl.Syntax.Expression.Variable
+import de.thm.mni.hybridcomputing.roopl.Syntax.Expression.Reference
 import de.thm.mni.hybridcomputing.roopl.Syntax.Expression.Binary
 import de.thm.mni.hybridcomputing.roopl.Syntax.ObjectType.IntegerArray
 import de.thm.mni.hybridcomputing.roopl.Syntax.ObjectType.ClassArray
@@ -82,8 +82,7 @@ class Formatting(options: Formatting.Options) {
     def format(expression: Expression, parenthesizeExpressions: Boolean = false): String = {
         expression match
             case Literal(value) => value.toString()
-            case Variable(variable) => variable.toString
-            case Expression.Array(name, index) => s"${name}[${format(index)}]"
+            case Reference(reference) => format(reference)
             case Expression.Nil() => "nil"
             case Binary(left, op, right) => {
                 // Must parenthesize subexpressions if their operator has lower or equal precedence than this.op
