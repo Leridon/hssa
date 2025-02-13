@@ -1,0 +1,16 @@
+class X
+    int x
+    int[] y
+    method main()
+        // illegal
+        x += x
+        // illegal
+        x += 1 - x
+        // legal
+        y[1] += y[2]
+        // illegal
+        y[1] += y[1]
+        // illegal
+        y[x + 1] += x
+        // illegal
+        x += y[x + 1]

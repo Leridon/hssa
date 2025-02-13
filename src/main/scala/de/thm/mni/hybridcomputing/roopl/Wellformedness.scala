@@ -55,33 +55,62 @@ object Wellformedness {
             check(context.syntax.body, context, errors)
         }
 
-        def check(statement: Syntax.Statement, context: BindingTree.Method, errors: LanguageError.Collector): Unit = {
+        def check(statement: Syntax.Statement, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {
             statement match
-                case Syntax.Statement.Assignment(assignee, op, value) => 
-                case Syntax.Statement.Swap(left, right) =>
-                case Syntax.Statement.Conditional(test, thenStatement, elseStatement, assertion) =>
-                case Syntax.Statement.Loop(test, doStatement, loopStatement, assertion) =>
-                case Syntax.Statement.ObjectBlock(typ, alloc, body, dealloc) =>
-                case Syntax.Statement.LocalBlock(initType, initName, initValue, statement, deInitType, deInitName, deInitValue) =>
-                case Syntax.Statement.New(typ, name) =>
-                case Syntax.Statement.Delete(typ, name) =>
-                case Syntax.Statement.Copy(typ, from, to) =>
-                case Syntax.Statement.Uncopy(typ, from, to) =>
-                case Syntax.Statement.CallLocal(method, args) =>
-                case Syntax.Statement.UncallLocal(method, args) =>
-                case Syntax.Statement.Call(callee, method, args) =>
-                case Syntax.Statement.Uncall(callee, method, args) =>
-                case Syntax.Statement.Skip() =>
+                case statement: Syntax.Statement.Assignment => check(statement, context, errors)
+                case statement: Syntax.Statement.Swap => check(statement, context, errors)
+                case statement: Syntax.Statement.Conditional => check(statement, context, errors)
+                case statement: Syntax.Statement.Loop => check(statement, context, errors)
+                case statement: Syntax.Statement.ObjectBlock => check(statement, context, errors)
+                case statement: Syntax.Statement.LocalBlock => check(statement, context, errors)
+                case statement: Syntax.Statement.New => check(statement, context, errors)
+                case statement: Syntax.Statement.Delete => check(statement, context, errors)
+                case statement: Syntax.Statement.Copy => check(statement, context, errors)
+                case statement: Syntax.Statement.Uncopy => check(statement, context, errors)
+                case statement: Syntax.Statement.CallLocal => check(statement, context, errors)
+                case statement: Syntax.Statement.UncallLocal => check(statement, context, errors)
+                case statement: Syntax.Statement.Call => check(statement, context, errors)
+                case statement: Syntax.Statement.Uncall => check(statement, context, errors)
+                case statement: Syntax.Statement.Skip => ()
                 case Syntax.Statement.Block(list) => list.foreach(check(_, context, errors))
         }
 
-        private def variableInExpression(variable: BindingTree.Variable, expression: Syntax.Expression): Boolean = {
+        def check(statement: Syntax.Statement.Assignment, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {
+            val assignee = context.lookupVariable(statement.assignee.name)
+            if assignee.isEmpty then
+                errors.add(VariableDoesntExit(assignee.get, statement))
+            else
+                if variableInExpression(statement.assignee, context, statement.value) then
+                    errors.add(IrreversibleAssignment(assignee.get, statement))
+        }
+        def check(statement: Syntax.Statement.Swap, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.Conditional, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.Loop, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.ObjectBlock, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.LocalBlock, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.New, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.Delete, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.Copy, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.Uncopy, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.CallLocal, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.UncallLocal, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.Call, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Syntax.Statement.Uncall, context: BindingTree.Method | BindingTree.Block, errors: LanguageError.Collector): Unit = {}
+
+        private def variableInExpression(variable: Syntax.VariableReference, context: BindingTree.Method | BindingTree.Block, expression: Syntax.Expression): Boolean = {
             expression match
                 case Syntax.Expression.Literal(value) => false
-                case Syntax.Expression.Variable(reference) => ???
-                case Syntax.Expression.Array(name, index) => ???
                 case Syntax.Expression.Nil() => false
-                case Syntax.Expression.Binary(left, op, right) => variableInExpression(variable, left) || variableInExpression(variable, right)
+                case Syntax.Expression.Binary(left, op, right) => variableInExpression(variable, context, left) || variableInExpression(variable, context, right)
+                case Syntax.Expression.Reference(reference) => {
+                    variable == reference
+                    || (reference match
+                        // y[x] += x
+                        case Syntax.VariableReference.Variable(name) => variable.isInstanceOf[Syntax.VariableReference.Array] && variableInExpression(reference, context, variable.asInstanceOf[Syntax.VariableReference.Array].index)
+                        // x += y[x]
+                        case Syntax.VariableReference.Array(name, index) => variable.isInstanceOf[Syntax.VariableReference.Variable] && variableInExpression(variable, context, index)
+                    )
+                }
         }
 
         private def checkCyclicInheritance(context: BindingTree.Class, base: BindingTree.Class, errors: LanguageError.Collector): Unit = {
@@ -141,4 +170,8 @@ object Wellformedness {
     case class MissingMain() extends RooplError(Error, s"main method needs to be defined.")
     case class MultipleMains(mainClass: Syntax.ClassIdentifier, duplicate: Syntax.MethodDefinition) extends RooplError(Error, s"main method is already defined in class $mainClass.", duplicate.position)
     case class BadMain(parameters: Seq[Syntax.VariableDefinition]) extends RooplError(Error, s"main method must not declare any parameters.", SourcePosition(parameters.head.position.file, parameters.head.position.from, parameters.last.position.to))
+
+    // Reference errors
+    case class VariableDoesntExit(variable: BindingTree.Variable, definition: Syntax.Node) extends RooplError(Error, s"referenced variable ${variable.name} is not in scope.", definition.position)
+    case class IrreversibleAssignment(variable: BindingTree.Variable, definition: Syntax.Statement.Assignment) extends RooplError(Error, s"irreversible assignment of variable ${variable.name}. Assignee must not occur on the right-hand side of assignment.", definition.position)
 }
