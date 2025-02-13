@@ -56,7 +56,7 @@ class Formatting(options: Formatting.Options) {
             case UncallLocal(method, args) => s"uncall $method(${args.mkString(", ")})"
             case Call(callee, method, args) => s"call ${format(callee)}::$method(${args.mkString(", ")})"
             case Uncall(callee, method, args) => s"uncall ${format(callee)}::$method(${args.mkString(", ")})"
-            case Skip() => "skip"
+            case Skip => "skip"
             // Could tell statements in the list whether they're the first in the block and, if not, have conditionals, loops etc. print newlines before and after themselves
             case Block(list) => list.map(format(_, indent)).mkString("\n")
         )
@@ -83,7 +83,7 @@ class Formatting(options: Formatting.Options) {
         expression match
             case Literal(value) => value.toString()
             case Reference(reference) => format(reference)
-            case Expression.Nil() => "nil"
+            case Expression.Nil => "nil"
             case Binary(left, op, right) => {
                 // Must parenthesize subexpressions if their operator has lower or equal precedence than this.op
                 // Since all operators are left-associative parenthesizing the left expression is not required with equal precedence
