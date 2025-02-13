@@ -14,3 +14,4 @@ class X
         y[x + 1] += x
         // illegal
         x += y[x + 1]
+        skip
