@@ -15,6 +15,7 @@ object Main {
                 case Array("--run-tests") => chains.executeAllTests(mChains.parseAndLink(path))
                 case Array("--run", main) => chains.checkAndExecute(mChains.parseAndLink(path), main)
                 case Array("--run") => chains.checkAndExecute(mChains.parseAndLink(path))
+                case Array("--check") => chains.check(mChains.parseAndLink(path))
                 case Array("--format") => mChains.parseAndFormat(path)
                 case Array("--autoformat") => mChains.formatProjectInplace(mChains.parseProject(path))
                 case arr => println(s"Unknown command: ${arr.mkString(" ")}")

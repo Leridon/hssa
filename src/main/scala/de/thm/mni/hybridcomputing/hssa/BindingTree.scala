@@ -29,12 +29,14 @@ object BindingTree {
     def init(program: Syntax.Program) = Program(program)
     
     class Program(val syntax: Syntax.Program) extends BindingTree {
+        val builtins: Seq[GlobalBuiltinVariable] = syntax.language.builtins.map(b => GlobalBuiltinVariable(b.value.name, this, b))
+        
         val relations: Seq[GlobalRelationVariable] = syntax.definitions.map(rel => {
             GlobalRelationVariable(rel.name.name, this, Relation(this, rel))
         })
         
         private val entries: MultiMap[String, GlobalRelationVariable | GlobalBuiltinVariable] = MultiMap(
-            syntax.language.builtins.map(b => b.value.name -> GlobalBuiltinVariable(b.value.name, this, b))
+            builtins.map(b => b.name -> b)
               ++ relations.map(rel => {
                 rel.name.name -> rel
             }) *
@@ -60,7 +62,7 @@ object BindingTree {
         private val entries: MultiMap[String, Relation.LabelUsage] = MultiMap(blocks.flatMap(block => block.syntax.entry.labels.zipWithIndex.map(l => l._1.name -> Relation.LabelUsage(l._2, block))) *)
         private val exits: MultiMap[String, Relation.LabelUsage] = MultiMap(blocks.flatMap(block => block.syntax.exit.labels.zipWithIndex.map(l => l._1.name -> Relation.LabelUsage(l._2, block))) *)
         
-        lazy val labels: Set[String] = entries.keys() ++ exits.keys()
+        lazy val labels: Set[Label] = (entries.keys() ++ exits.keys()).map(l => Label(l, this))
         
         def getEntryByLabel(label: String): Option[Relation.LabelUsage] = entries.get(label)
         def getExitByLabel(label: String): Option[Relation.LabelUsage] = exits.get(label)
@@ -85,17 +87,21 @@ object BindingTree {
     }
     
     class Block(val parent: Relation, val syntax: Syntax.Block) extends BindingTree {
+        
+        val entry_labels = syntax.entry.labels.map(l => Label(l.name, parent))
+        val exit_labels = syntax.exit.labels.map(l => Label(l.name, parent))
+        
         val initializations = MultiMap(
             syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.initializes.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Init)) })
               .map(u => u.variable.name.name -> u) *
         )
         
-        val usages = MultiMap(
+        val usages: MultiMap[String, Block.VariableUsage] = MultiMap(
             syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.uses.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Use)) })
               .map(u => u.variable.name.name -> u) *
         )
         
-        val finalizations = MultiMap(
+        val finalizations: MultiMap[String, Block.VariableUsage] = MultiMap(
             syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.finalizes.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Final)) })
               .map(u => u.variable.name.name -> u) *
         )
@@ -120,6 +126,8 @@ object BindingTree {
         override def root: Program = this.parent.root
     }
     
+    case class Label(name: String, relation: Relation)
+    
     object Block {
         case class VariableUsage(
                                   variable: Syntax.Expression.Variable,
@@ -137,6 +145,7 @@ object BindingTree {
     class Variable(val name: String)
     case class BlockVariable(override val name: String, val block: Block) extends Variable(name)
     case class ParameterVaiable(override val name: String, val relation: Relation) extends Variable(name)
+    
     abstract class GlobalVariable(name: String, val program: Program) extends Variable(name)
     case class GlobalRelationVariable(override val name: String, override val program: Program, relation: BindingTree.Relation) extends GlobalVariable(name, program)
     case class GlobalBuiltinVariable(override val name: String, override val program: Program, builtin: Language.Plugin.Builtin) extends GlobalVariable(name, program)

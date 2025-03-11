@@ -62,17 +62,17 @@ class Wellformedness(language: Language) {
             
             
             context.labels.foreach(label => {
-                val entries = context.getAllEntries(label)
-                val exits = context.getAllExits(label)
+                val entries = context.getAllEntries(label.name)
+                val exits = context.getAllExits(label.name)
                 
                 if (context.getEntryByLabel(Language.BeginLabel).isEmpty) errors.add(Wellformedness.BeginMissing(context.syntax))
                 if (context.getExitByLabel(Language.EndLabel).isEmpty) errors.add(Wellformedness.EndMissing(context.syntax))
                 
-                if (entries.isEmpty && label != Language.EndLabel) errors.add(Wellformedness.LabelMissingEntry(context.syntax, label))
-                if (exits.isEmpty && label != Language.BeginLabel) errors.add(Wellformedness.LabelMissingExit(context.syntax, label))
+                if (entries.isEmpty && label.name != Language.EndLabel) errors.add(Wellformedness.LabelMissingEntry(context.syntax, label.name))
+                if (exits.isEmpty && label.name != Language.BeginLabel) errors.add(Wellformedness.LabelMissingExit(context.syntax, label.name))
                 
-                if (entries.length > 1) errors.add(Wellformedness.LabelUsedInMultipleEntries(context.syntax, label, entries))
-                if (exits.length > 1) errors.add(Wellformedness.LabelUsedInMultipleExits(context.syntax, label, exits))
+                if (entries.length > 1) errors.add(Wellformedness.LabelUsedInMultipleEntries(context.syntax, label.name, entries))
+                if (exits.length > 1) errors.add(Wellformedness.LabelUsedInMultipleExits(context.syntax, label.name, exits))
             })
             
             context.blocks.foreach(block => this.check(block, errors))

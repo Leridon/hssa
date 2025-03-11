@@ -31,8 +31,8 @@ object Language {
     
     object Plugin {
         case class Builtin(
-                            //`type`: Types.ParameterizedRelation,
-                            value: Value.BuiltinRelation
+                            value: Value.BuiltinRelation,
+                            `type`: Types.ParameterizedRelation = Types.ParameterizedRelation(new Types.MetaVariable, new Types.MetaVariable, new Types.MetaVariable)
                           )
     }
     
