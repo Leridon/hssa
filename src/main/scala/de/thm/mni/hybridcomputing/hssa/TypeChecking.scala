@@ -58,6 +58,8 @@ class TypeChecking(language: Language) {
     def check(program: hssa.BindingTree.Program): Unit = {
         val env = new Environment(program)
         
+        program.builtins.foreach(builtin => env.set(Environment.VariableKey(builtin), builtin.builtin.`type`))
+        
         def botup(environment: BindingTree, exp: Expression): Types.Type =
             def helper(exp: Expression): Types.Type = {
                 exp match
@@ -125,7 +127,7 @@ class TypeChecking(language: Language) {
                     val t3 = botup(block, assignment.instance_argument)
                     val t4 = botup(block, assignment.source)
                     
-                    // TODO: Check that t2 can be instantiated to t3 -> (t4 <-> t1) (clone if polymorphic)
+                    // TODO: Check that t2 can be instantiated to t3 -> (t4 <-> t1) (clone if polymorphic ? Does order matter now? What about recursive calls? Cyclic types?)
                 })
                 
                 {

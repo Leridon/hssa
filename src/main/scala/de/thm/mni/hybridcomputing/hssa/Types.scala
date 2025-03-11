@@ -13,7 +13,7 @@ object Types {
             case Pair(a, b) => s"($a, $b)"
             case ParameterizedRelation(parameter, in, out) => s"$parameter -> ($in <-> $out)"
             case variable: MetaVariable => s"<mv${this.hashCode()}>"
-            case Literal(value) => s"(L $value)"
+            case Literal(value) => value.toString
             case UnionType(a, b) => s"$a | $b"
             case IntersectionType(a, b) => s"$a & $b"
             case AnyType => "Any"

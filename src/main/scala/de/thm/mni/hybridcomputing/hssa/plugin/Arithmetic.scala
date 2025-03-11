@@ -22,6 +22,11 @@ object Arithmetic extends Language.Plugin {
                         case Basic.Int(r) => Basic.Int(bw(l, r))
                     }
                     }
+                ),
+                Types.ParameterizedRelation(
+                    Types.Int,
+                    Types.Int,
+                    Types.Int,
                 )
             )
         
@@ -38,7 +43,13 @@ object Arithmetic extends Language.Plugin {
                         case Basic.Int(v) if v == f(a, b) => Basic.Unit
                     }
                 },
+            ),
+            Types.ParameterizedRelation(
+                Types.Pair(Types.Int, Types.Int),
+                Types.Unit,
+                Types.Int
             )
+        
         )
         
         Seq(
