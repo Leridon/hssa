@@ -27,7 +27,7 @@ class Chains(val language: Language) {
     def check(prog: Program): Unit = {
         Wellformedness(language).check(prog).raiseIfNonEmpty()
         
-        TypeChecking(language).check(BindingTree.init(prog))
+        TypeChecking(language).check(BindingTree.init(prog)).raiseIfNonEmpty()
     }
     
     def checkAndExecute(prog: Program, relation_name: String = "main", instance_argument: Value = Basic.Unit, relation_argument: Value = Basic.Unit, direction: Direction = Direction.FORWARDS): Value = {

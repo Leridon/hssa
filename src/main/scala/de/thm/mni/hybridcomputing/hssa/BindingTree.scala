@@ -71,7 +71,7 @@ object BindingTree {
         def getAllExits(label: String): Seq[Relation.LabelUsage] = exits.getAll(label)
         
         def lookup_variable(name: String): Option[Variable] = {
-            if this.parameter_variables.contains(name) then Some(ParameterVaiable(name, this))
+            if this.parameter_variables.contains(name) then Some(ParameterVariable(name, this))
             else this.parent.lookup_variable(name)
         }
         
@@ -142,11 +142,11 @@ object BindingTree {
             case Use
     }
     
-    class Variable(val name: String)
+    sealed class Variable(val name: String)
     case class BlockVariable(override val name: String, val block: Block) extends Variable(name)
-    case class ParameterVaiable(override val name: String, val relation: Relation) extends Variable(name)
+    case class ParameterVariable(override val name: String, val relation: Relation) extends Variable(name)
     
-    abstract class GlobalVariable(name: String, val program: Program) extends Variable(name)
+    sealed abstract class GlobalVariable(name: String, val program: Program) extends Variable(name)
     case class GlobalRelationVariable(override val name: String, override val program: Program, relation: BindingTree.Relation) extends GlobalVariable(name, program)
     case class GlobalBuiltinVariable(override val name: String, override val program: Program, builtin: Language.Plugin.Builtin) extends GlobalVariable(name, program)
 }

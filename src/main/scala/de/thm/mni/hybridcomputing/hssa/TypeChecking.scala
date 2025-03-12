@@ -3,10 +3,14 @@ package de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
+import de.thm.mni.hybridcomputing.util.errors.LanguageError
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity
 
 import scala.collection.mutable
 
 class TypeChecking(language: Language) {
+    class TypeError(expected: Types.Type, actual: Types.Type) extends HSSAError(Severity.Error, s"Type Error: Expected $expected, but got $actual")
+    
     class Environment(prog: BindingTree.Program) {
         private val map = mutable.Map[Environment.Key, Types.Type]()
         
@@ -55,7 +59,9 @@ class TypeChecking(language: Language) {
         }
     }
     
-    def check(program: hssa.BindingTree.Program): Unit = {
+    def check(program: hssa.BindingTree.Program): LanguageError.Collector = {
+        val collector = LanguageError.Collector()
+        
         val env = new Environment(program)
         
         program.builtins.foreach(builtin => env.set(Environment.VariableKey(builtin), builtin.builtin.`type`))
@@ -65,7 +71,7 @@ class TypeChecking(language: Language) {
                 exp match
                     case Expression.Literal(value) => value match
                         case Basic.Unit => Types.Unit
-                        case v: Basic.Int => Types.Literal(v)
+                        case v: Basic.Int => Types.Int
                     case Expression.Variable(name) =>
                         val variable = environment.lookup_variable(name.name).get
                         
@@ -76,9 +82,16 @@ class TypeChecking(language: Language) {
                                 env.get(Environment.VariableKey(variable))
                     case Expression.Pair(a, b) => Types.Pair(helper(a), helper(b))
                     case Expression.Invert(a) =>
-                        Types.unify(helper(a),
-                            Types.ParameterizedRelation(new Types.MetaVariable(), new Types.MetaVariable(), new Types.MetaVariable())
-                        ).get // TODO: Wrong
+                        val t = helper(a)
+                        val rel = Types.ParameterizedRelation(new Types.MetaVariable(), new Types.MetaVariable(), new Types.MetaVariable())
+                        
+                        if (Types.unify(t, rel).isEmpty) {
+                            collector.add(TypeError(rel, t)
+                              .setPosition(a.position)
+                            )
+                        }
+                        
+                        Types.ParameterizedRelation(rel.parameter, rel.out, rel.in)
                     case Expression.Unit() => Types.Unit
             }
             
@@ -112,13 +125,16 @@ class TypeChecking(language: Language) {
                 {
                     val t = botup(block, block.syntax.entry.initialized)
                     
-                    val t2 = block.entry_labels.map(l => {
+                    val t2 = Types.Pair(block.entry_labels.map(l => {
                         env.get(Environment.LabelKey(l))
-                    }).zipWithIndex.map({
-                        case (t, i) => Types.Pair(t, Types.Literal(Basic.Int(i)))
-                    }).reduce(Types.UnionType)
+                    }).reduce(Types.UnionType.apply), Types.Int)
                     
-                    Types.unify(t, t2)
+                    if (Types.unify(t, t2).isEmpty) {
+                        collector.add(
+                            TypeError(t, t2)
+                              .setPosition(block.syntax.entry.initialized.position)
+                        )
+                    }
                 }
                 
                 block.syntax.assignments.foreach(assignment => {
@@ -127,24 +143,57 @@ class TypeChecking(language: Language) {
                     val t3 = botup(block, assignment.instance_argument)
                     val t4 = botup(block, assignment.source)
                     
-                    // TODO: Check that t2 can be instantiated to t3 -> (t4 <-> t1) (clone if polymorphic ? Does order matter now? What about recursive calls? Cyclic types?)
+                    val rel_t = Types.ParameterizedRelation(new Types.MetaVariable, new Types.MetaVariable, new Types.MetaVariable)
+                    
+                    if (Types.unify(Types.clone(t2), rel_t).isEmpty) {
+                        collector.add(
+                            TypeError(t2, rel_t)
+                              .setPosition(assignment.relation.position)
+                        )
+                    }
+                    
+                    if (Types.unify(t3, rel_t.parameter).isEmpty) {
+                        collector.add(
+                            TypeError(rel_t.parameter, t3)
+                              .setPosition(assignment.instance_argument.position)
+                        )
+                    }
+                    
+                    if(Types.unify(t1, rel_t.out).isEmpty) {
+                        collector.add(
+                            TypeError(rel_t.out, t1)
+                              .setPosition(assignment.target.position)
+                        )
+                    }
+                    
+                    if(Types.unify(t4, rel_t.in).isEmpty) {
+                        collector.add(
+                            TypeError(t4, rel_t.in)
+                              .setPosition(assignment.source.position)
+                        )
+                    }
                 })
                 
                 {
                     val t = botup(block, block.syntax.exit.argument)
                     
-                    val t2 = block.exit_labels.map(l => {
+                    val t2 = Types.Pair(block.exit_labels.map(l => {
                         env.get(Environment.LabelKey(l))
-                    }).zipWithIndex.map({
-                        case (t, i) => Types.Pair(t, Types.Literal(Basic.Int(i)))
-                    }).reduce(Types.UnionType)
+                    }).reduce(Types.UnionType.apply), Types.Int)
                     
-                    Types.unify(t, t2)
+                    if (Types.unify(t, t2).isEmpty) {
+                        collector.add(
+                            TypeError(t, t2)
+                              .setPosition(block.syntax.exit.argument.position)
+                        )
+                    }
                 }
             })
         })
         
         env.print()
         println()
+        
+        collector
     }
 }

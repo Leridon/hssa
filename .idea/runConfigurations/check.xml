@@ -2,7 +2,7 @@
   <configuration default="false" name="check" type="Application" factoryName="Application" folderName="Shared">
     <option name="MAIN_CLASS_NAME" value="de.thm.mni.hybridcomputing.hssa.modular.Main" />
     <module name="hssa" />
-    <option name="PROGRAM_PARAMETERS" value="programs/tests.hssa --check" />
+    <option name="PROGRAM_PARAMETERS" value="programs/examples/type_error.hssa --check" />
     <extension name="coverage">
       <pattern>
         <option name="PATTERN" value="de.thm.mni.hybridcomputing.hssa.modular.*" />
