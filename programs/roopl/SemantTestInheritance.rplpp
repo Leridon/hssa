@@ -17,3 +17,22 @@ class XXX inherits XX
         skip
     method y(XXX a)
         skip
+
+class Animal
+    int a
+    method cry(Animal other)
+        skip
+
+class Cat inherits Animal
+    method cry(Animal other)
+        skip
+    method meowAt(Cat other)
+        skip
+
+class OkCat inherits Cat
+    method meowAt(Animal other)
+        skip
+
+class BadCat inherits Cat
+    method meowAt(BadCat other)
+        skip

@@ -15,7 +15,7 @@ class B inherits Z
 class C inherits C
     int c
     
-    method main()
+    method mains()
         skip
 
 class E inherits D

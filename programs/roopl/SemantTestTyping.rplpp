@@ -1,28 +1,33 @@
-/* Beispiel für Hellwig?
+class Main
+    int i
+    Cat cat
+    Animal anim
 
-class A
-class A1 inherits A
+    method main()
+        // illegal
+        i ^= nil
+        // legal
+        local int[] arr = nil
+            skip
+        local Cat c = nil
+            skip
+        delocal Cat c = nil
+        local Animal a = nil
+            skip
+        delocal Animal a = nil
+        // illegal
+        arr += 5
+        cat += 5
+        anim += 5
+        // legal
+        arr[5] += i
+        i ^= arr[0]
+        delocal int[] arr = nil
 
-class B
-    method x(a: A)
-class B1 inherits B
-    method x(a: A1)
+class Animal
+    method roar()
+        skip
 
-method main()
-    A a
-    B b
-    a = new A()
-    b = new B1()
-    b::x(a)
-
-*/
-
-/* Array types
-
-A[] x
-A1[] y
-
-x = y ??
-
-
-*/
+class Cat
+    method roar()
+        skip

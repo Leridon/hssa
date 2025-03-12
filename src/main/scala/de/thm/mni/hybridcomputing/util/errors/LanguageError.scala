@@ -56,11 +56,6 @@ object LanguageError {
         
     }
     
-    def format(errors: Seq[LanguageError]): Unit = {
-        val builder = StringBuilder()
-        
-    }
-
     val previousLinesShown = 3
 
     extension (position: SourcePosition) {

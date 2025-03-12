@@ -5,6 +5,8 @@ object MultiMap {
     
     extension [Key, Value](map: MultiMap[Key, Value]) { 
         def entries(): Seq[(Key, Seq[Value])] = map.toSeq
+
+        def valueSet(): Set[Value] = map.values.flatMap(identity).toSet
             
         def getAll(key: Key): Seq[Value] = map.get(key).map(_.toSeq).getOrElse(Seq())
             
