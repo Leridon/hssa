@@ -118,10 +118,10 @@ class TypeChecking(language: Language) {
             )
         })
         
+        val call_graph = new CallGraph(program)
         
-        program.relations.foreach(rel => {
-            
-            rel.relation.blocks.foreach(block => {
+        call_graph.topologically_sorted.foreach(rel => {
+            rel.blocks.foreach(block => {
                 {
                     val t = botup(block, block.syntax.entry.initialized)
                     
