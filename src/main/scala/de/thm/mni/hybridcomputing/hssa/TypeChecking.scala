@@ -73,7 +73,7 @@ class TypeChecking(language: Language) {
                         case Basic.Unit => Types.Unit
                         case v: Basic.Int => Types.Int
                     case Expression.Variable(name) =>
-                        val variable = environment.lookup_variable(name.name).get
+                        val variable = environment.lookup(name.name).get
                         
                         variable match
                             case BindingTree.GlobalBuiltinVariable(name, program, builtin) =>

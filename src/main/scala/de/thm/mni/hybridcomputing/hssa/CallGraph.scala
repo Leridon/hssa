@@ -10,7 +10,7 @@ class CallGraph(program: BindingTree.Program) {
             
             block.all_variable_usages.entries().flatMap(_._2)
               .flatMap(v => {
-                  block.lookup_variable(v.variable.name.name).flatMap {
+                  block.lookup(v.variable.name.name).flatMap {
                       case BindingTree.GlobalRelationVariable(name, program, relation) => Some(relation)
                       case _ => None
                   }.toSeq

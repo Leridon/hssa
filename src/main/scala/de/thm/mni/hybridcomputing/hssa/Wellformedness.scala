@@ -41,7 +41,7 @@ class Wellformedness(language: Language) {
                             
                         }
                     } else {
-                        if (context.lookup_variable(usage.variable.name.name).isEmpty) {
+                        if (context.lookup(usage.variable.name.name).isEmpty) {
                             errors.add(Wellformedness.UseOfUndefinedVariable(usage))
                             
                         }
