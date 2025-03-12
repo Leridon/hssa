@@ -87,9 +87,8 @@ object BindingTree {
     }
     
     class Block(val parent: Relation, val syntax: Syntax.Block) extends BindingTree {
-        
-        val entry_labels = syntax.entry.labels.map(l => Label(l.name, parent))
-        val exit_labels = syntax.exit.labels.map(l => Label(l.name, parent))
+        val entry_labels: Seq[Label] = syntax.entry.labels.map(l => Label(l.name, parent))
+        val exit_labels: Seq[Label] = syntax.exit.labels.map(l => Label(l.name, parent))
         
         val initializations = MultiMap(
             syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.initializes.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Init)) })
