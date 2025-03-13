@@ -1,8 +1,8 @@
 rel fibpair:
-     n, 0       :=  begin <-                     
+     n, 0       :=  begin <-
                      -> Fib2   :=  (0, 1, n), 0  
 
- (x, y, m), c   := L1,Fib2 <-                    
+ (x, y, m), c   := L1,Fib2 <-
       ()        := ~equal 0, x :=        c       
       c1        :=  less 0, m  :=       ()       
                     -> L3,L2   :=  (x, y, m), c1 
@@ -17,7 +17,7 @@ rel fibpair:
 
 
 rel fibpair.test:
-(), 0 :=      begin <-               
+(),0     :=      begin <-
  (1, 1)  :=       fibpair       :=  1
  (1, 2)  :=       fibpair       :=  2
  (2, 3)  :=       fibpair       :=  3
