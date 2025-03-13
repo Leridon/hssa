@@ -26,7 +26,6 @@ object Scopes {
                     case None => () // No override
 
             check(method.body, method, errors)
-            method.parameters
         }
 
         def check(statement: Syntax.Statement, context: Method | Block, errors: LanguageError.Collector): Unit = {
