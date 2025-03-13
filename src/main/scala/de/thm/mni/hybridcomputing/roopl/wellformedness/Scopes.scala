@@ -6,7 +6,7 @@ import de.thm.mni.hybridcomputing.util.MultiMap.*
 import de.thm.mni.hybridcomputing.roopl.Syntax
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 import de.thm.mni.hybridcomputing.roopl.Syntax.VariableIdentifier
-import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing.Type
+import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing.{Type, NonIntType}
 
 object Scopes {
     private object Wellformedness {
@@ -25,41 +25,37 @@ object Scopes {
                     case Some(superMethod) => checkSignature(superMethod, method, errors)
                     case None => () // No override
 
-            check(method.body, method, errors)
+            // TODO: Properly implement descend over StatementNodes
+            //check(method.body, method, errors)
         }
 
-        def check(statement: Syntax.Statement, context: Method | Block, errors: LanguageError.Collector): Unit = {
+        def check(statement: StatementNode, scope: Scope, errors: LanguageError.Collector): Unit = {
             statement match
-                case statement: Syntax.Statement.Assignment => check(statement, context, errors)
-                case statement: Syntax.Statement.Swap => check(statement, context, errors)
-                case statement: Syntax.Statement.Conditional => check(statement, context, errors)
-                case statement: Syntax.Statement.Loop => check(statement, context, errors)
-                case statement: Syntax.Statement.ObjectBlock => check(statement, context, errors)
-                case statement: Syntax.Statement.LocalBlock => check(statement, context, errors)
-                case statement: Syntax.Statement.New => check(statement, context, errors)
-                case statement: Syntax.Statement.Delete => check(statement, context, errors)
-                case statement: Syntax.Statement.Copy => check(statement, context, errors)
-                case statement: Syntax.Statement.Uncopy => check(statement, context, errors)
-                case statement: Syntax.Statement.CallLocal => check(statement, context, errors)
-                case statement: Syntax.Statement.UncallLocal => check(statement, context, errors)
-                case statement: Syntax.Statement.Call => check(statement, context, errors)
-                case statement: Syntax.Statement.Uncall => check(statement, context, errors)
-                case Syntax.Statement.Skip => ()
-                case Syntax.Statement.Block(list) => list.foreach(check(_, context, errors))
+                case block: Block => ()
+                case Conditional => ()
+                case Loop => ()
+                case Assignment => ()
+                case Swap => ()
+                case New => ()
+                case Delete => ()
+                case Copy => ()
+                case Uncopy => ()
+                case Call => ()
+                case Uncall => ()
         }
 
-        def check(statement: Syntax.Statement.Assignment, context: Method | Block, errors: LanguageError.Collector): Unit = {
-            context.lookupVariable(statement.assignee.name) match
+        def check(statement: Assignment, scope: Scope, errors: LanguageError.Collector): Unit = {
+            scope.lookupVariable(statement.assignee.name) match
                 case Some(variable) if variableInExpression(statement.assignee, statement.value) => errors.add(IrreversibleAssignment(variable, statement))
                 case None => errors.add(VariableDoesntExist(statement.assignee.name, statement))
                 case _ => () // Lookup succeeded
             
             val assignmentTyping: Option[(Type, Type)] = for {
-                x <- Typing.typeOf(statement.assignee, context)
-                y <- Typing.typeOf(statement.value, context)
+                x <- Typing.typeOf(statement.assignee, scope)
+                y <- Typing.typeOf(statement.value, scope)
             } yield (x, y)
             assignmentTyping match
-                case None => errors.add(NoTyping(statement.position))
+                case None => errors.add(ImpossibleTyping(statement.position))
                 case Some(assigneeType, expressionType) if !expressionType.isA(assigneeType) =>
                     errors.add(BadTyping(assigneeType, expressionType, statement))
                 case _ => ()
@@ -77,19 +73,15 @@ object Scopes {
                     variable.isInstanceOf[Syntax.VariableReference.Variable] && variableInExpression(variable, index)
         }
 
-        def check(statement: Syntax.Statement.Swap, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.Conditional, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.Loop, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.ObjectBlock, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.LocalBlock, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.New, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.Delete, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.Copy, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.Uncopy, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.CallLocal, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.UncallLocal, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.Call, context: Method | Block, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Syntax.Statement.Uncall, context: Method | Block, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Swap, scope: Scope, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Conditional, scope: Scope, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Loop, scope: Scope, errors: LanguageError.Collector): Unit = {}
+        def check(statement: New, scope: Scope, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Delete, scope: Scope, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Copy, scope: Scope, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Uncopy, scope: Scope, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Call, scope: Scope, errors: LanguageError.Collector): Unit = {}
+        def check(statement: Uncall, scope: Scope, errors: LanguageError.Collector): Unit = {}
 
         // Method signature must contain the same parameters
         private def checkSignature(superMethod: Method, method: Method, errors: LanguageError.Collector): Unit = {
@@ -110,6 +102,9 @@ object Scopes {
     def check(program: ClassGraph.Program): Program = {
         val scopes = Program(program)
         val collector = LanguageError.Collector()
+
+        determineStaticTypes(scopes, collector)
+        collector.raiseIfNonEmpty()
         
         scopes.classes.foreach(c => Wellformedness.check(c, collector))
         collector.raiseIfNonEmpty()
@@ -117,22 +112,44 @@ object Scopes {
         scopes
     }
 
+    // Determine the types of fields, method parameters and block variables
+    // This step is necessary before type checking statements can be done
+    private def determineStaticTypes(program: Program, errors: LanguageError.Collector): Unit = {
+        program.classes.foreach(c =>
+            c.fields.foreach(f => f.typ = deriveType(program, f, errors))
+            c.methods.foreach(m =>
+                m.parameters.foreach(p => p.typ = deriveType(program, p, errors))
+                m.body.foreach(sb => ???)
+            )
+        )
+    }
+
+    private def deriveType(program: Program, variable: Variable, errors: LanguageError.Collector): Type = {
+        variable.syntacticType match
+            case Syntax.DataType.Integer => Typing.Integer
+            case Syntax.DataType.IntegerArray => Typing.IntegerArray
+            case Syntax.DataType.Class(name) => program.classes.find(_.name == name).map(Typing.Class(_)).getOrElse({errors.add(MissingType(variable));null})
+            case Syntax.DataType.ClassArray(name) => program.classes.find(_.name == name).map(Typing.ClassArray(_)).getOrElse({errors.add(MissingType(variable));null})
+    }
+
+    
+
     trait Scope {
-        def root: Program
+        def program: Program
         def lookupVariable(name: Syntax.VariableIdentifier): Option[Variable]
     }
     
     // Program structure
-    class Program(val program: ClassGraph.Program) extends Scope {
-        val classes: Seq[Class] = program.classes.valueSet().toSeq.map(c => new Class(this, c))
+    class Program(val classProgram: ClassGraph.Program) extends Scope {
+        val classes: Seq[Class] = classProgram.classes.valueSet().toSeq.map(c => new Class(this, c))
 
-        override def root: Program = this
+        override def program: Program = this
         override def lookupVariable(name: VariableIdentifier): Option[Variable] = None
     }
     class Class(val parent: Program, val graphClass: ClassGraph.Class) extends Scope {
         val name: Syntax.ClassIdentifier = graphClass.name
 
-        lazy val fields: Seq[Variable] = graphClass.fields.valueSet().toSeq.map(f => FieldVariable(f.name, Typing.deriveType(parent, f.typ).getOrElse(throw LanguageError.AbortDueToErrors(Seq(NoTyping(f.position)))), f.position, this))
+        val fields: Seq[Variable] = graphClass.fields.valueSet().toSeq.map(f => Variable(f.name, f.typ, f.position, this))
         val methods: Seq[Method] = graphClass.methods.valueSet().toSeq.map(m => new Method(this, m))
 
         def superClasses(): Seq[Class] = {
@@ -142,46 +159,121 @@ object Scopes {
                 case Some(clazz) => clazz +: clazz.superClasses()
         }
 
-        override def root: Program = parent
+        override def program: Program = parent
         override def lookupVariable(name: VariableIdentifier): Option[Variable] =
             fields.find(_.name == name).orElse(superClasses().map(_.lookupVariable(name)).find(_.isDefined).flatMap(identity))
     }
     class Method(val parent: Class, val method: ClassGraph.Method) extends Scope {
         val name: Syntax.MethodIdentifier = method.name
-        lazy val parameters: Seq[Variable] = method.parameters.valueSet().toSeq.map(p => ParameterVariable(p.name, Typing.deriveType(root, p.typ).getOrElse(throw LanguageError.AbortDueToErrors(Seq(NoTyping(p.position)))), p.position, this))
-
-        val body: Syntax.Statement = method.syntax.body
+        
+        val parameters: Seq[Variable] = method.parameters.valueSet().toSeq.map(p => Variable(p.name, p.typ, p.position, this))
+        val body: Seq[StatementNode] = buildStatementNodes(method.syntax.body, this)
 
         // The method that is overriden by this is the method with the same name in the closest ancestor
         def superMethod(): Option[Method] = parent.superClasses().find(c => c.methods.exists(m => m.name == this.name)).flatMap(_.methods.find(_.name == this.name))
 
-        override def root: Program = parent.root
+        override def program: Program = parent.program
         override def lookupVariable(name: VariableIdentifier): Option[Variable] =
             parameters.find(_.name == name).orElse(parent.lookupVariable(name))
     }
 
-    // Since object blocks are only syntactic sugar it might simplify things to get rid of them in the Syntax after formatting?
-    class Block(val parent: Method | Block, val syntax: Syntax.Statement.ObjectBlock | Syntax.Statement.LocalBlock) extends Scope {
-        /*val alloc: Variable = syntax match
-            case ob: Syntax.Statement.ObjectBlock => ObjectBlockVariable(ob.alloc, Syntax.DataType.Class(ob.typ), this)
-            case lb: Syntax.Statement.LocalBlock => LocalBlockVariable(lb.initName, lb.initType, this)
-        val dealloc: Variable = syntax match
-            case ob: Syntax.Statement.ObjectBlock => ObjectBlockVariable(ob.dealloc, Syntax.DataType.Class(ob.typ), this)
-            case lb: Syntax.Statement.LocalBlock => LocalBlockVariable(lb.deInitName, lb.initType, this)*/
+    // Builds a list of statements and scopes (blocks). This will allow us to parse the full statement tree, while also handling scopes properly
+    private def buildStatementNodes(body: Syntax.Statement, scope: Scope): Seq[StatementNode] = {
+        body match
+            case Syntax.Statement.ObjectBlock(typ, alloc, statement, dealloc) =>
+                // Since object blocks are only syntactic sugar we can get rid of them here by transforming them like a local block
+                Seq(Block(scope, (Syntax.DataType.Class.apply(typ), Syntax.DataType.Class.apply(typ)),
+                                    (alloc, dealloc),
+                                    (Syntax.Expression.Nil, Syntax.Expression.Nil),
+                                    Syntax.Statement.Block(Seq(
+                                        Syntax.Statement.New(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(alloc)),
+                                        statement,
+                                        Syntax.Statement.Delete(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(dealloc))
+                                    ))))
+            case Syntax.Statement.LocalBlock(typ, alloc, init, statement, detyp, dealloc, deinit) =>
+                Seq(Block(scope, (typ, detyp), (alloc, dealloc), (init, deinit), statement))
+            case Syntax.Statement.Assignment(assignee, op, value) =>
+                Seq(Assignment(ref(assignee, scope), op, value))
+            case Syntax.Statement.Swap(left, right) =>
+                Seq(Swap(???, ???))
+            case Syntax.Statement.Conditional(test, thenStatement, elseStatement, assertion) =>
+                Seq(Conditional(???, ???, ???, ???))
+            case Syntax.Statement.Loop(test, doStatement, loopStatement, assertion) =>
+                Seq(Loop(???, ???, ???, ???))
+            case Syntax.Statement.New(typ, name) =>
+                Seq(New(???, ???))
+            case Syntax.Statement.Delete(typ, name) =>
+                Seq(Delete(???, ???))
+            case Syntax.Statement.Copy(typ, from, to) =>
+                Seq(Copy(???, ???, ???))
+            case Syntax.Statement.Uncopy(typ, from, to) =>
+                Seq(Uncopy(???, ???, ???))
+            case Syntax.Statement.CallLocal(method, args) =>
+                Seq(Call(???, ???, ???))
+            case Syntax.Statement.UncallLocal(method, args) =>
+                Seq(Uncall(???, ???, ???))
+            case Syntax.Statement.Call(callee, method, args) =>
+                Seq(Call(???, ???, ???))
+            case Syntax.Statement.Uncall(callee, method, args) =>
+                Seq(Uncall(???, ???, ???))
+            case Syntax.Statement.Skip => Seq()
+            case Syntax.Statement.Block(list) =>
+                list.flatMap(statement => buildStatementNodes(statement, scope))
+    }
 
-        override def root: Program = parent.root
+    class Block(val parent: Scope,
+                val varType: (Syntax.DataType, Syntax.DataType),
+                val varName: (Syntax.VariableIdentifier, Syntax.VariableIdentifier),
+                val varInit: (Syntax.Expression, Syntax.Expression),
+                val statement: Syntax.Statement) extends Scope {
+        val body: Seq[StatementNode] = buildStatementNodes(statement, this)
+        val variable: Variable = Variable(varName._1, varType._1, varName._1.position, this)
+
+        override def program: Program = parent.program
+
         override def lookupVariable(name: Syntax.VariableIdentifier): Option[Variable] = {
-            //if alloc.name == name then return Some(alloc)
-            /*else*/ parent.lookupVariable(name)
+            if variable.name == name then return Some(variable)
+            else parent.lookupVariable(name)
         }
     }
 
-    sealed abstract class Variable(val name: Syntax.VariableIdentifier, val typ: Type, val definition: SourcePosition, val owner: Scope)
-    case class FieldVariable(override val name: Syntax.VariableIdentifier, override val typ: Type, override val definition: SourcePosition, override val owner: Class) extends Variable(name, typ, definition, owner)
-    case class ParameterVariable(override val name: Syntax.VariableIdentifier, override val typ: Type, override val definition: SourcePosition, override val owner: Method) extends Variable(name, typ, definition, owner)
-    case class ObjectBlockVariable(override val name: Syntax.VariableIdentifier, override val typ: Type, override val definition: SourcePosition, override val owner: Block) extends Variable(name, typ, definition, owner)
-    case class LocalBlockVariable(override val name: Syntax.VariableIdentifier, override val typ: Type, override val definition: SourcePosition, override val owner: Block) extends Variable(name, typ, definition, owner)
+    type StatementNode = Statement | Block
 
+    // Semantic conversion of statements, this simplifies further evaluation because the Syntax objects are not well suited for semantic analysis
+    sealed abstract class Statement
+
+    // Statements possibly containing blocks
+    sealed abstract class BlockStatement extends Statement
+    case class Conditional(val test: Syntax. Expression, val thenStatement: StatementNode, val elseStatement: StatementNode, val assertion: Syntax.Expression) extends BlockStatement
+    case class Loop(val test: Syntax.Expression, val doStatement: StatementNode, val loopStatement: StatementNode, val assertion: Syntax.Expression) extends BlockStatement
+
+    // If variable is None, an error will be thrown during wellformedness checking
+    case class VariableReference(val variable: Option[Variable], val index: Option[Syntax.Expression])
+    private def ref(reference: Syntax.VariableReference, scope: Scope): VariableReference = {
+        reference match
+            case Syntax.VariableReference.Variable(name) => VariableReference(scope.lookupVariable(name), None)
+            case Syntax.VariableReference.Array(name, index) => VariableReference(scope.lookupVariable(name), Some(index))
+    }
+    // Other statements (except those not needed anymore like Skip and Block)
+    case class Assignment(assignee: VariableReference, op: Syntax.AssignmentOperator, value: Syntax.Expression) extends Statement
+    case class Swap(left: VariableReference, right: VariableReference) extends Statement
+    case class New(typ: NonIntType, name: VariableReference) extends Statement
+    case class Delete(typ: NonIntType, name: VariableReference) extends Statement
+    case class Copy(typ: NonIntType, from: VariableReference, to: VariableReference) extends Statement
+    case class Uncopy(typ: NonIntType, from: VariableReference, to: VariableReference) extends Statement
+    case class Call(callee: Option[VariableReference], method: Method, args: Seq[Variable]) extends Statement
+    case class Uncall(callee: Option[VariableReference], method: Method, args: Seq[Variable]) extends Statement
+
+
+    // We keep the syntax tree type as well as the semantic type as this heavily simplifies usage of our data structures
+    case class Variable(val name: Syntax.VariableIdentifier, val syntacticType: Syntax.DataType, val definition: SourcePosition, val owner: Scope, var typ: Type = null)
+
+    // Type/block errors
+    case class MissingType(variable: Variable) extends RooplError(Error, s"specified type ${variable.syntacticType.toString()} does not exist.", variable.definition)
+    case class BadBlockType(pos: SourcePosition) extends RooplError(Error, s"type of delocal must be equal to type of local.", pos)
+    case class BadBlockName(pos: SourcePosition) extends RooplError(Error, s"name of delocal must be equal to name of local.", pos)
+    case class BadTyping(expected: Type, actual: Type, usage: Syntax.Node) extends RooplError(Error, s"expected type to satisfy $expected, got $actual instead.", usage.position)
+    case class ImpossibleTyping(pos: SourcePosition) extends RooplError(Error, s"unable to determine type.", pos)
 
     // Inheritance errors
     case class FieldOverwrite(parent: Syntax.ClassIdentifier, variable: Variable) extends RooplError(Error, s"field ${variable.name} is already defined in class $parent", variable.definition)
@@ -192,7 +284,4 @@ object Scopes {
     case class VariableDoesntExist(name: Syntax.VariableIdentifier, usage: Syntax.Node) extends RooplError(Error, s"referenced variable ${name} is not in scope.", usage.position)
     case class IrreversibleAssignment(variable: Variable, usage: Syntax.Statement.Assignment) extends RooplError(Error, s"irreversible assignment of variable ${variable.name}. Assignee must not occur on the right-hand side of assignment.", usage.position)
     
-    // Type errors
-    case class BadTyping(expected: Type, actual: Type, usage: Syntax.Node) extends RooplError(Error, s"expected type to satisfy $expected, got $actual instead.", usage.position)
-    case class NoTyping(pos: SourcePosition) extends RooplError(Error, s"unable to determine type.", pos)
 }

@@ -19,7 +19,7 @@
     - [x] Add erroneous source code to error message output
 - [-] Semantic Analysis
     - [x] ~~BindingTree as a helpful datastructure to write wellformedness checks easier~~
-    - [x] Rewrite of BindingTree into multiple data structures, which represent the current semantics of the Syntax tree
+    - [-] Rewrite of BindingTree into multiple data structures, which represent the current semantics of the Syntax tree
     - [-] Wellformedness checks
     - [-] Type checking
 - [ ] Translation into HSSA

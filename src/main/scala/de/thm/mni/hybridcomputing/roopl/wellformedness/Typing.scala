@@ -51,14 +51,6 @@ object Typing {
             )     
     }
 
-    def deriveType(program: Scopes.Program, typ: Syntax.DataType): Option[Type] = {
-        typ match
-            case Syntax.DataType.Integer => Some(Integer)
-            case Syntax.DataType.Class(name) => program.classes.find(_.name == name).map(Class(_))
-            case Syntax.DataType.IntegerArray => Some(IntegerArray)
-            case Syntax.DataType.ClassArray(name) => program.classes.find(_.name == name).map(ClassArray(_))
-    }
-
     private def baseType(arrayType: ArrayType): Type = {
         arrayType match
             case IntegerArray => Integer
