@@ -116,6 +116,7 @@ object Syntax {
         case class Swap(left: VariableReference, right: VariableReference) extends Statement
         case class Conditional(test: Expression, thenStatement: Statement, elseStatement: Statement, assertion: Expression) extends Statement
         case class Loop(test: Expression, doStatement: Statement, loopStatement: Statement, assertion: Expression) extends Statement
+        // alloc and dealloc must always be the same, no?
         case class ObjectBlock(typ: ClassIdentifier, alloc: VariableIdentifier, body: Statement, dealloc: VariableIdentifier) extends Statement
         case class LocalBlock(initType: DataType, initName: VariableIdentifier, initValue: Expression, statement: Statement, deInitType: DataType, deInitName: VariableIdentifier, deInitValue: Expression) extends Statement
         case class New(typ: ObjectType, name: VariableReference) extends Statement

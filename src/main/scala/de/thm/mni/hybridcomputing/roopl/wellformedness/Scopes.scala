@@ -6,10 +6,9 @@ import de.thm.mni.hybridcomputing.util.MultiMap.*
 import de.thm.mni.hybridcomputing.roopl.Syntax
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 import de.thm.mni.hybridcomputing.roopl.Syntax.VariableIdentifier
+import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing.Type
 
-object ScopeGraph {
-    import Typing.Type
-
+object Scopes {
     private object Wellformedness {
         def check(context: Class, errors: LanguageError.Collector): Unit = {
             // No field overwrite
@@ -26,15 +25,7 @@ object ScopeGraph {
                     case Some(superMethod) => checkSignature(superMethod, method, errors)
                     case None => () // No override
 
-            method.body.foreach(sb => sb match
-                case block: Block => check(block, errors)
-                case statement: Syntax.Statement => check(statement, method, errors))
-        }
-
-        def check(block: Block, errors: LanguageError.Collector): Unit = {
-            block.body.foreach(sb => sb match
-                case block: Block => check(block, errors)
-                case statement: Syntax.Statement => check(statement, block, errors))
+            check(method.body, method, errors)
         }
 
         def check(statement: Syntax.Statement, context: Method | Block, errors: LanguageError.Collector): Unit = {
@@ -116,7 +107,7 @@ object ScopeGraph {
             )
         }
     }
-    def check(program: BlockGraph.Program): Program = {
+    def check(program: ClassGraph.Program): Program = {
         val scopes = Program(program)
         val collector = LanguageError.Collector()
         
@@ -132,21 +123,20 @@ object ScopeGraph {
     }
     
     // Program structure
-    class Program(val program: BlockGraph.Program) extends Scope {
-        val classes: Seq[Class] = program.classes.map(c => new Class(this, c))
+    class Program(val program: ClassGraph.Program) extends Scope {
+        val classes: Seq[Class] = program.classes.valueSet().toSeq.map(c => new Class(this, c))
 
         override def root: Program = this
         override def lookupVariable(name: VariableIdentifier): Option[Variable] = None
     }
+    class Class(val parent: Program, val graphClass: ClassGraph.Class) extends Scope {
+        val name: Syntax.ClassIdentifier = graphClass.name
 
-    class Class(val parent: Program, val typeClass: BlockGraph.Class) extends Scope {
-        val name: Syntax.ClassIdentifier = typeClass.name
-
-        lazy val fields: Seq[Variable] = typeClass.fields.map(f => Variable(f.name, Typing.deriveType(parent, f.typ), f.definition, this))
-        val methods: Seq[Method] = typeClass.methods.map(m => new Method(this, m))
+        lazy val fields: Seq[Variable] = graphClass.fields.valueSet().toSeq.map(f => FieldVariable(f.name, Typing.deriveType(parent, f.typ).getOrElse(throw LanguageError.AbortDueToErrors(Seq(NoTyping(f.position)))), f.position, this))
+        val methods: Seq[Method] = graphClass.methods.valueSet().toSeq.map(m => new Method(this, m))
 
         def superClasses(): Seq[Class] = {
-            val superClass: Option[Class] = typeClass.graphClass.superClass().flatMap(_._2).flatMap(c => parent.classes.find(cl => cl.name == c.name))
+            val superClass: Option[Class] = graphClass.superClass().flatMap(_._2).flatMap(c => parent.classes.find(cl => cl.name == c.name))
             superClass match
                 case None => Seq()
                 case Some(clazz) => clazz +: clazz.superClasses()
@@ -156,15 +146,11 @@ object ScopeGraph {
         override def lookupVariable(name: VariableIdentifier): Option[Variable] =
             fields.find(_.name == name).orElse(superClasses().map(_.lookupVariable(name)).find(_.isDefined).flatMap(identity))
     }
-
-    class Method(val parent: Class, val method: BlockGraph.Method) extends Scope {
+    class Method(val parent: Class, val method: ClassGraph.Method) extends Scope {
         val name: Syntax.MethodIdentifier = method.name
+        lazy val parameters: Seq[Variable] = method.parameters.valueSet().toSeq.map(p => ParameterVariable(p.name, Typing.deriveType(root, p.typ).getOrElse(throw LanguageError.AbortDueToErrors(Seq(NoTyping(p.position)))), p.position, this))
 
-        lazy val parameters: Seq[Variable] = method.parameters.map(p => Variable(p.name, Typing.deriveType(root, p.typ), p.definition, this))
-
-        val body: Seq[Syntax.Statement | Block] = method.body.map(sb => sb match
-            case s: Syntax.Statement => s
-            case b: BlockGraph.Block => Block(this, b))
+        val body: Syntax.Statement = method.syntax.body
 
         // The method that is overriden by this is the method with the same name in the closest ancestor
         def superMethod(): Option[Method] = parent.superClasses().find(c => c.methods.exists(m => m.name == this.name)).flatMap(_.methods.find(_.name == this.name))
@@ -174,85 +160,28 @@ object ScopeGraph {
             parameters.find(_.name == name).orElse(parent.lookupVariable(name))
     }
 
-    class Block(val parent: Method | Block,
-                val block: BlockGraph.Block) extends Scope {
-        val variable: Variable = Variable(block.variable.name, Typing.deriveType(root, block.variable.typ), block.variable.definition, this)
-        val body: Seq[Syntax.Statement | Block] = block.body.map(sb => sb match
-            case s: Syntax.Statement => s
-            case b: BlockGraph.Block => Block(this, b))
+    // Since object blocks are only syntactic sugar it might simplify things to get rid of them in the Syntax after formatting?
+    class Block(val parent: Method | Block, val syntax: Syntax.Statement.ObjectBlock | Syntax.Statement.LocalBlock) extends Scope {
+        /*val alloc: Variable = syntax match
+            case ob: Syntax.Statement.ObjectBlock => ObjectBlockVariable(ob.alloc, Syntax.DataType.Class(ob.typ), this)
+            case lb: Syntax.Statement.LocalBlock => LocalBlockVariable(lb.initName, lb.initType, this)
+        val dealloc: Variable = syntax match
+            case ob: Syntax.Statement.ObjectBlock => ObjectBlockVariable(ob.dealloc, Syntax.DataType.Class(ob.typ), this)
+            case lb: Syntax.Statement.LocalBlock => LocalBlockVariable(lb.deInitName, lb.initType, this)*/
 
         override def root: Program = parent.root
         override def lookupVariable(name: Syntax.VariableIdentifier): Option[Variable] = {
-            if variable.name == name then return Some(variable)
-            else parent.lookupVariable(name)
+            //if alloc.name == name then return Some(alloc)
+            /*else*/ parent.lookupVariable(name)
         }
     }
 
-    case class Variable(val name: Syntax.VariableIdentifier, val typ: Type, val definition: SourcePosition, val owner: Scope)
+    sealed abstract class Variable(val name: Syntax.VariableIdentifier, val typ: Type, val definition: SourcePosition, val owner: Scope)
+    case class FieldVariable(override val name: Syntax.VariableIdentifier, override val typ: Type, override val definition: SourcePosition, override val owner: Class) extends Variable(name, typ, definition, owner)
+    case class ParameterVariable(override val name: Syntax.VariableIdentifier, override val typ: Type, override val definition: SourcePosition, override val owner: Method) extends Variable(name, typ, definition, owner)
+    case class ObjectBlockVariable(override val name: Syntax.VariableIdentifier, override val typ: Type, override val definition: SourcePosition, override val owner: Block) extends Variable(name, typ, definition, owner)
+    case class LocalBlockVariable(override val name: Syntax.VariableIdentifier, override val typ: Type, override val definition: SourcePosition, override val owner: Block) extends Variable(name, typ, definition, owner)
 
-    // Typing
-    object Typing {
-        sealed abstract class Type {
-            // This can be assigned to other
-            def isA(other: Type): Boolean = {
-                (this, other) match
-                    case (Class(typ), Class(otherTyp)) =>
-                        otherTyp == typ || typ.superClasses().contains(otherTyp)
-                    case (NilType, _: NonIntType) => true
-                    case _ => this == other
-            }
-        }
-        sealed abstract class NonIntType extends Type
-        case object NilType extends NonIntType
-        sealed abstract class ArrayType extends NonIntType
-        case object Integer extends Type
-        case class Class(typ: ScopeGraph.Class) extends NonIntType {
-            override def toString(): String = s"Class(${typ.name})"
-        }
-        case object IntegerArray extends ArrayType
-        case class ClassArray(typ: ScopeGraph.Class) extends ArrayType {
-            override def toString(): String = s"ClassArray(${typ.name})"
-        }
-
-        def typeOf(expression: Syntax.Expression, context: Scope): Option[Type] = {
-            expression match
-                case Syntax.Expression.Literal(value) => Some(Integer)
-                case Syntax.Expression.Reference(ref) => typeOf(ref, context)
-                case Syntax.Expression.Nil => Some(NilType)
-                case Syntax.Expression.Binary(left, op, right) => {
-                    (typeOf(left, context), typeOf(right, context)) match
-                        // All binary expressions must be integer-typed
-                        case (Some(Integer), Some(Integer)) => Some(Integer)
-                        // Unless they equals compare two objects
-                        case (Some(Class), Some(Class)) if op == Syntax.Operator.EQUAL || op == Syntax.Operator.NOTEQUAL => Some(Integer)
-                        case _ => None
-                }
-        }
-
-        def typeOf(reference: Syntax.VariableReference, context: Scope): Option[Type] = {
-            reference match
-                case Syntax.VariableReference.Variable(name) => context.lookupVariable(name).map(_.typ)
-                case Syntax.VariableReference.Array(name, index) => context.lookupVariable(name).flatMap(v => (v.typ, typeOf(index, context)) match
-                    case (t: ArrayType, Some(Integer)) => Some(baseType(t))
-                    case _ => None
-                )     
-        }
-
-        private def baseType(arrayType: ArrayType): Type = {
-            arrayType match
-                case IntegerArray => Integer
-                case ClassArray(name) => Class(name)
-        }
-
-        def deriveType(program: Program, typ: Syntax.DataType): Type = {
-            typ match
-                case Syntax.DataType.Integer => Integer
-                case Syntax.DataType.IntegerArray => IntegerArray
-                // Because of previous checks from the BlockGraph, this get cannot fail
-                case Syntax.DataType.Class(name) => program.classes.find(_.name == name).map(Class(_)).get
-                case Syntax.DataType.ClassArray(name) => program.classes.find(_.name == name).map(ClassArray(_)).get
-        }
-    }
 
     // Inheritance errors
     case class FieldOverwrite(parent: Syntax.ClassIdentifier, variable: Variable) extends RooplError(Error, s"field ${variable.name} is already defined in class $parent", variable.definition)
