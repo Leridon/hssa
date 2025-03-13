@@ -10,7 +10,7 @@ import de.thm.mni.hybridcomputing.roopl.parsing.Parsing
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import java.nio.file.NoSuchFileException
 import de.thm.mni.hybridcomputing.roopl.Syntax.Program
-import de.thm.mni.hybridcomputing.roopl.wellformedness.{ClassGraph,Scopes}
+import de.thm.mni.hybridcomputing.roopl.wellformedness.{ClassGraph,BlockGraph,ScopeGraph}
 
 object RooplMain {
   def main(args: Array[String]): Unit = {
@@ -45,8 +45,9 @@ object RooplMain {
         sys.exit(0)
 
       // Run semantic analysis (each check will raise if any errors are found)
-      val graph: ClassGraph.Program = ClassGraph.check(syntax)
-      val scopes: Scopes.Program = Scopes.check(graph)
+      val classGraph: ClassGraph.Program = ClassGraph.check(syntax)
+      val blockGraph: BlockGraph.Program = BlockGraph.check(classGraph)
+      val scopes: ScopeGraph.Program = ScopeGraph.check(blockGraph)
     } catch {
       case e: NoSuchFileException =>
         println(s"File '$file' does not exist!")

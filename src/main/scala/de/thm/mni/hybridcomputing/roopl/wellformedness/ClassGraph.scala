@@ -61,7 +61,7 @@ object ClassGraph {
         graph
     }
     
-    // Program structure
+    // ClassGraph structure
     class Program(val syntax: Syntax.Program) {
         val classes: MultiMap[Syntax.ClassIdentifier, Class] = MultiMap(
             syntax.definitions.map(c => c.name -> new Class(this, c))*
