@@ -6,13 +6,7 @@ rel toffoli:
     ->E10,B11 := c, b
 
         c, 0 := B11<-
-        -> B110,B111 := (), c
-
-            (), 0 := B110<-
-            ->E111 := (), 0
-
-            (), 0 := B111<-
-            ->E110 := (), 0
+        -> E111,E110 := (), c
 
         (),c := E110,E111<-
         -> E11 := c,0
@@ -33,4 +27,30 @@ rel toffoli.test:
 1, 0, 1 := toffoli := 1, 0, 1
 1, 1, 1 := toffoli := 1, 1, 0
 1, 1, 0 := toffoli := 1, 1, 1
+->end := (), 0
+
+
+rel fredkin:
+(a, b, c), 0 := begin<-
+->B0,B1 := (b, c),a
+
+    (b, c), 0 := B0<-
+    ->E0 := (b, c),0
+
+    (b, c), 0 := B1<-
+    ->E1 := (c, b),0
+
+(b, c), a := E0,E1<-
+->end := (a, b, c),0
+
+rel fredkin.test:
+(), 0 := begin<-
+0, 0, 0 := fredkin := 0, 0, 0
+0, 0, 1 := fredkin := 0, 0, 1
+0, 1, 0 := fredkin := 0, 1, 0
+0, 1, 1 := fredkin := 0, 1, 1
+1, 0, 0 := fredkin := 1, 0, 0
+1, 1, 0 := fredkin := 1, 0, 1
+1, 0, 1 := fredkin := 1, 1, 0
+1, 1, 1 := fredkin := 1, 1, 1
 ->end := (), 0
