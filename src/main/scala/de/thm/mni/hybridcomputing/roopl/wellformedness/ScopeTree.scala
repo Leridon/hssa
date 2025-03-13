@@ -8,7 +8,7 @@ import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 import de.thm.mni.hybridcomputing.roopl.Syntax.VariableIdentifier
 import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing.{Type, NonIntType}
 
-object Scopes {
+object ScopeTree {
     private object Wellformedness {
         def check(context: Class, errors: LanguageError.Collector): Unit = {
             // No field overwrite
@@ -134,12 +134,12 @@ object Scopes {
 
     
 
+    // ScopeTree structure
     trait Scope {
         def program: Program
         def lookupVariable(name: Syntax.VariableIdentifier): Option[Variable]
     }
     
-    // Program structure
     class Program(val classProgram: ClassGraph.Program) extends Scope {
         val classes: Seq[Class] = classProgram.classes.valueSet().toSeq.map(c => new Class(this, c))
 
@@ -283,5 +283,4 @@ object Scopes {
     // Reference errors
     case class VariableDoesntExist(name: Syntax.VariableIdentifier, usage: Syntax.Node) extends RooplError(Error, s"referenced variable ${name} is not in scope.", usage.position)
     case class IrreversibleAssignment(variable: Variable, usage: Syntax.Statement.Assignment) extends RooplError(Error, s"irreversible assignment of variable ${variable.name}. Assignee must not occur on the right-hand side of assignment.", usage.position)
-    
 }

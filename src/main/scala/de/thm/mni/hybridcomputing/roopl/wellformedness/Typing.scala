@@ -1,7 +1,7 @@
 package de.thm.mni.hybridcomputing.roopl.wellformedness
 
 import de.thm.mni.hybridcomputing.util.MultiMap.*
-import de.thm.mni.hybridcomputing.roopl.wellformedness.Scopes.Scope
+import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Scope
 import de.thm.mni.hybridcomputing.roopl.Syntax
 
 object Typing {
@@ -19,11 +19,11 @@ object Typing {
     case object NilType extends NonIntType
     sealed abstract class ArrayType extends NonIntType
     case object Integer extends Type
-    case class Class(typ: Scopes.Class) extends NonIntType {
+    case class Class(typ: ScopeTree.Class) extends NonIntType {
         override def toString(): String = s"Class(${typ.name})"
     }
     case object IntegerArray extends ArrayType
-    case class ClassArray(typ: Scopes.Class) extends ArrayType {
+    case class ClassArray(typ: ScopeTree.Class) extends ArrayType {
         override def toString(): String = s"ClassArray(${typ.name})"
     }
 
