@@ -3,6 +3,8 @@ package de.thm.mni.hybridcomputing.roopl.wellformedness
 import de.thm.mni.hybridcomputing.util.MultiMap.*
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Scope
 import de.thm.mni.hybridcomputing.roopl.Syntax
+import de.thm.mni.hybridcomputing.util.errors.LanguageError
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity.{Error, Warning}
 
 object Typing {
     sealed abstract class Type {
@@ -27,13 +29,13 @@ object Typing {
         override def toString(): String = s"ClassArray(${typ.name})"
     }
 
-    def typeOf(expression: Syntax.Expression, context: Scope): Option[Type] = {
+    def typeOf(expression: Syntax.Expression, scope: Scope): Option[Type] = {
         expression match
             case Syntax.Expression.Literal(value) => Some(Integer)
-            case Syntax.Expression.Reference(ref) => typeOf(ref, context)
+            case Syntax.Expression.Reference(ref) => typeOf(ScopeTree.deriveRef(ref, scope), scope)
             case Syntax.Expression.Nil => Some(NilType)
             case Syntax.Expression.Binary(left, op, right) => {
-                (typeOf(left, context), typeOf(right, context)) match
+                (typeOf(left, scope), typeOf(right, scope)) match
                     // All binary expressions must be integer-typed
                     case (Some(Integer), Some(Integer)) => Some(Integer)
                     // Unless they equals compare two objects
@@ -42,13 +44,52 @@ object Typing {
             }
     }
 
-    def typeOf(reference: Syntax.VariableReference, context: Scope): Option[Type] = {
-        reference match
-            case Syntax.VariableReference.Variable(name) => context.lookupVariable(name).map(_.typ)
-            case Syntax.VariableReference.Array(name, index) => context.lookupVariable(name).flatMap(v => (v.typ, typeOf(index, context)) match
-                case (t: ArrayType, Some(Integer)) => Some(baseType(t))
-                case _ => None
-            )     
+    def typeOf(reference: ScopeTree.VariableReference, scope: Scope): Option[Type] = {
+        reference.variable match
+            case Some(variable) => reference.index match
+                case Some(index) => (variable.typ, typeOf(index, scope)) match
+                    case (t: ArrayType, Some(Integer)) => Some(baseType(t))
+                    case _ => None
+                case None => Some(variable.typ)
+            case None => None
+    }
+
+    // Determine the types of fields, method parameters and block variables
+    // This step is necessary before type checking statements can be done
+    // Otherwise every following check would have to type check the variables again
+    def determineVariableTypes(program: ScopeTree.Program, errors: LanguageError.Collector): Unit = {
+        program.classes.foreach(c =>
+            c.fields.foreach(f => deriveType(program, f, errors))
+            c.methods.foreach(m =>
+                m.parameters.foreach(p => deriveType(program, p, errors))
+                m.body.foreach(determineVariableTypes(_, errors))
+            )
+        )
+    }
+
+    private def determineVariableTypes(sb: ScopeTree.StatementNode, errors: LanguageError.Collector): Unit = {
+        sb match
+            case block: ScopeTree.Block =>
+                deriveType(block.program, block.variable, errors)
+            case ScopeTree.Conditional(test, thenStatement, elseStatement, assertion) =>
+                thenStatement.foreach(determineVariableTypes(_, errors))
+                elseStatement.foreach(determineVariableTypes(_, errors))
+            case ScopeTree.Loop(test, doStatement, loopStatement, assertion) =>
+                doStatement.foreach(determineVariableTypes(_, errors))
+                loopStatement.foreach(determineVariableTypes(_, errors))
+            case _ => ()
+    }
+
+    private def deriveType(program: ScopeTree.Program, variable: ScopeTree.Variable, errors: LanguageError.Collector): Unit = {
+        variable.syntacticType match
+            case Syntax.DataType.Integer => variable.typ = Integer
+            case Syntax.DataType.IntegerArray => variable.typ = IntegerArray
+            case Syntax.DataType.Class(name) => program.classes.find(_.name == name).map(Class(_)) match
+                case Some(typ) => variable.typ = typ
+                case None => errors.add(MissingType(variable))
+            case Syntax.DataType.ClassArray(name) => program.classes.find(_.name == name).map(ClassArray(_)) match
+                case Some(typ) => variable.typ = typ
+                case None => errors.add(MissingType(variable))
     }
 
     private def baseType(arrayType: ArrayType): Type = {
@@ -56,4 +97,7 @@ object Typing {
             case IntegerArray => Integer
             case ClassArray(name) => Class(name)
     }
+
+    // Type errors
+    case class MissingType(variable: ScopeTree.Variable) extends RooplError(Error, s"specified type ${variable.syntacticType.toString()} does not exist.", variable.definition)
 }
