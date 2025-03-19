@@ -13,7 +13,7 @@
 - [-] Formatting
     - [x] Print Syntax as SourceCode
     - [ ] Add newlines where sensible
-    - [ ] Don't loose comments when formatting (requires comments in Syntax)
+    - [ ] Don't lose comments when formatting (requires comments in Syntax)
 - [-] CLI-usable main
 - [+] Improved Error Handling
     - [x] Add erroneous source code to error message output
