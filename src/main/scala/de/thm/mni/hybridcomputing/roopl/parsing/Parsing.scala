@@ -4,7 +4,6 @@ import de.thm.mni.hybridcomputing.util.parsing.Token
 import scala.util.parsing.input.Reader
 import de.thm.mni.hybridcomputing.util.parsing
 import de.thm.mni.hybridcomputing.util.parsing.ParserUtilities
-import de.thm.mni.hybridcomputing.util.parsing.ImplicitConversionsExtended
 import scala.util.parsing.combinator.ImplicitConversions
 import de.thm.mni.hybridcomputing.roopl.Syntax
 import de.thm.mni.hybridcomputing.roopl.Syntax.Program
@@ -30,7 +29,7 @@ object Parsing {
         }
     }
 
-    class Grammar extends ParserUtilities[Lexing.Tokens.TokenClass] with ImplicitConversions with ImplicitConversionsExtended {
+    class Grammar extends ParserUtilities[Lexing.Tokens.TokenClass] with ImplicitConversions {
         import de.thm.mni.hybridcomputing.roopl.parsing.Lexing.Tokens.TokenClass.*
         import de.thm.mni.hybridcomputing.util.parsing
 
@@ -81,8 +80,17 @@ object Parsing {
             | variableLiteral ~>! (in => Error(s"Expected swap or assignment but got ${in.first}", in))
             | IF ~~! expression ~~ THEN ~~ block ~~ ELSE ~~ block ~~ FI ~~ expression ^^ Syntax.Statement.Conditional.apply
             | FROM ~~! expression ~~ DO ~~ block ~~ LOOP ~~ block ~~ UNTIL ~~ expression ^^ Syntax.Statement.Loop.apply
-            | CONSTRUCT ~~! classIdent ~~ variableIdent ~~ block ~~ DESTRUCT ~~ variableIdent ^^ Syntax.Statement.ObjectBlock.apply
-            | LOCAL ~~! dataType ~~ variableIdent ~~ EQUAL ~~ expression ~~ block ~~ DELOCAL ~~ dataType ~~ variableIdent ~~ EQUAL ~~ expression ^^ Syntax.Statement.LocalBlock.apply
+            | CONSTRUCT ~~! classIdent ~~ variableIdent ~~ block ~~ DESTRUCT ~~ variableIdent ^?(
+                (_ match {case typ ~ name ~ statement ~ unname if name == unname => {
+                    Syntax.Statement.ObjectBlock.apply(typ, name, statement)}
+                }),
+                // Rooplppc in the original implementation ignores the second type and identifier, as they always have to be the same as the first. Here we throw an error if this is not the case
+                (in => "Expected name in deconstruct to equal construct"))
+            | LOCAL ~~! dataType ~~ variableIdent ~~ EQUAL ~ expression ~~ block ~~ DELOCAL ~~ dataType ~~ variableIdent ~~ EQUAL ~~ expression ^?(
+                (_ match {case typ ~ name ~ compute ~ statement ~ untyp ~ unname ~ uncompute if typ == untyp && name == unname => {
+                    Syntax.Statement.LocalBlock.apply(typ, name, compute, statement, uncompute)}
+                }),
+                (in => "Expected type and name in delocal to equal local"))
             | NEW ~~! objectType ~~ variableLiteral ^^ Syntax.Statement.New.apply
             | DELETE ~~! objectType ~~ variableLiteral ^^ Syntax.Statement.Delete.apply
             | COPY ~~! objectType ~~ variableLiteral ~~ variableLiteral ^^ Syntax.Statement.Copy.apply

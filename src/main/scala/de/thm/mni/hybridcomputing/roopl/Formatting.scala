@@ -46,8 +46,8 @@ class Formatting(options: Formatting.Options) {
             // Could add a case for else skip to not print skip in a new line
             case Conditional(test, thenStatement, elseStatement, assertion) => s"if ${format(test)} then\n${format(thenStatement, indent + 1)}\n${tab(indent)}else\n${format(elseStatement, indent + 1)}\n${tab(indent)}fi ${format(assertion)}"
             case Loop(test, doStatement, loopStatement, assertion) => s"from ${format(test)} do\n${format(doStatement, indent + 1)}\n${tab(indent)}loop\n${format(loopStatement, indent + 1)}\n${tab(indent)}until ${format(assertion)}" 
-            case ObjectBlock(typ, alloc, body, dealloc) => s"construct $typ $alloc\n${format(body, indent + 1)}\n${tab(indent)}destruct $dealloc"
-            case LocalBlock(initType, initName, initValue, statement, deInitType, deInitName, deInitValue) => s"local $initType $initName = ${format(initValue)}\n${format(statement, indent)}\n${tab(indent)}delocal $deInitType $deInitName = ${format(deInitValue)}"
+            case ObjectBlock(typ, name, body) => s"construct $typ $name\n${format(body, indent + 1)}\n${tab(indent)}destruct $name"
+            case LocalBlock(initType, initName, compute, statement, uncompute) => s"local $initType $initName = ${format(compute)}\n${format(statement, indent)}\n${tab(indent)}delocal $initType $initName = ${format(uncompute)}"
             case New(typ, name) => s"new ${format(typ)} ${format(name)}"
             case Delete(typ, name) => s"delete ${format(typ)} ${format(name)}"
             case Copy(typ, from, to) => s"copy ${format(typ)} ${format(from)} ${format(to)}"

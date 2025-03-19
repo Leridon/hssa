@@ -116,8 +116,9 @@ object Syntax {
         case class Swap(left: VariableReference, right: VariableReference) extends Statement
         case class Conditional(test: Expression, thenStatement: Statement, elseStatement: Statement, assertion: Expression) extends Statement
         case class Loop(test: Expression, doStatement: Statement, loopStatement: Statement, assertion: Expression) extends Statement
-        case class ObjectBlock(typ: ClassIdentifier, alloc: VariableIdentifier, body: Statement, dealloc: VariableIdentifier) extends Statement
-        case class LocalBlock(initType: DataType, initName: VariableIdentifier, initValue: Expression, statement: Statement, deInitType: DataType, deInitName: VariableIdentifier, deInitValue: Expression) extends Statement
+        // Rooplppc in the original implementation ignores parts of the delocal/deconstruct statement in the parser, as they always have to be equal to the local/construct parts.
+        case class ObjectBlock(typ: ClassIdentifier, name: VariableIdentifier, statement: Statement) extends Statement
+        case class LocalBlock(typ: DataType, name: VariableIdentifier, compute: Expression, statement: Statement, uncompute: Expression) extends Statement
         case class New(typ: ObjectType, name: VariableReference) extends Statement
         case class Delete(typ: ObjectType, name: VariableReference) extends Statement
         case class Copy(typ: ObjectType, from: VariableReference, to: VariableReference) extends Statement

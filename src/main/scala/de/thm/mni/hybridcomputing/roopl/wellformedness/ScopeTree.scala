@@ -25,27 +25,26 @@ object ScopeTree {
                     case Some(superMethod) => checkSignature(superMethod, method, errors)
                     case None => () // No override
 
-            // TODO: Properly implement descend over StatementNodes
-            //check(method.body, method, errors)
+            method.body.foreach(check(_, method, errors))
         }
 
         def check(statement: StatementNode, scope: Scope, errors: LanguageError.Collector): Unit = {
             statement match
                 case block: Block => ()
-                case Conditional => ()
-                case Loop => ()
-                case Assignment => ()
-                case Swap => ()
-                case New => ()
-                case Delete => ()
-                case Copy => ()
-                case Uncopy => ()
-                case Call => ()
-                case Uncall => ()
+                case s: Conditional => ()
+                case s: Loop => ()
+                case s: Assignment => ()
+                case s: Swap => ()
+                case s: New => ()
+                case s: Delete => ()
+                case s: Copy => ()
+                case s: Uncopy => ()
+                case s: Call => ()
+                case s: Uncall => ()
         }
 
         def check(statement: Assignment, scope: Scope, errors: LanguageError.Collector): Unit = {
-            scope.lookupVariable(statement.assignee.name) match
+            /*scope.lookupVariable(statement.assignee.name) match
                 case Some(variable) if variableInExpression(statement.assignee, statement.value) => errors.add(IrreversibleAssignment(variable, statement))
                 case None => errors.add(VariableDoesntExist(statement.assignee.name, statement))
                 case _ => () // Lookup succeeded
@@ -58,7 +57,7 @@ object ScopeTree {
                 case None => errors.add(ImpossibleTyping(statement.position))
                 case Some(assigneeType, expressionType) if !expressionType.isA(assigneeType) =>
                     errors.add(BadTyping(assigneeType, expressionType, statement))
-                case _ => ()
+                case _ => ()*/
         }
 
         private def variableInExpression(variable: Syntax.VariableReference, expression: Syntax.Expression): Boolean = {
@@ -180,18 +179,19 @@ object ScopeTree {
     // Builds a list of statements and scopes (blocks). This will allow us to parse the full statement tree, while also handling scopes properly
     private def buildStatementNodes(body: Syntax.Statement, scope: Scope): Seq[StatementNode] = {
         body match
-            case Syntax.Statement.ObjectBlock(typ, alloc, statement, dealloc) =>
+            case Syntax.Statement.ObjectBlock(typ, name, statement) =>
                 // Since object blocks are only syntactic sugar we can get rid of them here by transforming them like a local block
-                Seq(Block(scope, (Syntax.DataType.Class.apply(typ), Syntax.DataType.Class.apply(typ)),
-                                    (alloc, dealloc),
-                                    (Syntax.Expression.Nil, Syntax.Expression.Nil),
+                Seq(Block(scope, Syntax.DataType.Class.apply(typ),
+                                    name,
+                                    Syntax.Expression.Nil,
+                                    Syntax.Expression.Nil,
                                     Syntax.Statement.Block(Seq(
-                                        Syntax.Statement.New(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(alloc)),
+                                        Syntax.Statement.New(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(name)),
                                         statement,
-                                        Syntax.Statement.Delete(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(dealloc))
+                                        Syntax.Statement.Delete(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(name))
                                     ))))
-            case Syntax.Statement.LocalBlock(typ, alloc, init, statement, detyp, dealloc, deinit) =>
-                Seq(Block(scope, (typ, detyp), (alloc, dealloc), (init, deinit), statement))
+            case Syntax.Statement.LocalBlock(typ, name, compute, statement, uncompute) =>
+                Seq(Block(scope, typ, name, compute, uncompute, statement))
             case Syntax.Statement.Assignment(assignee, op, value) =>
                 Seq(Assignment(ref(assignee, scope), op, value))
             case Syntax.Statement.Swap(left, right) =>
@@ -222,12 +222,13 @@ object ScopeTree {
     }
 
     class Block(val parent: Scope,
-                val varType: (Syntax.DataType, Syntax.DataType),
-                val varName: (Syntax.VariableIdentifier, Syntax.VariableIdentifier),
-                val varInit: (Syntax.Expression, Syntax.Expression),
+                val varType: Syntax.DataType,
+                val varName: Syntax.VariableIdentifier,
+                val varInit: Syntax.Expression,
+                var varUninit: Syntax.Expression,
                 val statement: Syntax.Statement) extends Scope {
         val body: Seq[StatementNode] = buildStatementNodes(statement, this)
-        val variable: Variable = Variable(varName._1, varType._1, varName._1.position, this)
+        val variable: Variable = Variable(varName, varType, varName.position, this)
 
         override def program: Program = parent.program
 
