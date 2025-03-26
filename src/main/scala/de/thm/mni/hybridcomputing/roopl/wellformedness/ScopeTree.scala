@@ -44,6 +44,15 @@ object ScopeTree {
                 case s: Uncall => check(s, scope, errors)
         }
 
+        def check(statement: Conditional, scope: Scope, errors: LanguageError.Collector): Unit = {
+            statement.thenStatements.foreach(check(_, scope, errors))
+            statement.elseStatements.foreach(check(_, scope, errors))
+        }
+        def check(statement: Loop, scope: Scope, errors: LanguageError.Collector): Unit = {
+            statement.doStatements.foreach(check(_, scope, errors))
+            statement.loopStatements.foreach(check(_, scope, errors))
+        }
+
         def check(statement: Assignment, scope: Scope, errors: LanguageError.Collector): Unit = {
             statement.assignee.variable match
                 case Some(variable) if variableInExpression(statement.assignee, statement.value, scope) => errors.add(IrreversibleAssignment(variable, statement))
@@ -56,27 +65,30 @@ object ScopeTree {
             } yield (x, y)
             assignmentTyping match
                 case None => errors.add(ImpossibleTyping(statement))
+                // Can only assign int?
+                case Some(typ, any) if typ != Typing.Integer =>
+                    errors.add(BadAssign(typ, statement))
                 case Some(assigneeType, expressionType) if !expressionType.isA(assigneeType) =>
                     errors.add(BadTyping(assigneeType, expressionType, statement))
                 case _ => ()
         }
 
-        private def variableInExpression(variable: VariableReference, expression: Syntax.Expression, scope: Scope): Boolean = {
+        private def variableInExpression(variable: VariableReference, expression: Expression, scope: Scope): Boolean = {
             expression match
-                case Syntax.Expression.Literal(value) => false
-                case Syntax.Expression.Nil => false
-                case Syntax.Expression.Binary(left, op, right) => variableInExpression(variable, left, scope) || variableInExpression(variable, right, scope)
-                // This is broken
-                case Syntax.Expression.Reference(`variable`) => true
-                case Syntax.Expression.Reference(reference@Syntax.VariableReference.Variable(name)) =>
-                    variable.index.isDefined && variableInExpression(deriveRef(reference, scope), variable.index.get, scope)
-                case Syntax.Expression.Reference(Syntax.VariableReference.Array(name, index)) =>
+                case Expression.Literal(value) => false
+                case Expression.Nil => false
+                case Expression.Binary(left, op, right) => variableInExpression(variable, left, scope) || variableInExpression(variable, right, scope)
+                case Expression.Reference(`variable`) => true
+                case Expression.Reference(reference@VariableReference(Some(variabl), None, name)) =>
+                    variable.index.isDefined && variableInExpression(reference, variable.index.get, scope)
+                case Expression.Reference(VariableReference(Some(variabl), Some(index), name)) =>
                     variable.index.isEmpty && variableInExpression(variable, index, scope)
+                // No Variable in reference => Some semantic error
+                case Expression.Reference(VariableReference(None, opt, name)) =>
+                    false
         }
 
         def check(statement: Swap, scope: Scope, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Conditional, scope: Scope, errors: LanguageError.Collector): Unit = {}
-        def check(statement: Loop, scope: Scope, errors: LanguageError.Collector): Unit = {}
         def check(statement: New, scope: Scope, errors: LanguageError.Collector): Unit = {}
         def check(statement: Delete, scope: Scope, errors: LanguageError.Collector): Unit = {}
         def check(statement: Copy, scope: Scope, errors: LanguageError.Collector): Unit = {}
@@ -149,7 +161,8 @@ object ScopeTree {
         val name: Syntax.MethodIdentifier = method.name
         
         val parameters: Seq[Variable] = method.parameters.valueSet().toSeq.map(p => Variable(p.name, p.typ, p.position, this))
-        val body: Seq[StatementNode] = buildStatementNodes(method.syntax.body, this)
+        // Because calls reference other methods, we can only call buildStatementNodes after all Methods have been initialized (lazy-load)
+        lazy val body: Seq[StatementNode] = buildStatementNodes(method.syntax.body, this)
 
         // The method that is overriden by this is the method with the same name in the closest ancestor
         def superMethod(): Option[Method] = parent.superClasses().find(c => c.methods.exists(m => m.name == this.name)).flatMap(_.methods.find(_.name == this.name))
@@ -175,23 +188,23 @@ object ScopeTree {
                 // Since object blocks are only syntactic sugar we can get rid of them here by transforming them like a local block
                 Block(scope, Syntax.DataType.Class.apply(typ),
                                     name,
-                                    Syntax.Expression.Nil,
-                                    Syntax.Expression.Nil,
+                                    Expression.Nil,
+                                    Expression.Nil,
                                     Syntax.Statement.Block(Seq(
                                         Syntax.Statement.New(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(name)),
                                         statement,
                                         Syntax.Statement.Delete(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(name))
                                     )))
             case Syntax.Statement.LocalBlock(typ, name, compute, statement, uncompute) =>
-                Block(scope, typ, name, compute, uncompute, statement)
+                Block(scope, typ, name, buildExpression(compute, scope), buildExpression(uncompute, scope), statement)
             case Syntax.Statement.Assignment(assignee, op, value) =>
-                Assignment(deriveRef(assignee, scope), op, value)
+                Assignment(deriveRef(assignee, scope), op, buildExpression(value, scope))
             case Syntax.Statement.Swap(left, right) =>
                 Swap(deriveRef(left, scope), deriveRef(right, scope))
             case Syntax.Statement.Conditional(test, thenStatement, elseStatement, assertion) =>
-                Conditional(test, buildStatementNodes(thenStatement, scope), buildStatementNodes(elseStatement, scope), assertion)
+                Conditional(buildExpression(test, scope), buildStatementNodes(thenStatement, scope), buildStatementNodes(elseStatement, scope), buildExpression(assertion, scope))
             case Syntax.Statement.Loop(test, doStatement, loopStatement, assertion) =>
-                Loop(test, buildStatementNodes(doStatement, scope), buildStatementNodes(loopStatement, scope), assertion)
+                Loop(buildExpression(test, scope), buildStatementNodes(doStatement, scope), buildStatementNodes(loopStatement, scope), buildExpression(assertion, scope))
             case Syntax.Statement.New(typ, name) =>
                 New(typ, deriveRef(name, scope))
             case Syntax.Statement.Delete(typ, name) =>
@@ -217,20 +230,28 @@ object ScopeTree {
         result
     }
 
+    private def buildExpression(expression: Syntax.Expression, scope: Scope): Expression = {
+        expression match
+            case Syntax.Expression.Literal(value) => Expression.Literal(value)
+            case Syntax.Expression.Reference(ref) => Expression.Reference(deriveRef(ref, scope))
+            case Syntax.Expression.Nil => Expression.Nil
+            case Syntax.Expression.Binary(left, op, right) => Expression.Binary(buildExpression(left, scope), op, buildExpression(right, scope))
+    }
+
     def deriveRef(reference: Syntax.VariableReference, scope: Scope): VariableReference = {
         reference match
             case Syntax.VariableReference.Variable(name) => VariableReference(scope.lookupVariable(name), None, name)
-            case Syntax.VariableReference.Array(name, index) => VariableReference(scope.lookupVariable(name), Some(index), name)
+            case Syntax.VariableReference.Array(name, index) => VariableReference(scope.lookupVariable(name), Some(buildExpression(index, scope)), name)
     }
 
     class Block(val parent: Scope,
                 val varType: Syntax.DataType,
                 val varName: VariableIdentifier,
-                val varCompute: Syntax.Expression,
-                var varUncompute: Syntax.Expression,
+                val varCompute: Expression,
+                var varUncompute: Expression,
                 val statement: Syntax.Statement) extends Scope {
-        val body: Seq[StatementNode] = buildStatementNodes(statement, this)
         val variable: Variable = Variable(varName, varType, varName.position, this)
+        val body: Seq[StatementNode] = buildStatementNodes(statement, this)
 
         override def program: Program = parent.program
         override def clazz: Class = parent.clazz
@@ -248,13 +269,13 @@ object ScopeTree {
 
     // Statements possibly containing blocks
     sealed abstract class BlockStatement extends Statement
-    case class Conditional(val test: Syntax. Expression, val thenStatements: Seq[StatementNode], val elseStatements: Seq[StatementNode], val assertion: Syntax.Expression) extends BlockStatement
-    case class Loop(val test: Syntax.Expression, val doStatements: Seq[StatementNode], val loopStatements: Seq[StatementNode], val assertion: Syntax.Expression) extends BlockStatement
+    case class Conditional(val test: Expression, val thenStatements: Seq[StatementNode], val elseStatements: Seq[StatementNode], val assertion: Expression) extends BlockStatement
+    case class Loop(val test: Expression, val doStatements: Seq[StatementNode], val loopStatements: Seq[StatementNode], val assertion: Expression) extends BlockStatement
 
     // If variable is None, an error will be thrown during wellformedness checking
-    case class VariableReference(val variable: Option[Variable], val index: Option[Syntax.Expression], val name: VariableIdentifier)
+    case class VariableReference(val variable: Option[Variable], val index: Option[Expression], val name: VariableIdentifier)
     // Other statements (except those not needed anymore like Skip and Block)
-    case class Assignment(assignee: VariableReference, op: Syntax.AssignmentOperator, value: Syntax.Expression) extends Statement
+    case class Assignment(assignee: VariableReference, op: Syntax.AssignmentOperator, value: Expression) extends Statement
     case class Swap(left: VariableReference, right: VariableReference) extends Statement
     case class New(typ: Syntax.ObjectType, name: VariableReference) extends Statement
     case class Delete(typ: Syntax.ObjectType, name: VariableReference) extends Statement
@@ -263,12 +284,20 @@ object ScopeTree {
     case class Call(callee: Option[VariableReference], method: Option[Method], args: Seq[Option[Variable]]) extends Statement
     case class Uncall(callee: Option[VariableReference], method: Option[Method], args: Seq[Option[Variable]]) extends Statement
 
+    sealed abstract class Expression extends Positioned
+    object Expression {
+        case class Literal(value: Int) extends Expression
+        case class Reference(ref: VariableReference) extends Expression
+        case object Nil extends Expression
+        case class Binary(left: Expression, op: Syntax.Operator, right: Expression) extends Expression
+    }
 
     // We keep the syntax tree type as well as the semantic type as this heavily simplifies usage of our data structures
     case class Variable(val name: VariableIdentifier, val syntacticType: Syntax.DataType, val definition: SourcePosition, val owner: Scope, var typ: Type = null)
 
     // Type errors
     case class BadTyping(expected: Type, actual: Type, usage: Statement) extends RooplError(Error, s"expected type to satisfy $expected, got $actual instead.", usage.position)
+    case class BadAssign(typ: Type, usage: Statement) extends RooplError(Error, s"expected integer variable on left side of assignment, got $typ instead.", usage.position)
     case class ImpossibleTyping(usage: Statement) extends RooplError(Error, s"unable to determine type.", usage.position)
 
     // Inheritance errors

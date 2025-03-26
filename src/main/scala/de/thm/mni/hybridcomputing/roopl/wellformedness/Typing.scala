@@ -29,12 +29,12 @@ object Typing {
         override def toString(): String = s"ClassArray(${typ.name})"
     }
 
-    def typeOf(expression: Syntax.Expression, scope: Scope): Option[Type] = {
+    def typeOf(expression: ScopeTree.Expression, scope: Scope): Option[Type] = {
         expression match
-            case Syntax.Expression.Literal(value) => Some(Integer)
-            case Syntax.Expression.Reference(ref) => typeOf(ScopeTree.deriveRef(ref, scope), scope)
-            case Syntax.Expression.Nil => Some(NilType)
-            case Syntax.Expression.Binary(left, op, right) => {
+            case ScopeTree.Expression.Literal(value) => Some(Integer)
+            case ScopeTree.Expression.Reference(ref) => typeOf(ref, scope)
+            case ScopeTree.Expression.Nil => Some(NilType)
+            case ScopeTree.Expression.Binary(left, op, right) => {
                 (typeOf(left, scope), typeOf(right, scope)) match
                     // All binary expressions must be integer-typed
                     case (Some(Integer), Some(Integer)) => Some(Integer)
