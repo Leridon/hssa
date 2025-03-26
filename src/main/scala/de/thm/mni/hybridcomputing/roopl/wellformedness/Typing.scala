@@ -38,8 +38,10 @@ object Typing {
                 (typeOf(left, scope), typeOf(right, scope)) match
                     // All binary expressions must be integer-typed
                     case (Some(Integer), Some(Integer)) => Some(Integer)
-                    // Unless they equals compare two objects
-                    case (Some(Class), Some(Class)) if op == Syntax.Operator.EQUAL || op == Syntax.Operator.NOTEQUAL => Some(Integer)
+                    // Unless they equals compare two objects/nil
+                    case (Some(Class(typ)), Some(Class(typ2))) if op == Syntax.Operator.EQUAL || op == Syntax.Operator.NOTEQUAL => Some(Integer)
+                    case (Some(Class(typ)), Some(NilType)) if op == Syntax.Operator.EQUAL || op == Syntax.Operator.NOTEQUAL => Some(Integer)
+                    case (Some(NilType), Some(Class(typ2))) if op == Syntax.Operator.EQUAL || op == Syntax.Operator.NOTEQUAL => Some(Integer)
                     case _ => None
             }
     }
@@ -67,10 +69,15 @@ object Typing {
         )
     }
 
+    def classFromName(name: Syntax.ClassIdentifier, scope: Scope): Option[ScopeTree.Class] = {
+        scope.program.classes.find(_.name == name)
+    }
+
     private def determineVariableTypes(sb: ScopeTree.StatementNode, errors: LanguageError.Collector): Unit = {
         sb match
             case block: ScopeTree.Block =>
                 deriveType(block.program, block.variable, errors)
+                block.body.foreach(determineVariableTypes(_, errors))
             case ScopeTree.Conditional(test, thenStatement, elseStatement, assertion) =>
                 thenStatement.foreach(determineVariableTypes(_, errors))
                 elseStatement.foreach(determineVariableTypes(_, errors))
@@ -84,10 +91,10 @@ object Typing {
         variable.syntacticType match
             case Syntax.DataType.Integer => variable.typ = Integer
             case Syntax.DataType.IntegerArray => variable.typ = IntegerArray
-            case Syntax.DataType.Class(name) => program.classes.find(_.name == name).map(Class(_)) match
+            case Syntax.DataType.Class(name) => classFromName(name, program).map(Class(_)) match
                 case Some(typ) => variable.typ = typ
                 case None => errors.add(MissingType(variable))
-            case Syntax.DataType.ClassArray(name) => program.classes.find(_.name == name).map(ClassArray(_)) match
+            case Syntax.DataType.ClassArray(name) => classFromName(name, program).map(ClassArray(_)) match
                 case Some(typ) => variable.typ = typ
                 case None => errors.add(MissingType(variable))
     }
