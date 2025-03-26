@@ -23,6 +23,16 @@ class Main
         arr[5] += i
         i ^= arr[0]
         delocal int[] arr = nil
+        if 5 >= 5 then
+            local int x = 5
+                x += 1
+                // illegal
+                x += a
+                // illegal
+                x += nil
+            delocal int x = 6
+        else skip
+        fi 5 >= 5
 
 class Animal
     method roar()
