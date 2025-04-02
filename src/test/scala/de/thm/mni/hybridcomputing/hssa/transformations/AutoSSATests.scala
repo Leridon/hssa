@@ -8,14 +8,16 @@ import org.scalatest.flatspec.AnyFlatSpec
 class AutoSSATests extends AnyFlatSpec:
     
     "Auto SSA" should "work" in {
-        assert(AutoSSA.autoSSA(Parsing().parseBlock(
+        val result  = AutoSSA.autoSSA(Parsing().parseBlock(
             """x, 0 := L0<-
               |x := add 1 := x
               |->L1 := x,0
-              |""".stripMargin)) == Parsing().parseBlock(
+              |""".stripMargin))
+        
+        assert(result == Parsing().parseBlock(
             """x, 0 := L0<-
-              |x.1 := add 1 := x
-              |->L1 := x.1,0
+              |x.0 := add 1 := x
+              |->L1 := x.0,0
               |""".stripMargin)
         )
     }
