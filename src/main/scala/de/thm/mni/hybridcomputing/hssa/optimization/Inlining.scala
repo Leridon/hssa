@@ -6,9 +6,9 @@ import de.thm.mni.hybridcomputing.hssa.{BindingTree, Syntax}
 
 object Inlining {
     def find_unique_name(context: BindingTree, prefix: String = "x"): Identifier = {
-        if (context.lookup_variable(prefix).isEmpty) return Syntax.Identifier(prefix)
+        if (context.lookup(prefix).isEmpty) return Syntax.Identifier(prefix)
         
-        LazyList.from(1).map(i => prefix + i).find(context.lookup_variable(_).isEmpty).map(Syntax.Identifier.apply).get
+        LazyList.from(1).map(i => prefix + i).find(context.lookup(_).isEmpty).map(Syntax.Identifier.apply).get
     }
     
     def ensure_pair_expressions(rel: BindingTree.Relation): Syntax.Relation = {

@@ -26,7 +26,7 @@ class LocalConstantPropagation(collector: LanguageError.Collector = LanguageErro
         def isStaticConstant(context: Option[BindingTree.Block]): Boolean = self match
             case Expression.Literal(_) => true
             case Expression.Unit() => true
-            case Expression.Variable(name) => context.exists(b => b.lookup_variable(name.name).exists(v => v.isInstanceOf[BindingTree.GlobalBuiltinVariable]))
+            case Expression.Variable(name) => context.exists(b => b.lookup(name.name).exists(v => v.isInstanceOf[BindingTree.GlobalBuiltinVariable]))
             case Expression.Pair(a, b) => a.isStaticConstant(context) && b.isStaticConstant(context)
             case Expression.Invert(a) => a.isStaticConstant(context)
         
@@ -41,7 +41,7 @@ class LocalConstantPropagation(collector: LanguageError.Collector = LanguageErro
         def staticValue(context: BindingTree.Block): Value = self match
             case Expression.Literal(value) => value
             case Expression.Variable(name) =>
-                val Some(BindingTree.GlobalBuiltinVariable(_, _, builtin)) = context.lookup_variable(name.name)
+                val Some(BindingTree.GlobalBuiltinVariable(_, _, builtin)) = context.lookup(name.name)
                 
                 builtin.value
             case Expression.Pair(a, b) => Value.Pair(a.staticValue(context), b.staticValue(context))

@@ -40,7 +40,7 @@ object Inversion {
         private class Adjuster(val inverted_relations: Set[Identifier]) {
             
             private def must_invert(context: BindingTree.Block, name: Identifier): Boolean = {
-                context.lookup_variable(name.name) match
+                context.lookup(name.name) match
                     case Some(BindingTree.GlobalRelationVariable(_, _, relation)) if relation.syntax.name == name => inverted_relations.contains(name)
                     case _ => false
             }
