@@ -32,21 +32,28 @@ object RooplMain {
     if (file == "") usage()
 
     try {
+      println("Check syntax...")
       val tokenStream: TokenReader[TokenClass] = lex(SourceFile.fromFile(Paths.get(file)))
       if showTokens then
         tokenStream.readAll().foreach(token => println(s"$token @ ${token.position.toString}"))
         sys.exit(0)
 
       val syntax: Program = Parsing.parse(tokenStream)
+      println("Syntax OK")
 
       if showFormat then
         val formatter = Formatting(new Formatting.Options(parenthesizeExpressions = false, indentBy = 4))
         println(formatter.format(syntax))
         sys.exit(0)
 
+      println("Check semantics...")
       // Run semantic analysis (each check will raise if any errors are found)
       val graph: ClassGraph.Program = ClassGraph.check(syntax)
       val scopes: ScopeTree.Program = ScopeTree.check(graph)
+      println("Semantics OK")
+
+      // Translation
+      println("Translate to HSSA")
     } catch {
       case e: NoSuchFileException =>
         println(s"File '$file' does not exist!")
