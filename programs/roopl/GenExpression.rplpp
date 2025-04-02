@@ -1,0 +1,11 @@
+class Main
+    method main()
+        local int x = 0
+        local int y = 0
+
+        x += 5
+        y -= 5
+        x ^= y
+
+        delocal int y = -5
+        delocal int x = 0
