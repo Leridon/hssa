@@ -76,7 +76,7 @@ object BindingTree {
         val entry_labels: Seq[Label] = syntax.entry.labels.map(l => Label(l.name, parent))
         val exit_labels: Seq[Label] = syntax.exit.labels.map(l => Label(l.name, parent))
         
-        val initializations = MultiMap(
+        val initializations: MultiMap[String, Block.VariableUsage] = MultiMap(
             syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.initializes.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Init)) })
               .map(u => u.variable.name.name -> u) *
         )

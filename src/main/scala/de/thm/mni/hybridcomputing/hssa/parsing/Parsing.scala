@@ -10,7 +10,7 @@ import de.thm.mni.hybridcomputing.util.parsing.{ParserUtilities, SourceFile, Sou
 import scala.util.parsing.combinator.ImplicitConversions
 import scala.util.parsing.input.Reader
 
-case class Parsing(language: Language) {
+case class Parsing(language: Language = Language.Canon) {
     val grammar = new Parsing.Grammar(language)
     
     def parseLiteral(string: String): Value = Interpretation(language).evaluate(this.grammar.expression(Lexing.lex(SourceFile.fromString(string))).get, Interpretation.ValueContext(None))
@@ -25,6 +25,10 @@ case class Parsing(language: Language) {
             case grammar.Failure(_, _) => ???
             case grammar.Error(_, _) => ???
         }
+    }
+    
+    def parseBlock(input: String): Syntax.Block = {
+        this.grammar.block(Lexing.lex(SourceFile.fromString(input))).get
     }
 }
 

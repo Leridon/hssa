@@ -1,4 +1,4 @@
-package de.thm.mni.hybridcomputing.tests
+package de.thm.mni.hybridcomputing
 
 import de.thm.mni.hybridcomputing.util.UniqueNameGenerator
 import org.scalatest.flatspec.AnyFlatSpec

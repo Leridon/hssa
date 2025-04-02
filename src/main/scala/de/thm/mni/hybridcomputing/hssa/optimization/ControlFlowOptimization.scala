@@ -4,49 +4,13 @@ import de.thm.mni.hybridcomputing.hssa.{Inversion, Syntax}
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
-import de.thm.mni.hybridcomputing.hssa.util.Transformer
+import de.thm.mni.hybridcomputing.hssa.util.{RelationBuilder, Transformer}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer
 
 object ControlFlowOptimization {
-    /*
-    class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks: Seq[Syntax.Block]) {
-        def this(relation: Syntax.Relation) = {
-            this(relation.name, relation.parameter, new BlockIndex(relation).blocks)
-        }
-        
-        val blocks: ListBuffer[Syntax.Block] = new ListBuffer[Syntax.Block]
-        
-        blocks.addAll(initial_blocks)
-        
-        def getByEntryLabel(label: String): Syntax.Block = blocks.find(b => b.entry.labels.contains(label)).get
-        def getByExitLabel(label: String): Syntax.Block = blocks.find(b => b.exit.labels.contains(label)).get
-        
-        def getAllByEntryLabel(label: String): Seq[Syntax.Block] = blocks.filter(b => b.entry.labels.contains(label)).toSeq
-        def getAllByExitLabel(label: String): Seq[Syntax.Block] = blocks.filter(b => b.exit.labels.contains(label)).toSeq
-        
-        def labels: Set[String] = this.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet
-        
-        def remove(block: Syntax.Block): Unit = {
-            this.blocks.remove(this.blocks.indexOf(block))
-        }
-        
-        def add(block: Syntax.Block): Unit = {
-            this.blocks.addOne(block)
-        }
-        
-        def compile(): Syntax.Relation = Syntax.Relation(name, parameter, this.blocks.flatMap(_.sequence).toSeq)
-        
-        def updateLabels(f: String => String): Unit = this.updateStatements(Transformer.Labels(f).apply)
-        
-        def updateStatements(f: Syntax.Statement => Syntax.Statement): Unit = blocks.mapInPlace(b => new Syntax.Block(b.sequence.map(f)))
-        
-        def filterBlocks(f: Syntax.Block => Boolean): Unit = this.blocks.filterInPlace(f)
-        
-        def newLabel(template: String): String = ???
-    }
-    
+        /*
     object MergeStrictlyConsecutiveBlocks extends Transformer.RelationTransformer {
         def apply(relation: Syntax.Relation): Syntax.Relation = {
             val builder = new RelationBuilder(relation)
@@ -77,8 +41,9 @@ object ControlFlowOptimization {
             
             builder.compile()
         }
-    }
+    }*/
     
+    /*
     object RemoveRedirections extends Transformer.RelationTransformer {
         def apply(relation: Syntax.Relation): Syntax.Relation = {
             val builder = new RelationBuilder(relation)
