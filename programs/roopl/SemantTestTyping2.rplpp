@@ -1,0 +1,9 @@
+class Main
+    // illegal
+    A a
+
+    method main()
+        skip
+    // illegal
+    method mains(A a)
+        skip

@@ -84,13 +84,13 @@ object Syntax {
 
     // Types passed to methods and used for variables
     object DataType {
-        case class Integer() extends DataType {
+        case object Integer extends DataType {
             override def toString(): String = "int"
         }
         case class Class(name: ClassIdentifier) extends DataType {
             override def toString(): String = name.toString
         }
-        case class IntegerArray() extends DataType {
+        case object IntegerArray extends DataType {
             override def toString(): String = "int[]"
         }
         case class ClassArray(name: ClassIdentifier) extends DataType {
@@ -116,9 +116,9 @@ object Syntax {
         case class Swap(left: VariableReference, right: VariableReference) extends Statement
         case class Conditional(test: Expression, thenStatement: Statement, elseStatement: Statement, assertion: Expression) extends Statement
         case class Loop(test: Expression, doStatement: Statement, loopStatement: Statement, assertion: Expression) extends Statement
-        // alloc and dealloc must always be the same, no?
-        case class ObjectBlock(typ: ClassIdentifier, alloc: VariableIdentifier, body: Statement, dealloc: VariableIdentifier) extends Statement
-        case class LocalBlock(initType: DataType, initName: VariableIdentifier, initValue: Expression, statement: Statement, deInitType: DataType, deInitName: VariableIdentifier, deInitValue: Expression) extends Statement
+        // Rooplppc in the original implementation ignores parts of the delocal/deconstruct statement in the parser, as they always have to be equal to the local/construct parts.
+        case class ObjectBlock(typ: ClassIdentifier, name: VariableIdentifier, statement: Statement) extends Statement
+        case class LocalBlock(typ: DataType, name: VariableIdentifier, compute: Expression, statement: Statement, uncompute: Expression) extends Statement
         case class New(typ: ObjectType, name: VariableReference) extends Statement
         case class Delete(typ: ObjectType, name: VariableReference) extends Statement
         case class Copy(typ: ObjectType, from: VariableReference, to: VariableReference) extends Statement
@@ -127,7 +127,7 @@ object Syntax {
         case class UncallLocal(method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class Call(callee: VariableReference, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class Uncall(callee: VariableReference, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
-        case class Skip() extends Statement
+        case object Skip extends Statement
         // Since statements are always executed one by one there is no reason to store them binarily (Also makes parsing easier by removing recursion)
         case class Block(list: Seq[Statement]) extends Statement
     }
@@ -138,20 +138,19 @@ object Syntax {
         case XOR
     }
 
-    sealed abstract class VariableReference extends Node
+    sealed abstract class VariableReference(val name: VariableIdentifier) extends Node
 
     object VariableReference {
-        case class Variable(name: VariableIdentifier) extends VariableReference
-        case class Array(name: VariableIdentifier, index: Expression) extends VariableReference
+        case class Variable(override val name: VariableIdentifier) extends VariableReference(name)
+        case class Array(override val name: VariableIdentifier, index: Expression) extends VariableReference(name)
     }
 
     sealed abstract class Expression extends Node
 
     object Expression {
         case class Literal(value: Int) extends Expression
-        case class Variable(variable: VariableIdentifier) extends Expression
-        case class Array(name: VariableIdentifier, index: Expression) extends Expression
-        case class Nil() extends Expression
+        case class Reference(ref: VariableReference) extends Expression
+        case object Nil extends Expression
         case class Binary(left: Expression, op: Operator, right: Expression) extends Expression
     }
 

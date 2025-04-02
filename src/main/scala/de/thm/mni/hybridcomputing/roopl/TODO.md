@@ -3,6 +3,7 @@
 - [-] In progress
 - [ ] TBD
 
+---
 
 - [x] Syntax
 - [x] Scanner
@@ -12,11 +13,14 @@
 - [-] Formatting
     - [x] Print Syntax as SourceCode
     - [ ] Add newlines where sensible
-    - [ ] Don't loose comments when formatting (requires comments in Syntax)
-- [-] CLI-usable main
-- [+] Improved Error Handling
+    - [ ] Don't lose comments when formatting (requires comments in Syntax)
+- [x] CLI-usable main
+- [x] Improved Error Handling
     - [x] Add erroneous source code to error message output
-- [ ] Semantic Analysis
-    - ...
+- [-] Semantic Analysis
+    - [x] ~~BindingTree as a helpful datastructure to write wellformedness checks easier~~
+    - [x] Rewrite of BindingTree into multiple data structures, which represent the current semantics of the Syntax tree
+    - [x] Wellformedness checks
+    - [x] Type checking
 - [ ] Translation into HSSA
     - ...

@@ -4,7 +4,7 @@ import de.thm.mni.hybridcomputing.roopl.Syntax.*
 import de.thm.mni.hybridcomputing.roopl.Syntax.Statement.*
 import de.thm.mni.hybridcomputing.roopl.Syntax.Operator.*
 import de.thm.mni.hybridcomputing.roopl.Syntax.Expression.Literal
-import de.thm.mni.hybridcomputing.roopl.Syntax.Expression.Variable
+import de.thm.mni.hybridcomputing.roopl.Syntax.Expression.Reference
 import de.thm.mni.hybridcomputing.roopl.Syntax.Expression.Binary
 import de.thm.mni.hybridcomputing.roopl.Syntax.ObjectType.IntegerArray
 import de.thm.mni.hybridcomputing.roopl.Syntax.ObjectType.ClassArray
@@ -46,8 +46,8 @@ class Formatting(options: Formatting.Options) {
             // Could add a case for else skip to not print skip in a new line
             case Conditional(test, thenStatement, elseStatement, assertion) => s"if ${format(test)} then\n${format(thenStatement, indent + 1)}\n${tab(indent)}else\n${format(elseStatement, indent + 1)}\n${tab(indent)}fi ${format(assertion)}"
             case Loop(test, doStatement, loopStatement, assertion) => s"from ${format(test)} do\n${format(doStatement, indent + 1)}\n${tab(indent)}loop\n${format(loopStatement, indent + 1)}\n${tab(indent)}until ${format(assertion)}" 
-            case ObjectBlock(typ, alloc, body, dealloc) => s"construct $typ $alloc\n${format(body, indent + 1)}\n${tab(indent)}destruct $dealloc"
-            case LocalBlock(initType, initName, initValue, statement, deInitType, deInitName, deInitValue) => s"local $initType $initName = ${format(initValue)}\n${format(statement, indent)}\n${tab(indent)}delocal $deInitType $deInitName = ${format(deInitValue)}"
+            case ObjectBlock(typ, name, body) => s"construct $typ $name\n${format(body, indent + 1)}\n${tab(indent)}destruct $name"
+            case LocalBlock(initType, initName, compute, statement, uncompute) => s"local $initType $initName = ${format(compute)}\n${format(statement, indent)}\n${tab(indent)}delocal $initType $initName = ${format(uncompute)}"
             case New(typ, name) => s"new ${format(typ)} ${format(name)}"
             case Delete(typ, name) => s"delete ${format(typ)} ${format(name)}"
             case Copy(typ, from, to) => s"copy ${format(typ)} ${format(from)} ${format(to)}"
@@ -56,7 +56,7 @@ class Formatting(options: Formatting.Options) {
             case UncallLocal(method, args) => s"uncall $method(${args.mkString(", ")})"
             case Call(callee, method, args) => s"call ${format(callee)}::$method(${args.mkString(", ")})"
             case Uncall(callee, method, args) => s"uncall ${format(callee)}::$method(${args.mkString(", ")})"
-            case Skip() => "skip"
+            case Skip => "skip"
             // Could tell statements in the list whether they're the first in the block and, if not, have conditionals, loops etc. print newlines before and after themselves
             case Block(list) => list.map(format(_, indent)).mkString("\n")
         )
@@ -82,9 +82,8 @@ class Formatting(options: Formatting.Options) {
     def format(expression: Expression, parenthesizeExpressions: Boolean = false): String = {
         expression match
             case Literal(value) => value.toString()
-            case Variable(variable) => variable.toString
-            case Expression.Array(name, index) => s"${name}[${format(index)}]"
-            case Expression.Nil() => "nil"
+            case Reference(reference) => format(reference)
+            case Expression.Nil => "nil"
             case Binary(left, op, right) => {
                 // Must parenthesize subexpressions if their operator has lower or equal precedence than this.op
                 // Since all operators are left-associative parenthesizing the left expression is not required with equal precedence

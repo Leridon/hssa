@@ -2,8 +2,11 @@ package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 import de.thm.mni.hybridcomputing.util.DynamicCache
+import de.thm.mni.hybridcomputing.util.MultiMap.*
 
 import scala.collection.mutable.ListBuffer
+
+
 
 class CallGraph private(program: BindingTree.Program) {
     val calls: Seq[CallGraph.Call] = program.relations.flatMap(rel => {

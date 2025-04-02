@@ -56,56 +56,51 @@ object LanguageError {
         
     }
     
-    def format(errors: Seq[LanguageError]): Unit = {
-        val builder = StringBuilder()
-        
-    }
-
-    val codePrefix = " > "
-    val codeLines = 3
+    val previousLinesShown = 3
 
     extension (position: SourcePosition) {
         def erroneousSourceCode(): String = {
             val builder = new StringBuilder()
+            val (file, from, to) = (position.file, position.from, position.to)
+            val lineNumPad = file.numLines.toString().length()
 
             // Underline affected position with '^' to highlight the problematic code
-
-            if position.to == null || position.from.line == position.to.line then
-                underlineLine(builder, position.file, position.from, position.to)
+            val underline = "^" * (if to == null || from.line == to.line then
+                // Show affected line and some previous lines to add context
+                showSourceLines(builder, file, (from.line - previousLinesShown to from.line), lineNumPad)
+                underlineLine(file, from, to)
             else
-                underlineBlock(builder, position.file, position.from, position.to)
+                showSourceLines(builder, file, (from.line until to.line), lineNumPad)
+                underlineBlock(file, from, to))
 
-            builder.toString()
+            builder
+                .addAll(underline.indent(lineNumPad + from.column))
+                .toString()
         }
     }
 
-    private def showSourceLines(builder: StringBuilder, file: SourceFile, lines: Range): Unit = {
-        lines.foreach(i => if (i > 0) builder.addAll(codePrefix).addAll(file.getLine(i)))
+    private def showSourceLines(builder: StringBuilder, file: SourceFile, lines: Range, pad: Int): Unit = {
+        lines.foreach(i => if (i > 0) {
+            val lineNum = i.toString()
+            builder
+                .addAll(" " * (pad - lineNum.length()))
+                .addAll(lineNum).addOne(' ')
+                .addAll(file.getLine(i))
+            if i == file.numLines - 1 then
+                builder.addOne('\n')
+        })
     }
 
-    private def underlineLine(builder: StringBuilder, file: SourceFile, from: Position, to: Position): Unit = {
-        // Show affected line and some previous lines to add context
-        showSourceLines(builder, file, (from.line - codeLines to from.line))
-
-        val len =
-            if to != null then
-                to.column - from.column
-            else
-                // Underline rest of line if to is unset (should only be the case for syntax errors)
-                file.getLine(from.line).length() - from.column
-        builder
-            .addAll(" " * codePrefix.length())
-            .addAll(" " * (from.column - 1))
-            .addAll("^" * len)
+    private def underlineLine(file: SourceFile, from: Position, to: Position): Int = {
+        if to != null then
+            to.column - from.column
+        else
+            // Underline rest of line if to is unset (should only be the case for syntax errors)
+            file.getLine(from.line).length() - from.column
     }
 
-    private def underlineBlock(builder: StringBuilder, file: SourceFile, from: Position, to: Position): Unit = {
+    private def underlineBlock(file: SourceFile, from: Position, to: Position): Int = {
         // to mustn't be null
-        showSourceLines(builder, file, (from.line until to.line))
-        val len = (from.line until to.line).map(file.getLine(_).length()).max - (from.column)
-        builder
-            .addAll(" " * codePrefix.length())
-            .addAll(" " * (from.column - 1))
-            .addAll("^" * len)
+        (from.line until to.line).map(file.getLine(_).length()).max - (from.column)
     }
 }

@@ -1,0 +1,38 @@
+class X
+    int x
+    method main()
+        skip
+    method x(X x)
+        skip
+    method y(int a)
+        skip
+class XX inherits X
+    int[] y
+    method x(X x, XX xx)
+        skip
+class XXX inherits XX
+    X x
+    XX y
+    method x()
+        skip
+    method y(XXX a)
+        skip
+
+class Animal
+    int a
+    method cry(Animal other)
+        skip
+
+class Cat inherits Animal
+    method cry(Animal other)
+        skip
+    method meowAt(Cat other)
+        skip
+
+class OkCat inherits Cat
+    method meowAt(Animal other)
+        skip
+
+class BadCat inherits Cat
+    method meowAt(BadCat other)
+        skip

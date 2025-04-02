@@ -118,7 +118,7 @@ class TypeChecking(language: Language) {
             )
         })
         
-        val call_graph = new CallGraph(program)
+        val call_graph = CallGraph.get(program)
         
         call_graph.topologically_sorted.foreach(rel => {
             rel.blocks.foreach(block => {

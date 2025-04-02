@@ -1,0 +1,43 @@
+class Main
+    int i
+    Cat cat
+    Animal anim
+
+    method main()
+        // illegal
+        i ^= nil
+        // legal
+        local int[] arr = nil
+            skip
+        local Cat c = nil
+            skip
+        delocal Cat c = nil
+        local Animal a = nil
+            skip
+        delocal Animal a = nil
+        // illegal
+        arr += 5
+        cat += 5
+        anim += 5
+        // legal
+        arr[5] += i
+        i ^= arr[0]
+        delocal int[] arr = nil
+        if 5 >= 5 then
+            local int x = 5
+                x += 1
+                // illegal
+                x += a
+                // illegal
+                x += nil
+            delocal int x = 6
+        else skip
+        fi cat
+
+class Animal
+    method roar()
+        skip
+
+class Cat
+    method roar()
+        skip

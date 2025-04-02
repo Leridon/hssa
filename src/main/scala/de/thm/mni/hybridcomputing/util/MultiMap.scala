@@ -1,15 +1,19 @@
 package de.thm.mni.hybridcomputing.util
 
-class MultiMap[Key, Value](initialdata: (Key, Value)*) {
-    private val data = initialdata.groupBy(_._1).map(kv => kv._1 -> kv._2.map(_._2))
+object MultiMap {
+    type MultiMap[Key, Value] = Map[Key, Seq[Value]]
     
-    def contains(key: Key): Boolean = this.data.contains(key)
+    extension [Key, Value](map: MultiMap[Key, Value]) { 
+        def entries(): Seq[(Key, Seq[Value])] = map.toSeq
+
+        def valueSet(): Set[Value] = map.values.flatMap(identity).toSet
+            
+        def getAll(key: Key): Seq[Value] = map.get(key).map(_.toSeq).getOrElse(Seq())
+            
+        def getFirst(key: Key, filter: Value => Boolean = (_: Value) => true): Option[Value] = map.get(key).map(_.toSeq).getOrElse(Seq()).find(filter)
+    }
     
-    def keys(): Set[Key] = data.keySet
-    
-    def entries(): Seq[(Key, Seq[Value])] = data.toSeq
-    
-    def getAll(key: Key): Seq[Value] = this.data.get(key).map(_.toSeq).getOrElse(Seq())
-    
-    def get(key: Key, filter: Value => Boolean = _ => true): Option[Value] = this.data.get(key).map(_.toSeq).getOrElse(Seq()).find(filter)
+    def MultiMap[Key, Value](init: (Key, Value)*): MultiMap[Key, Value] = {
+        init.groupBy(_._1).map(kv => kv._1 -> kv._2.map(_._2))
+    }
 }

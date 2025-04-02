@@ -230,8 +230,8 @@ class RTM
         fi right = nil
 
         uncall tapeHead::getRight(right) // Set right neighbour
-        delocal Cell right = nil
         delocal Cell tmp = nil
+        delocal Cell right = nil
 
 class Program
     RTM bni
