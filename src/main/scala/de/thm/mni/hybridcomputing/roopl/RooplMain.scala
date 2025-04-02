@@ -11,6 +11,9 @@ import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import java.nio.file.NoSuchFileException
 import de.thm.mni.hybridcomputing.roopl.Syntax.Program
 import de.thm.mni.hybridcomputing.roopl.wellformedness.{ClassGraph,ScopeTree}
+import de.thm.mni.hybridcomputing.hssa.Language
+import de.thm.mni.hybridcomputing.hssa.plugin.*
+import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
 
 object RooplMain {
   def main(args: Array[String]): Unit = {
@@ -54,6 +57,11 @@ object RooplMain {
 
       // Translation
       println("Translate to HSSA")
+
+      val language = Language(Seq(Basic, Arithmetic, Information), Language.Canon.semantics)
+      val program: de.thm.mni.hybridcomputing.hssa.Syntax.Program = Translation.translateRooplToHssa(scopes, language)
+      println(de.thm.mni.hybridcomputing.hssa.Formatting.format(program))
+      println(Interpretation(language).interpret(program))
     } catch {
       case e: NoSuchFileException =>
         println(s"File '$file' does not exist!")
