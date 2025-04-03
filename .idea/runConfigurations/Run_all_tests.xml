@@ -21,15 +21,16 @@
       <list />
     </option>
     <option name="testKind" value="All in package" />
-    <option name="workingDirectory" value="D:\Projekte\Reverse Computing\hssa" />
+    <option name="workingDirectory" value="$ProjectFileDir$" />
     <option name="classBuf">
       <list>
         <option value="de.thm.mni.hybridcomputing.UniqueNameGeneratorTests" />
+        <option value="de.thm.mni.hybridcomputing.hssa.InterpretationTests" />
         <option value="de.thm.mni.hybridcomputing.hssa.transformations.AutoSSATests" />
       </list>
     </option>
     <option name="shortenClasspath" value="NONE" />
-    <option name="workingDirectory" value="D:\Projekte\Reverse Computing\hssa" />
+    <option name="workingDirectory" value="$ProjectFileDir$" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
