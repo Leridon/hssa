@@ -5,10 +5,11 @@ import RelationBuilder.LabelUsage.Position
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Relation, Statement}
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
-import de.thm.mni.hybridcomputing.hssa.{Syntax}
+import de.thm.mni.hybridcomputing.hssa.Syntax
 
 import scala.collection.mutable.ListBuffer
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
+import de.thm.mni.hybridcomputing.util.UniqueNameGenerator
 
 class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks: Seq[Syntax.Block]) {
     def this(relation: Syntax.Relation) = {
@@ -18,8 +19,6 @@ class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks
     val blocks: ListBuffer[Syntax.Block] = new ListBuffer[Syntax.Block]
     
     blocks.addAll(initial_blocks)
-    
-    private val reserved_labels = new ListBuffer[String]
     
     def getByEntryLabel(label: String): Syntax.Block = blocks.find(b => b.entry.labels.contains(label)).get
     def getByExitLabel(label: String): Syntax.Block = blocks.find(b => b.exit.labels.contains(label)).get
@@ -41,24 +40,15 @@ class RelationBuilder(name: String, parameter: Syntax.Expression, initial_blocks
     
     def filterBlocks(f: Syntax.Block => Boolean): Unit = this.blocks.filterInPlace(f)
     
-    def newLabel(template: String): String = {
-        val raw_template = template.reverse.dropWhile(_.isDigit).reverse
-        
-        val existing_labels = this.reserved_labels.toSet ++ this.allLabelUsages.map(_.label).toSet
-        
-        val label = LazyList.from(0).map(i => s"$raw_template$i").find(i => !existing_labels.contains(i)).get
-        
-        this.reserved_labels.addOne(label)
-        
-        label
-    }
+    val label_generator: UniqueNameGenerator = new UniqueNameGenerator("")
+      .withExternalReservation(name => this.allLabelUsages.exists(_.label == name))
     
     def allLabelUsages: List[RelationBuilder.LabelUsage] = {
         def getUsages(block: Syntax.Block, stm: Statement): List[RelationBuilder.LabelUsage] = {
             stm match
-                case Syntax.Assignment(target, relation, instance_argument, source) => Nil
-                case Syntax.Exit(labels, argument) => labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(block, i, LabelUsage.Position.EXIT, l.name) }).toList
-                case Syntax.Entry(argument, labels) => labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(block, i, LabelUsage.Position.ENTRY, l.name) }).toList
+                case Syntax.Exit(labels, _) => labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(block, i, LabelUsage.Position.EXIT, l.name) }).toList
+                case Syntax.Entry(_, labels) => labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(block, i, LabelUsage.Position.ENTRY, l.name) }).toList
+                case _ => Nil
         }
         
         this.blocks.toList.flatMap(b => getUsages(b, b.entry) ++ getUsages(b, b.exit))

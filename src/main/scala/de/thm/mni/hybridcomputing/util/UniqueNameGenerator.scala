@@ -7,11 +7,17 @@ class UniqueNameGenerator(separator: String = ".") {
     private val reserved_functions = new ListBuffer[String => Boolean]()
     private val reserved = mutable.Set[String]()
     
-    def reserve(f: String => Boolean): Unit = this.reserved_functions.addOne(f)
+    def withExternalReservation(f: String => Boolean): this.type = {
+        this.reserved_functions.addOne(f)
+    
+        this
+    }
     
     def isReserved(name: String): Boolean = this.reserved.contains(name) || reserved_functions.exists(f => f(name))
     
-    def get(name: String): String = {
+    def isAvailable(name: String): Boolean = !this.isReserved(name)
+    
+    def next(name: String): String = {
         val split = UniqueNameGenerator.splitName(name, this.separator)
         
         val generated_name = LazyList.from(split.postfix.map(_ + 1).getOrElse(0))
@@ -23,6 +29,16 @@ class UniqueNameGenerator(separator: String = ".") {
         this.reserved.addOne(generated_name)
         
         generated_name
+    }
+    
+    /**
+     * Resets the internal cache of generated names, making them available again.
+     * Keeps the function buffer for reserved names sourced externally.
+     *
+     * Use when all generated names have been integrated in the reserved functions in any way.
+     */
+    def reset(): Unit = {
+        this.reserved.clear()
     }
 }
 

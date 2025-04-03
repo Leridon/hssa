@@ -1,9 +1,8 @@
 package de.thm.mni.hybridcomputing.hssa.optimization
 
-import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
+import de.thm.mni.hybridcomputing.hssa.Syntax
 import de.thm.mni.hybridcomputing.hssa.util.RelationBuilder.LabelUsage
 import de.thm.mni.hybridcomputing.hssa.util.{RelationBuilder, Transformer}
-import de.thm.mni.hybridcomputing.hssa.Syntax
 
 import scala.annotation.tailrec
 
@@ -27,8 +26,8 @@ object EliminateNondeterminism {
                     case Some(value) =>
                         val List(first, second) = value._2.take(2)
                         
-                        val first_replacement = index.newLabel(first.label)
-                        val second_replacement = index.newLabel(second.label)
+                        val first_replacement = index.label_generator.next(first.label)
+                        val second_replacement = index.label_generator.next(second.label)
                         
                         index.updateLabels(usage => {
                             if (usage == first) first_replacement

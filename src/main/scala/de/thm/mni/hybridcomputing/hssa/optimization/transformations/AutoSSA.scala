@@ -25,7 +25,7 @@ object AutoSSA {
         
         val name_generator = new UniqueNameGenerator(".")
         
-        name_generator.reserve(BindingTree.Block(null, block).all_variable_usages.keySet.contains)
+        name_generator.withExternalReservation(BindingTree.Block(null, block).all_variable_usages.keySet.contains)
         
         def handle(e: Syntax.Expression, role: VariableRole): Syntax.Expression = {
             e match
@@ -37,7 +37,7 @@ object AutoSSA {
                                 case VariableRole.Final | VariableRole.Use => latest_rename // Ok, Finalization or use of live variable
                         case Some(VariableState(_, false)) =>
                             role match
-                                case VariableRole.Init => name_generator.get(old_name.name) // Reuse of dead variable => Rename
+                                case VariableRole.Init => name_generator.next(old_name.name) // Reuse of dead variable => Rename
                                 case VariableRole.Final => throw new RuntimeException("Refinal of dead variable") // Refinal of dead variable
                                 case VariableRole.Use => throw new RuntimeException("Use of dead variable")
                         case None => e.name.name // Variable not seen before, keep as is

@@ -8,16 +8,29 @@ class UniqueNameGeneratorTests extends AnyFlatSpec:
     "A UniqueNameGenerator" should "generate unique names" in {
         val generator = new UniqueNameGenerator(".")
         
-        assert(generator.get("x") == "x.0")
-        assert(generator.get("x") == "x.1")
-        assert(generator.get("x") == "x.2")
+        assert(generator.next("x") == "x.0")
+        assert(generator.next("x") == "x.1")
+        assert(generator.next("x") == "x.2")
     }
     
     it should "respect external reservations" in {
         val generator = new UniqueNameGenerator(".")
         
-        generator.reserve(_.endsWith("1"))
+        generator.withExternalReservation(_.endsWith("1"))
         
-        assert(generator.get("x") == "x.0")
-        assert(generator.get("x") == "x.2")
+        assert(generator.next("x") == "x.0")
+        assert(generator.next("x") == "x.2")
+    }
+    
+    it should "produce the same names again when reset" in {
+        
+        val generator = new UniqueNameGenerator(".")
+        
+        assert(generator.next("x") == "x.0")
+        assert(generator.next("x") == "x.1")
+        
+        generator.reset()
+        
+        assert(generator.next("x") == "x.0")
+        assert(generator.next("x") == "x.1")
     }
