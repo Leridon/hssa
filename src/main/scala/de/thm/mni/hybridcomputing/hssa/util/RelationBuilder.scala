@@ -68,7 +68,21 @@ object RelationBuilder {
                            pos: Int,
                            role: LabelUsage.Position,
                            label: String
-                         ) {}
+                         ) {
+        
+        override def equals(obj: Any): Boolean = {
+            obj match {
+                case other: LabelUsage =>
+                    (block eq other.block) &&
+                      pos == other.pos &&
+                      role == other.role &&
+                      label == other.label
+                
+                case _ => false
+            }
+        }
+        
+    }
     
     object LabelUsage {
         enum Position {

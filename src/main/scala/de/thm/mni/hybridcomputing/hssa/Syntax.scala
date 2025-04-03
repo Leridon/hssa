@@ -20,6 +20,7 @@ object Syntax {
             obj match {
                 case obj: String => name == obj
                 case obj: Identifier => name == obj.name
+                case _ => false
             }
         }
     }

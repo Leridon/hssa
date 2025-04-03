@@ -6,18 +6,20 @@ import de.thm.mni.hybridcomputing.hssa.Types.ParameterizedRelation
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
 
 object Information extends Plugin {
+    val discard = Plugin.Builtin(Value.BuiltinRelation(
+        "discard",
+        { case Basic.Unit => _ => Basic.Unit },
+        { case Basic.Unit => _ => Interpretation.Errors.Nondeterminism("Cannot execute inverted discard (aka oracle)").raise() }
+    ),
+        Types.ParameterizedRelation(
+            Types.Unit,
+            new Types.MetaVariable,
+            Types.Unit
+        )
+    )
+
     override def builtins: Seq[Plugin.Builtin] = Seq(
-        Plugin.Builtin(Value.BuiltinRelation(
-            "discard",
-            { case Basic.Unit => _ => Basic.Unit },
-            { case Basic.Unit => _ => Interpretation.Errors.Nondeterminism("Cannot execute inverted discard (aka oracle)").raise() }
-        ),
-            Types.ParameterizedRelation(
-                Types.Unit,
-                new Types.MetaVariable,
-                Types.Unit
-            )
-        ),
+        discard,
         Plugin.Builtin(Value.BuiltinRelation(
             "id",
             { case Basic.Unit => value => value },

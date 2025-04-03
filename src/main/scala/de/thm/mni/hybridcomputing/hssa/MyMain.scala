@@ -1,7 +1,7 @@
 package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.optimization.{EliminateNondeterminism, LocalConstantPropagation}
+import de.thm.mni.hybridcomputing.hssa.optimization.{EliminateImplicitNondeterminism, LocalConstantPropagation}
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Basic, Information}
@@ -21,7 +21,7 @@ object MyMain {
             
             var prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/examples/rtm.hssa"))))
             
-            prog = EliminateNondeterminism.ControlFlow.apply(prog)
+            prog = EliminateImplicitNondeterminism.ControlFlow.apply(prog)
             
             println("Original:")
             println(Formatting.format(prog))
