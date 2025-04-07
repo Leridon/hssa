@@ -1,12 +1,12 @@
 package de.thm.mni.hybridcomputing.hssa.optimization
 
-import de.thm.mni.hybridcomputing.hssa.Syntax
+import de.thm.mni.hybridcomputing.hssa.{BindingTree, Syntax}
 import de.thm.mni.hybridcomputing.hssa.plugin.Information
 import de.thm.mni.hybridcomputing.hssa.util.RelationBuilder.LabelUsage
 import de.thm.mni.hybridcomputing.hssa.util.RelationBuilder.LabelUsage.Position.EXIT
 import de.thm.mni.hybridcomputing.hssa.util.{RelationBuilder, Transformer}
 
-import scala.language.{implicitConversions, postfixOps}
+import scala.language.{implicitConversions}
 
 object EliminateImplicitNondeterminism {
     
@@ -48,6 +48,28 @@ object EliminateImplicitNondeterminism {
             })
             
             builder.compile()
+        }
+    }
+    
+    object AutoDiscard {
+        def apply(b: Syntax.Block): Syntax.Block = this.apply(BindingTree.Block(null, b))
+        
+        def apply(b: BindingTree.Block): Syntax.Block = {
+            val undiscarded = b.block_local_variables -- b.finalizations.keySet
+            val uninitialized = b.block_local_variables -- b.initializations.keySet
+            
+            uninitialized.map(variable => variable := ~Information.discard := ())
+            undiscarded.map(variable => () := Information.discard := variable)
+            
+            block(
+                b.syntax.entry,
+                Seq(
+                    uninitialized.map(variable => variable := ~Information.discard := ()).toSeq,
+                    b.syntax.assignments,
+                    undiscarded.map(variable => () := Information.discard := variable).toSeq,
+                ),
+                b.syntax.exit,
+            )
         }
     }
 }

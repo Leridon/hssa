@@ -27,6 +27,7 @@
         <option value="de.thm.mni.hybridcomputing.UniqueNameGeneratorTests" />
         <option value="de.thm.mni.hybridcomputing.hssa.InterpretationTests" />
         <option value="de.thm.mni.hybridcomputing.hssa.transformations.AutoSSATests" />
+        <option value="de.thm.mni.hybridcomputing.hssa.transformations.AutoDiscardTests" />
       </list>
     </option>
     <option name="shortenClasspath" value="NONE" />

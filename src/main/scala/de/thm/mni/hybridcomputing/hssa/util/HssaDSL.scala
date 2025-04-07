@@ -5,6 +5,7 @@ import de.thm.mni.hybridcomputing.hssa.Syntax
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
 import scala.annotation.targetName
+import scala.language.implicitConversions
 
 object HssaDSL {
     case class IncompleteApplication(target: Syntax.Expression, rel: Syntax.Expression, par: Syntax.Expression) {
@@ -30,8 +31,7 @@ object HssaDSL {
         def :==(rel_par: (Syntax.Expression, Syntax.Expression)): IncompleteApplication = IncompleteApplication(self, rel_par._1, rel_par._2)
         def :=(rel: Syntax.Expression): IncompleteApplication = IncompleteApplication(self, rel, Syntax.Expression.Unit())
         
-        
-        def unary_~ : Syntax.Expression = Syntax.Expression.Invert(self)
+        def unary_~ : Syntax.Expression.Invert = Syntax.Expression.Invert(self)
     }
     
     trait Expressionable[T]:
@@ -62,5 +62,20 @@ object HssaDSL {
     
     def block(entry: Syntax.Entry, exit: Syntax.Exit): Syntax.Block = Syntax.Block(entry, Seq(), exit)
     def block(entry: Syntax.Entry, a0: Syntax.Assignment, exit: Syntax.Exit): Syntax.Block = Syntax.Block(entry, Seq(a0), exit)
+    def block[T: AsAssignmentSeq](entry: Syntax.Entry, a0: T, exit: Syntax.Exit): Syntax.Block = Syntax.Block(entry, a0.toSeq, exit)
     
+    
+    trait AsAssignmentSeq[T]:
+        extension(v: T)
+            def toSeq: Seq[Syntax.Assignment]
+        
+    given AsAssignmentSeq[Syntax.Assignment] with
+        extension(v: Syntax.Assignment)
+            def toSeq: Seq[Syntax.Assignment] = Seq(v)
+        
+    given [T](using t: AsAssignmentSeq[T]): AsAssignmentSeq[Seq[T]] with
+        extension(v: Seq[T])
+            def toSeq: Seq[Syntax.Assignment] = v.flatMap(_.toSeq)
+    
+    implicit def assignmentseq[T: AsAssignmentSeq](v: T): Syntax.Expression = v.toSeq
 }
