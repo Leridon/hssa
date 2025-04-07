@@ -2,6 +2,7 @@ package de.thm.mni.hybridcomputing.hssa.util
 
 import de.thm.mni.hybridcomputing.hssa.Language.Plugin
 import de.thm.mni.hybridcomputing.hssa.Syntax
+import de.thm.mni.hybridcomputing.hssa.Syntax.Identifier
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
 import scala.annotation.targetName
@@ -20,13 +21,26 @@ object HssaDSL {
     @targetName("incompleteExitFromVarArgs")
     def ->(labels: String*): IncompleteExit = IncompleteExit(labels.map(Syntax.Identifier.apply))
     
+    @targetName("incompleteExitFromVarArgs2")
+    def ->(labels: Seq[Identifier]): IncompleteExit = IncompleteExit(labels)
+    @targetName("incompleteExitFromVarArgs3")
+    def ->(labels: Identifier*): IncompleteExit = IncompleteExit(labels)
+    
     extension (self: Syntax.Expression) {
         def :=<-(labels: Seq[String]): Syntax.Entry = {
             Syntax.Entry(self, labels.map(l => Syntax.Identifier(l)))
         }
         
-        @targetName("addLabels")
+        @targetName("addLabels2")
+        def :=<-(labels: Seq[Identifier]): Syntax.Entry = {
+            Syntax.Entry(self, labels)
+        }
+        
+        @targetName("addLabels3")
         def :=<-(labels: String*): Syntax.Entry = self :=<- labels
+        
+        @targetName("addLabels4")
+        def :=<-(labels: Identifier*): Syntax.Entry = self :=<- labels
         
         def :==(rel_par: (Syntax.Expression, Syntax.Expression)): IncompleteApplication = IncompleteApplication(self, rel_par._1, rel_par._2)
         def :=(rel: Syntax.Expression): IncompleteApplication = IncompleteApplication(self, rel, Syntax.Expression.Unit())
@@ -66,16 +80,16 @@ object HssaDSL {
     
     
     trait AsAssignmentSeq[T]:
-        extension(v: T)
+        extension (v: T)
             def toSeq: Seq[Syntax.Assignment]
-        
+    
     given AsAssignmentSeq[Syntax.Assignment] with
-        extension(v: Syntax.Assignment)
+        extension (v: Syntax.Assignment)
             def toSeq: Seq[Syntax.Assignment] = Seq(v)
-        
+    
     given [T](using t: AsAssignmentSeq[T]): AsAssignmentSeq[Seq[T]] with
-        extension(v: Seq[T])
+        extension (v: Seq[T])
             def toSeq: Seq[Syntax.Assignment] = v.flatMap(_.toSeq)
     
-    implicit def assignmentseq[T: AsAssignmentSeq](v: T): Syntax.Expression = v.toSeq
+    implicit def assignmentseq[T: AsAssignmentSeq](v: T): Seq[Syntax.Assignment] = v.toSeq
 }

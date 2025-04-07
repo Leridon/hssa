@@ -1,12 +1,12 @@
-package de.thm.mni.hybridcomputing.hssa.optimization
+package de.thm.mni.hybridcomputing.hssa.optimization.transformations
 
-import de.thm.mni.hybridcomputing.hssa.{BindingTree, Syntax}
 import de.thm.mni.hybridcomputing.hssa.plugin.Information
 import de.thm.mni.hybridcomputing.hssa.util.RelationBuilder.LabelUsage
 import de.thm.mni.hybridcomputing.hssa.util.RelationBuilder.LabelUsage.Position.EXIT
 import de.thm.mni.hybridcomputing.hssa.util.{RelationBuilder, Transformer}
+import de.thm.mni.hybridcomputing.hssa.{BindingTree, Syntax}
 
-import scala.language.{implicitConversions}
+import scala.language.implicitConversions
 
 object EliminateImplicitNondeterminism {
     

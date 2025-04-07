@@ -1,7 +1,8 @@
 package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.optimization.{EliminateImplicitNondeterminism, LocalConstantPropagation}
+import de.thm.mni.hybridcomputing.hssa.optimization.LocalConstantPropagation
+import de.thm.mni.hybridcomputing.hssa.optimization.transformations.EliminateImplicitNondeterminism
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Basic, Information}
