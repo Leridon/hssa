@@ -1,9 +1,9 @@
-package de.thm.mni.hybridcomputing.hssa.optimization
+package de.thm.mni.hybridcomputing.hssa.transformation.optimizations
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
-import de.thm.mni.hybridcomputing.hssa.{BindingTree, HSSAError, Inversion, Language, Syntax}
+import de.thm.mni.hybridcomputing.hssa.*
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 
 import scala.collection.MapView

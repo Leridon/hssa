@@ -1,11 +1,11 @@
 package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.optimization.LocalConstantPropagation
-import de.thm.mni.hybridcomputing.hssa.optimization.transformations.EliminateImplicitNondeterminism
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Basic, Information}
+import de.thm.mni.hybridcomputing.hssa.transformation.optimizations.LocalConstantPropagation
+import de.thm.mni.hybridcomputing.hssa.transformation.repairs.EliminateImplicitNondeterminism
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 import de.thm.mni.hybridcomputing.util.reversibility.Direction.{BACKWARDS, FORWARDS}

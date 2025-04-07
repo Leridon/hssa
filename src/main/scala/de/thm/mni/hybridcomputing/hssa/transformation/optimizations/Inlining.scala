@@ -1,7 +1,7 @@
-package de.thm.mni.hybridcomputing.hssa.optimization
+package de.thm.mni.hybridcomputing.hssa.transformation.optimizations
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Identifier}
-import de.thm.mni.hybridcomputing.hssa.optimization.transformations.Normalization
+import de.thm.mni.hybridcomputing.hssa.transformation.normalizations.Normalization
 import de.thm.mni.hybridcomputing.hssa.util.RelationBuilder
 import de.thm.mni.hybridcomputing.hssa.{BindingTree, Syntax}
 

@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa.transformations
 
-import de.thm.mni.hybridcomputing.hssa.optimization.transformations.AutoSSA
+import de.thm.mni.hybridcomputing.hssa.transformation.repairs.AutoSSA
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.language.postfixOps

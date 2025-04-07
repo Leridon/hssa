@@ -1,8 +1,8 @@
-package de.thm.mni.hybridcomputing.hssa.optimization.transformations
+package de.thm.mni.hybridcomputing.hssa.transformation.normalizations
 
-import de.thm.mni.hybridcomputing.hssa.{BindingTree, Syntax}
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Identifier}
 import de.thm.mni.hybridcomputing.hssa.util.HssaDSL
+import de.thm.mni.hybridcomputing.hssa.{BindingTree, Syntax}
 
 object Normalization {
     

@@ -1,10 +1,10 @@
-package de.thm.mni.hybridcomputing.hssa.optimization
+package de.thm.mni.hybridcomputing.hssa.transformation.optimizations
 
-import de.thm.mni.hybridcomputing.hssa.{Inversion, Syntax}
-import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
+import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.util.{RelationBuilder, Transformer}
+import de.thm.mni.hybridcomputing.hssa.{Inversion, Syntax}
 
 import scala.annotation.tailrec
 import scala.collection.mutable.ListBuffer

@@ -1,4 +1,4 @@
-package de.thm.mni.hybridcomputing.hssa.optimization.transformations
+package de.thm.mni.hybridcomputing.hssa.transformation.repairs
 
 import de.thm.mni.hybridcomputing.hssa.BindingTree.Block.VariableRole
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
