@@ -5,6 +5,7 @@ ThisBuild / scalaVersion := "3.4.1"
 libraryDependencies += "org.scala-lang.modules" %% "scala-parser-combinators" % "2.3.0"
 libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.19"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % "test"
+libraryDependencies += "commons-io" % "commons-io" % "2.18.0"
 
 lazy val root = (project in file("."))
   .settings(

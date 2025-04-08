@@ -3,9 +3,13 @@ package de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Syntax.Program
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
+import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.reversibility.Direction
+import org.apache.commons.io.FileUtils
 
+import java.nio.charset.StandardCharsets
+import java.nio.file.Path
 import scala.util.{Failure, Success, Try}
 
 class Chains(val language: Language) {
@@ -61,5 +65,27 @@ class Chains(val language: Language) {
             run(rel.name.name, Direction.FORWARDS)
             run(rel.name.name, Direction.BACKWARDS)
         })
+    }
+    
+    def dumpAllGraphs(prog: Program, output_directory: Path): Unit = {
+        val dir = output_directory.toFile
+        
+        FileUtils.deleteDirectory(dir)
+        
+        dir.mkdirs()
+        
+        val binding_tree = BindingTree.init(prog)
+        
+        FileUtils.writeStringToFile(output_directory.resolve("call_graph.dot").toFile, Visualization.CallGraphVisualization.apply(binding_tree), StandardCharsets.UTF_8)
+        
+        binding_tree.relations.map(_.relation).foreach(rel => {
+            
+            FileUtils.writeStringToFile(output_directory.resolve(s"rel_${rel.syntax.name}_cfg.dot").toFile, Visualization.ControlFlowGraphVisualization.apply(rel), StandardCharsets.UTF_8)
+            
+            rel.blocks.foreach(block => {
+                FileUtils.writeStringToFile(output_directory.resolve(s"rel_${rel.syntax.name}_block${block.context.get.block_index}.dot").toFile, Visualization.BlockCircuitVisualization.apply(block), StandardCharsets.UTF_8)
+            })
+        })
+        
     }
 }

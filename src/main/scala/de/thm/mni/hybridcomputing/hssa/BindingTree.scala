@@ -1,6 +1,7 @@
 package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa
+import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 import de.thm.mni.hybridcomputing.util.MultiMap.*
 
@@ -11,7 +12,7 @@ trait BindingTree {
     final def program: Syntax.Program = this.root.syntax
 }
 
-object BindingTree {    
+object BindingTree {
     def init(program: Syntax.Program) = Program(program)
     
     class Program(val syntax: Syntax.Program) extends BindingTree {
@@ -41,9 +42,9 @@ object BindingTree {
     }
     
     class Relation(val parent: Program, val syntax: Syntax.Relation) extends BindingTree {
-        val parameter_variables = MultiMap(syntax.parameter.variables.map(v => v.name -> v) *)
+        val parameter_variables: MultiMap[Syntax.Identifier, Expression.Variable] = MultiMap(syntax.parameter.variables.map(v => v.name -> v) *)
         
-        val blocks: Seq[Block] = syntax.blocks.map(block => Block(this, block))
+        val blocks: Seq[Block] = syntax.blocks.zipWithIndex.map({ case (block, i) => Block(Some(Block.Context(this, i)), block) })
         
         private val entries: MultiMap[String, Relation.LabelUsage] = MultiMap(blocks.flatMap(block => block.syntax.entry.labels.zipWithIndex.map(l => l._1.name -> Relation.LabelUsage(l._2, block, Relation.LabelRole.Entry))) *)
         private val exits: MultiMap[String, Relation.LabelUsage] = MultiMap(blocks.flatMap(block => block.syntax.exit.labels.zipWithIndex.map(l => l._1.name -> Relation.LabelUsage(l._2, block, Relation.LabelRole.Exit))) *)
@@ -62,6 +63,11 @@ object BindingTree {
         }
         
         override def root: Program = this.parent
+        
+        override def equals(obj: Any): Boolean = obj match {
+            case r: Relation => r eq this
+            case _ => false
+        }
     }
     
     object Relation {
@@ -72,31 +78,31 @@ object BindingTree {
             case Exit
     }
     
-    class Block(val parent: Relation, val syntax: Syntax.Block) extends BindingTree {
-        val entry_labels: Seq[Label] = syntax.entry.labels.map(l => Label(l.name, parent))
-        val exit_labels: Seq[Label] = syntax.exit.labels.map(l => Label(l.name, parent))
+    class Block(val context: Option[Block.Context], val syntax: Syntax.Block) extends BindingTree {
+        val entry_labels: Seq[Label] = syntax.entry.labels.map(l => Label(l.name, context.map(_.relation).orNull))
+        val exit_labels: Seq[Label] = syntax.exit.labels.map(l => Label(l.name, context.map(_.relation).orNull))
         
         val initializations: MultiMap[String, Block.VariableUsage] = MultiMap(
-            syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.initializes.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Init)) })
+            syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.initializes.variables.map(v => Block.VariableUsage(this, v, s, index, Block.VariableRole.Init)) })
               .map(u => u.variable.name.name -> u) *
         )
         
         val usages: MultiMap[String, Block.VariableUsage] = MultiMap(
-            syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.uses.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Use)) })
+            syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.uses.variables.map(v => Block.VariableUsage(this, v, s, index, Block.VariableRole.Use)) })
               .map(u => u.variable.name.name -> u) *
         )
         
         val finalizations: MultiMap[String, Block.VariableUsage] = MultiMap(
-            syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.finalizes.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Final)) })
+            syntax.sequence.zipWithIndex.flatMap({ case (s, index) => s.finalizes.variables.map(v => Block.VariableUsage(this, v, s, index, Block.VariableRole.Final)) })
               .map(u => u.variable.name.name -> u) *
         )
         
         val all_variable_usages: MultiMap[String, Block.VariableUsage] = MultiMap(
             syntax.sequence.zipWithIndex.flatMap({
                   case (s, index) =>
-                      s.initializes.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Init)) ++
-                        s.uses.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Use)) ++
-                        s.finalizes.variables.map(v => Block.VariableUsage(v, s, index, Block.VariableRole.Final))
+                      s.initializes.variables.map(v => Block.VariableUsage(this, v, s, index, Block.VariableRole.Init)) ++
+                        s.uses.variables.map(v => Block.VariableUsage(this, v, s, index, Block.VariableRole.Use)) ++
+                        s.finalizes.variables.map(v => Block.VariableUsage(this, v, s, index, Block.VariableRole.Final))
               })
               .map(u => u.variable.name.name -> u) *
         )
@@ -105,21 +111,31 @@ object BindingTree {
         
         def lookup(name: String): Option[Variable] = {
             if this.block_local_variables.contains(name) then Some(BlockVariable(name, this))
-            else this.parent.lookup(name)
+            else this.context.flatMap(_.relation.lookup(name))
         }
         
-        override def root: Program = this.parent.root
+        override def root: Program = this.context.get.relation.root
+        
+        override def equals(obj: Any): Boolean = obj match {
+            case r: Block => r eq this
+            case _ => false
+        }
     }
     
     case class Label(name: String, relation: Relation)
     
     object Block {
+        case class Context(relation: Relation, block_index: Int)
+        
         case class VariableUsage(
+                                  block: Block,
                                   variable: Syntax.Expression.Variable,
                                   statement: Syntax.Statement,
                                   statement_index: Int,
                                   role: VariableRole
-                                )
+                                ) {
+            def ref: Option[Variable] = block.lookup(this.variable.name.name)
+        }
         
         enum VariableRole:
             case Init

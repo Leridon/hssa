@@ -133,7 +133,7 @@ class LocalConstantPropagation(collector: LanguageError.Collector = LanguageErro
     }
     
     def apply(block: BindingTree.Block): Syntax.Block = {
-        val inverted = BindingTree.Block(block.parent, Inversion.Local.invert(block.syntax))
+        val inverted = BindingTree.Block(block.context, Inversion.Local.invert(block.syntax))
         
         val fw_replacements_raw = getForwardsReplacements(block)
         val fw_replacements = fw_replacements_raw.asMap
@@ -182,7 +182,7 @@ class LocalConstantPropagation(collector: LanguageError.Collector = LanguageErro
             )
             
             // Repeat
-            apply(BindingTree.Block(block.parent, step_result))
+            apply(BindingTree.Block(block.context, step_result))
         }
     }
     

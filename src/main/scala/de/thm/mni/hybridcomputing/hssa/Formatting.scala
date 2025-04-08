@@ -52,17 +52,30 @@ object Formatting {
         formatInColumns(statement).mkString(" ")
     }
     
+    private def center(s: String, width: Int): String = {
+        val before = (width - s.length) / 2
+        
+        " ".repeat(before) + s + " ".repeat(width - before - s.length)
+    }
+    
+    def format(block: Syntax.Block): String = {
+        val rows = block.sequence.map(stm => (stm, formatInColumns(stm)))
+        
+        val column_widths = Array(0, 1, 2, 3, 4)
+          .map(i => rows.map(r => r._2(i).length).max)
+        
+        rows.map(row => {
+            row._2.zipWithIndex.map({ case (value, index) =>
+                center(value, column_widths(index))
+            }).mkString(" ")
+        }).mkString("\n")
+    }
+    
     def format(rel: Syntax.Relation): String = {
         val rows = rel.blocks.flatMap(_.sequence).map(stm => (stm, formatInColumns(stm)))
         
         val column_widths = Array(0, 1, 2, 3, 4)
           .map(i => rows.map(r => r._2(i).length).max)
-        
-        def center(s: String, width: Int): String = {
-            val before = (width - s.length) / 2
-            
-            " ".repeat(before) + s + " ".repeat(width - before - s.length)
-        }
         
         s"rel ${rel.name}${prependSpaceIfNotEmpty(format(rel.parameter))}:\n" + rows.map(row => {
             val r = row._2.zipWithIndex.map({ case (value, index) =>

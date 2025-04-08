@@ -6,8 +6,6 @@ import de.thm.mni.hybridcomputing.util.MultiMap.*
 
 import scala.collection.mutable.ListBuffer
 
-
-
 class CallGraph private(program: BindingTree.Program) {
     val calls: Seq[CallGraph.Call] = program.relations.flatMap(rel => {
         val callees = rel.relation.blocks.flatMap(block => {
@@ -23,6 +21,8 @@ class CallGraph private(program: BindingTree.Program) {
         
         callees.map(callee => CallGraph.Call(rel.relation, callee))
     })
+    
+    val unique_calls: Set[CallGraph.Call] = calls.toSet
     
     private val caller_map = calls.groupBy(c => c.caller).view.mapValues(_.map(_.callee))
     private val callee_map = calls.groupBy(c => c.callee).view.mapValues(_.map(_.caller))
@@ -52,7 +52,12 @@ class CallGraph private(program: BindingTree.Program) {
 object CallGraph {
     case class Call(caller: BindingTree.Relation,
                     callee: BindingTree.Relation
-                   )
+                   ) {
+        override def equals(obj: Any): Boolean = obj match {
+            case other: AnyRef => this eq other
+            case _ => false
+        }
+    }
     
     val get: BindingTree.Program => CallGraph = DynamicCache[BindingTree.Program, CallGraph](prog => new CallGraph(prog)).apply
 }
