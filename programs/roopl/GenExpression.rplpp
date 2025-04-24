@@ -7,5 +7,71 @@ class Main
         y -= 5
         x ^= y
 
+        x += 1 + 2 * 5
+
         delocal int y = -5
-        delocal int x = 0
+        delocal int x = 9
+
+/* HSSA code
+
+rel main ():
+    (), 0 := begin <-
+    x := add 0 := 0
+    y := add 0 := 0
+
+    x.1 := add 5 := x
+    y.1 := add -5 := y
+    x.2 := xor y.1 := x.1
+
+    t.0 := add 1 := 0
+    t.1 := add 2 := 0
+    t.2 := add 5 := 0
+
+    t.3 := mul t.1, t.2 := ()
+    t.4 := add t.0 := t.3
+    x.3 := add t.4 := x.2
+
+    // uncompute t.*
+
+    -5 := id := y.1
+    9 := id := x.3
+    -> end := (), 0
+
+*/
+
+/* Generated HSSA
+rel main:
+(), 0 :=    begin <-
+_t.0  :=      add 0      :=   0
+  x   :=       id        := _t.0
+_t.1  :=      add 0      :=   0
+  y   :=       id        := _t.1
+_t.2  :=      add 5      :=   0
+ x.0  :=    add _t.2     :=   x
+  0   :=     ~add 5      := _t.2
+_t.3  :=      add 5      :=   0
+ y.0  :=   minus _t.3    :=   y
+  0   :=     ~add 5      := _t.3
+_t.4  :=     dup y.0     :=  ()
+ x.1  :=    xor _t.4     :=  x.0
+ ()   :=    ~dup y.0     := _t.4
+_t.6  :=      add 1      :=   0
+_t.8  :=      add 2      :=   0
+_t.9  :=      add 5      :=   0
+_t.7  := mul _t.8, _t.9  :=  ()
+_t.5  :=    add _t.6     := _t.7
+ x.2  :=    add _t.5     :=  x.1
+_t.12 :=    ~add _t.6    := _t.5
+ ()   := ~mul _t.8, _t.9 := _t.12
+  0   :=     ~add 5      := _t.9
+  0   :=     ~add 2      := _t.8
+  0   :=     ~add 1      := _t.6
+_t.10 :=     add -5      :=   0
+ ()   :=   ~dup _t.10    :=  y.0
+  0   :=     ~add -5     := _t.10
+_t.11 :=      add 9      :=   0
+ ()   :=   ~dup _t.11    :=  x.2
+  0   :=     ~add 9      := _t.11
+             -> end      := (), 0
+
+*/
