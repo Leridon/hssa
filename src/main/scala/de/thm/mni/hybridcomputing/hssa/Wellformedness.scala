@@ -20,7 +20,7 @@ class Wellformedness(language: Language) {
                 if (inits.isEmpty) errors.add(Wellformedness.VariableNeverInitialized(finals.head))
                 if (finals.isEmpty) errors.add(Wellformedness.VariableNeverFinalized(inits.head))
                 
-                if (inits.length == 1 && finals.length == 1 && finals.head.variable.position < inits.head.variable.position)
+                if (inits.length == 1 && finals.length == 1 && finals.head.statement_index < inits.head.statement_index)
                     errors.add(Wellformedness.VariableFinalizedBeforeInitialized(inits.head, finals.head))
             })
             
