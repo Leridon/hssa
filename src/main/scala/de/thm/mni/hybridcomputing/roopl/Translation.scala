@@ -24,27 +24,29 @@ import de.thm.mni.hybridcomputing.hssa.transformation.repairs.EliminateImplicitN
 object Translation {
 
     val tempVars = UniqueNameGenerator(".")
+    var relation: RelationBuilder = null
     def nextTempVar() = tempVars.next("_t")
+    def nextLabel() = relation.label_generator.next("L")
 
     def translateRooplToHssa(program: ScopeTree.Program, language: Language): de.thm.mni.hybridcomputing.hssa.Syntax.Program = {
-        val mainRelation = RelationBuilder("main", Expression.Unit(), Seq())
+        relation = RelationBuilder("main", Expression.Unit(), Seq())
 
         // AutoSSA makes it so we don't have to track variable usages ourselves
-        mainRelation.add(AutoDiscard.apply(AutoSSA.autoSSA(block(
+        relation.add(AutoDiscard.apply(AutoSSA.autoSSA(block(
             ((), 0) :=<- "begin",
             program.mainMethod.body.flatMap(generateStatement(_)),
             ->("end") := ((), 0)
         ))))
 
-        de.thm.mni.hybridcomputing.hssa.Syntax.Program(Seq(mainRelation.compile()), language)
+        de.thm.mni.hybridcomputing.hssa.Syntax.Program(Seq(relation.compile()), language)
     }
 
     def generateStatement(statement: ScopeTree.StatementNode): Seq[Assignment] = {
         statement match
-            case ScopeTree.Conditional(test, thenStatements, elseStatements, assertion) => ???
-            case ScopeTree.Loop(test, doStatements, loopStatements, assertion) => ???
+            case conditional: ScopeTree.Conditional => generateConditional(conditional)
+            case loop: ScopeTree.Loop => ???
             case assignment: ScopeTree.Assignment => generateAssignment(assignment)
-            case ScopeTree.Swap(left, right) => ???
+            case swap: ScopeTree.Swap => generateSwap(swap)
             case ScopeTree.New(typ, name) => ???
             case ScopeTree.Delete(typ, name) => ???
             case ScopeTree.Copy(typ, from, to) => ???
@@ -71,9 +73,25 @@ object Translation {
         compute ++ computeVar ++ body ++ uncompute ++ uncomputeVar ++ uncomputeUncompute
     }
 
+    def generateConditional(conditional: ScopeTree.Conditional): Seq[Assignment] = {
+        val (compute, tempVar, uncompute) = generateExpression(conditional.test)
+        val truthVar = nextTempVar()
+        val truth = truthVar :== ("equal", (tempVar, 0)) := ()
+        val (thenLabel, elseLabel) = (nextLabel(), nextLabel())
+        val jump = ->(elseLabel, thenLabel) := ((), truthVar)
+
+        compute ++ uncompute ++ truth ++ jump
+    }
+
     def generateAssignment(assignment: ScopeTree.Assignment): Seq[Assignment] = {
         val (compute, tempVar, uncompute) = generateExpression(assignment.value)
+        // TODO: Arrays        
         compute ++ (assignment.assignee.name :== (convert(assignment.op), tempVar) := assignment.assignee.name) ++ uncompute
+    }
+
+    def generateSwap(swap: ScopeTree.Swap): Seq[Assignment] = {
+        // TODO: Arrays
+        (swap.left.name, swap.right.name) :== ("id", ()) := (swap.right.name, swap.left.name)
     }
 
     def convert(op: Syntax.AssignmentOperator): String = {
@@ -124,6 +142,8 @@ object Translation {
 
                 val res: Assignment = op match
                     case Operator.ADD | Operator.SUB | Operator.XOR =>
+                        // This consumes rvar but also returns an uncompute down the line, which leads to double initialization & finalization
+                        // This is fixed by AutoSSA which replaces the second occurrences with an entirely new intermediate variable, solving this problem
                         temp :== (convert(op), lVar) := rVar
 
                     case _ => temp :== (convert(op), (lVar, rVar)) := ()

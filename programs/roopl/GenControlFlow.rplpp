@@ -1,0 +1,82 @@
+class Main
+    method main()
+        local int x = 1
+        local int y = 10
+
+        if x = 0 then
+          x += 2
+        else
+          if x = 2 then
+            x += 3
+          else
+            x += 5
+          fi x = 5
+        fi x = 2
+
+        from x < y do
+          x -= 10
+        loop
+          x += 1
+          y -= 1
+        until x > y
+
+        x <=> y
+
+        delocal int y = 4
+        delocal int x = 2
+
+/* HSSA code
+rel main():
+  (), 0 := begin <-
+  x := add 1 := 0
+  y := add 10 := 0
+
+  // If
+  // Calculate expression
+  _t.0 := equal x, 0 := ()
+  // result is 1 or 0 in hssa, we need to narrow down the result to one or zero for jump labels
+  // 1 is true, 0 is false
+  _t.1 := equal _t.0, 0 := ()
+  -> L2,L1 := (), _t.1
+
+  // then
+  (), 0 := L1 <-
+  x.1 := add 2 := x
+  -> L3 := (), 0
+
+  // else
+  (), 0 := L2 <-
+  // ...
+  -> L4 := (), 0
+
+  // exit
+  (), _j.0 := L4,L3 <-
+  // Calculate expression
+  _t.2 := equal x.1, 2 := ()
+  () := ~equal _t.2, 0 := _j.0
+
+  (x.10, y.10) := id := (y, x.1)
+
+  4 := id := y.10
+  2 := id := x.10
+
+  -> end := (), 0
+
+
+  // Loop
+
+
+ from x < y do
+          x -= 10
+        loop
+          x += 1
+          y -= 1
+        until x > y
+
+  (x.10, y.10) := id := (y.9, x.9)
+
+  4 := id := y.10
+  2 := id := x.10
+
+
+*/
