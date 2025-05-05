@@ -6,6 +6,7 @@ import de.thm.mni.hybridcomputing.cli.Parsing.{LexicalGrammar, TokenTypes}
 import de.thm.mni.hybridcomputing.cli.Parsing.TokenTypes.LPAR
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Syntax
+import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
 import de.thm.mni.hybridcomputing.hssa.modular.Modular
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.LexicalGrammar.{Input, symbol}
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.{LexicalGrammar, Tokens}
@@ -117,8 +118,9 @@ object Parsing {
         
         protected def string: Parser[String] = valueToken(STRING)(classOf[String])
         
+        def args: Parser[List[Argument]] = rep(arg ^^ (a => Seq(a)) | (LPAR ~~ rep(arg) ~~ RPAR)) ^^ (_.flatten)
         
-        def fun: Parser[Fun] = string ~~ rep(arg) ^^ { case s ~ args => Fun(s, args) }
+        def fun: Parser[Fun] = string ~~ args ^^ { case s ~ args => Fun(s, args) }
     }
     
     def parse(specification: String): ChainExpression = {
@@ -150,6 +152,13 @@ object Evaluation {
                 case StringValue(value) => value
             }).getOrElse(LanguageError(Severity.Error, s"Expected argument for position $pos").raise())
         }
+        
+        def expectPositionedChain(pos: Int = 0): CliChain.Function = {
+            positioned.lift(pos).map({
+                case ChainValue(function) => function
+                case StringValue(value) => LanguageError(Severity.Error, s"Expected chain argument for position $pos, but got String").raise()
+            }).getOrElse(LanguageError(Severity.Error, s"Expected argument for position $pos").raise())
+        }
     }
     
     sealed trait ArgumentValue
@@ -179,14 +188,28 @@ object Evaluation {
                 _ => CliChain.Value.File(Some(p), p.getFileName.toString, None)
         },
         "tap" -> {
-            case Arguments(_, Seq(ChainValue(chain))) => input => {
+            args => {
                 import CliChain.Function.*
+                val f = args.expectPositionedChain().withImplicitDump
                 
-                chain.withImplicitDump(input)
-                
-                input
+                input => {
+                    f(input)
+                    
+                    input
+                }
             }
         },
+        "foreach" -> (args => {
+            import CliChain.Function.*
+            val f = args.expectPositionedChain().withImplicitDump
+            
+            {
+                case CliChain.Value.Sequence(seq) =>
+                    seq.foreach(f)
+                    
+                    CliChain.Value.Unit
+            }
+        }),
         "dump" -> Dump,
         "drop" -> (_ => _ => CliChain.Value.Unit),
         "hssa.parse" -> (_ => {
@@ -195,6 +218,12 @@ object Evaluation {
                 
                 CliChain.Value.HSSA(hssa.parsing.Parsing(lang).parse(
                     hssa.parsing.Lexing.lex(f.asSourceFile)
+                ))
+        }),
+        "hssa.exec" -> (_ => {
+            case CliChain.Value.HSSA(program) =>
+                CliChain.Value.File(None, "output.txt", Some(
+                    Interpretation(program.language).interpret(program).toString
                 ))
         })
     )

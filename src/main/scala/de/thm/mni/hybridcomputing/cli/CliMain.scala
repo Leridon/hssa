@@ -11,10 +11,11 @@ object CliMain:
         try {
             val build_script = Parsing.parse(
                 """load "./programs/tristan.hssa"
+                  |
                   |hssa.parse
-                  |tap {dump}
+                  |hssa.exec
                   |""".stripMargin)
-                  
+            
             val f = Evaluation.evaluate(build_script).withImplicitDump
             
             f(CliChain.Value.Unit)
