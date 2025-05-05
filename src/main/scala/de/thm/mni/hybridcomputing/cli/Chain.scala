@@ -1,8 +1,12 @@
 package de.thm.mni.hybridcomputing.cli
 
 import de.thm.mni.hybridcomputing.cli
+import de.thm.mni.hybridcomputing.cli.Evaluation.Dump
 import de.thm.mni.hybridcomputing.cli.Parsing.{LexicalGrammar, TokenTypes}
 import de.thm.mni.hybridcomputing.cli.Parsing.TokenTypes.LPAR
+import de.thm.mni.hybridcomputing.hssa
+import de.thm.mni.hybridcomputing.hssa.Syntax
+import de.thm.mni.hybridcomputing.hssa.modular.Modular
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.LexicalGrammar.{Input, symbol}
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.{LexicalGrammar, Tokens}
 import de.thm.mni.hybridcomputing.util.DynamicCache
@@ -26,6 +30,40 @@ sealed trait SimpleArgumentValue extends Argument
 case class ChainArgument(chain: ChainExpression) extends SimpleArgumentValue
 case class StringArgument(value: String) extends SimpleArgumentValue
 
+object CliChain {
+    trait Value
+    
+    object Value {
+        case object Unit extends Value
+        case class ModularHSSA(program: Modular.Syntax.Program) extends Value
+        case class HSSA(program: Syntax.Program) extends Value
+        case class File(
+                         path: Option[Path],
+                         name: String,
+                         content: Option[String]
+                       ) extends Value {
+            
+            def asSourceFile: SourceFile = content.map(SourceFile.fromString)
+              .orElse(path.map(SourceFile.fromFile))
+              .getOrElse(throw new RuntimeException("File has no path nor content"))
+        }
+        
+        case class Sequence[T <: Value](seq: Seq[T]) extends Value
+    }
+    
+    type Function = Value => Value
+    
+    object Function {
+        extension (self: Function)
+            def withImplicitDump: Function = input => {
+                val res = self(input)
+                
+                if (res != Value.Unit) Dump.apply(res)
+                
+                Value.Unit
+            }
+    }
+}
 
 object Parsing {
     enum TokenTypes:
@@ -87,8 +125,6 @@ object Parsing {
         val file = SourceFile.fromString(specification)
         val token_reader = TokenReader(file, file.reader, LexicalGrammar)
         
-        token_reader.readAll().foreach(println)
-        
         Grammar.chain(token_reader) match {
             case Grammar.Success(prog, _) => prog
             case err =>
@@ -117,11 +153,20 @@ object Evaluation {
     }
     
     sealed trait ArgumentValue
-    case class ChainValue(function: Any => Any) extends ArgumentValue
+    case class ChainValue(function: CliChain.Function) extends ArgumentValue
     case class StringValue(value: String) extends ArgumentValue
     
     trait Function {
-        def instantiate(args: Arguments): Any => Any
+        def instantiate(args: Arguments): CliChain.Function
+    }
+    
+    object Dump extends Function {
+        override def instantiate(args: Arguments): CliChain.Function = this.apply
+        def apply(input: CliChain.Value): CliChain.Value = {
+            println(input)
+            
+            CliChain.Value.Unit
+        }
     }
     
     val functions: Map[String, Function] = Map(
@@ -129,19 +174,29 @@ object Evaluation {
             args =>
                 val path = args.expectPositionedString()
                 
-                _ => Path.of(path)
-            
+                val p = Path.of(path)
+                
+                _ => CliChain.Value.File(Some(p), p.getFileName.toString, None)
         },
         "tap" -> {
-            case Seq(ChainArgument(chain)) => input => {
-                val f = evaluate(chain)
+            case Arguments(_, Seq(ChainValue(chain))) => input => {
+                import CliChain.Function.*
                 
-                f(input)
+                chain.withImplicitDump(input)
                 
                 input
             }
         },
-        "drop" -> (_ => _ => ())
+        "dump" -> Dump,
+        "drop" -> (_ => _ => CliChain.Value.Unit),
+        "hssa.parse" -> (_ => {
+            case f: CliChain.Value.File =>
+                val lang = hssa.Language.Canon
+                
+                CliChain.Value.HSSA(hssa.parsing.Parsing(lang).parse(
+                    hssa.parsing.Lexing.lex(f.asSourceFile)
+                ))
+        })
     )
     
     private def evaluate(argument: SimpleArgumentValue): ArgumentValue = argument match {
@@ -149,7 +204,7 @@ object Evaluation {
         case StringArgument(value) => StringValue(value)
     }
     
-    def evaluate(exp: ChainExpression): Any => Any =
+    def evaluate(exp: ChainExpression): CliChain.Function =
         exp match {
             case Sequence(chain) => input => chain.foldLeft(input)((in, f) => evaluate(f)(in))
             case Fun(name, args) =>
@@ -161,57 +216,3 @@ object Evaluation {
                 function.instantiate(Arguments(named, positioned))
         }
 }
-
-trait AnyStep {
-    def app(in: Any): Any
-}
-
-trait Step[A, B] extends AnyStep {
-    def app(in: Any): Any = {
-        this.apply(in.asInstanceOf[A])
-    }
-    
-    def apply(in: A): B
-}
-
-object Step {
-    val steps: Map[String, AnyStep] = Map(
-        "getfile" -> new Step[Unit, Path] {
-            override def apply(in: Unit): Path = {
-                Paths.get("")
-            }
-        },
-        "tap" -> new Step[Any, Any] {
-            override def apply(in: Any): Any = ???
-        }
-    )
-}
-
-/*
-abstract class AnyChain(using in_class: Class[Any], out: Class[Any]) {
-    def apply(in: Any): Unit = {
-        if (!in_class.isInstance(in)) throw new RuntimeException(s"${in_class.getName} expected, but got ")
-    }
-    
-    def implementation(in: Any): Any
-}
-
-trait Chain[In, Out]:
-    def int_type: Class[Any]
-    def out_type: Class[Any]
-    
-    def apply(in: In): Out
-
-    
-object Chain:
-    class Seq[A, B, C](a: Chain[A, B], b: Chain[B, C]) extends Chain[A, C] {
-        override def apply(in: A): C = b(a(in))
-    }
-    
-    class Fork[A, B](fork: Chain[A, B]) extends Chain[A, A] {
-        override def apply(in: A): A = {
-            fork(in)
-            in
-        }
-    }
-*/

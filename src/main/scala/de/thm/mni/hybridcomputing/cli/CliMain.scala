@@ -1,6 +1,7 @@
 package de.thm.mni.hybridcomputing.cli
 
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.AbortDueToErrors
+import CliChain.Function.*
 
 object CliMain:
     
@@ -9,17 +10,14 @@ object CliMain:
         
         try {
             val build_script = Parsing.parse(
-                """load "./test.hssa"
+                """load "./programs/tristan.hssa"
                   |hssa.parse
-                  |hssa.optimize
-                  |tap {hssa.dot; dump}
-                  |hssa.interpret""".stripMargin)
+                  |tap {dump}
+                  |""".stripMargin)
+                  
+            val f = Evaluation.evaluate(build_script).withImplicitDump
             
-            println(build_script)
-            
-            val f = Evaluation.evaluate(build_script)
-            
-            f(())
+            f(CliChain.Value.Unit)
         } catch {
             case e: AbortDueToErrors =>
                 e.errors.foreach(e => {
