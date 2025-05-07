@@ -37,28 +37,30 @@ rel main():
   // result is 1 or 0 in hssa, we need to narrow down the result to one or zero for jump labels
   // 1 is true, 0 is false
   _t.1 := equal _t.0, 0 := ()
-  -> L2,L1 := (), _t.1
+  () := ~equal x, 0 := _t.0
+  -> L1,L2 := (x, y), _t.1
 
   // then
-  (), 0 := L1 <-
+  (x, y), 0 := L1 <-
   x.1 := add 2 := x
-  -> L3 := (), 0
+  -> L3 := (x.1, y), 0
 
   // else
-  (), 0 := L2 <-
+  (x, y), 0 := L2 <-
   // ...
-  -> L4 := (), 0
+  -> L4 := (x, y), 0
 
   // exit
-  (), _j.0 := L4,L3 <-
+  (x, y), _j.0 := L3,L4 <-
   // Calculate expression
-  _t.2 := equal x.1, 2 := ()
+  _t.2 := equal x, 2 := ()
   () := ~equal _t.2, 0 := _j.0
+  () := ~equal x, 2 := _t.2
 
-  (x.10, y.10) := id := (y, x.1)
+  (x.1, y.1) := id := (y, x)
 
-  4 := id := y.10
-  2 := id := x.10
+  3 := id := y.1
+  10 := id := x.1
 
   -> end := (), 0
 
