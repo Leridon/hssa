@@ -232,9 +232,9 @@ object Translation {
 
                     val res: Assignment = op match
                         case Operator.ADD | Operator.SUB | Operator.XOR =>
-                            // This consumes rvar but also returns an uncompute down the line, which leads to double initialization & finalization
+                            // This consumes lVar but also returns an uncompute down the line, which leads to double initialization & finalization
                             // This is fixed by AutoSSA which replaces the second occurrences with an entirely new intermediate variable, solving this problem
-                            temp :== (convert(op), lVar) := rVar
+                            temp :== (convert(op), rVar) := lVar
 
                         case _ => temp :== (convert(op), (lVar, rVar)) := ()
 

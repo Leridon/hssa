@@ -7,12 +7,14 @@ class Main
           x += 2
         else
           local int z = 0
+          z += 5 - 2
           if x = 2 then
             x += 3
           else
             x += 5
           fi x = 5
-          delocal int z = 0
+          z += (20 * 2) + (3 * (4 - 1) / 12) - (7 * 3)
+          delocal int z = 22
         fi x = 2
 
         from x = 6 do
