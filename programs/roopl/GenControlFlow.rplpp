@@ -13,8 +13,8 @@ class Main
           fi x = 5
         fi x = 2
 
-        from x < y do
-          x -= 10
+        from x = 6 do
+          x += 1
         loop
           x += 1
           y -= 1
@@ -22,10 +22,10 @@ class Main
 
         x <=> y
 
-        delocal int y = 4
-        delocal int x = 2
+        delocal int y = 11
+        delocal int x = 8
 
-/* HSSA code
+/* HSSA code (incorrect, mock-up)
 rel main():
   (), 0 := begin <-
   x := add 1 := 0
@@ -57,28 +57,34 @@ rel main():
   () := ~equal _t.2, 0 := _j.0
   () := ~equal x, 2 := _t.2
 
+  // loop
+  -> L5 := (x, y), 0
+
+  // do
+  (x, y), _j.1 := L6, L5 <-
+  // Calculate test
+  _t.0 := less x, y := ()
+  // Test must be true if L5 and false if L6
+  _j.1 := id _t.0 := ()
+  x.1 := add -10 := x
+  // Calculate assert (leave if true and goto loop if false)
+  _t.1 := greater x, y := ()
+  -> L7, L8 := (x.1, y), _t.1
+
+  // loop
+  (x, y), 0 := L7 <-
+  x.1 := add 1 := x
+  y.1 := add -1 := y
+  -> L6 := (x.1, y.1), 0
+
+  // Leave loop
+  (x, y), 0 := L8 <-
+
   (x.1, y.1) := id := (y, x)
 
-  3 := id := y.1
-  10 := id := x.1
+  4 := id := y.1
+  2 := id := x.1
 
   -> end := (), 0
-
-
-  // Loop
-
-
- from x < y do
-          x -= 10
-        loop
-          x += 1
-          y -= 1
-        until x > y
-
-  (x.10, y.10) := id := (y.9, x.9)
-
-  4 := id := y.10
-  2 := id := x.10
-
 
 */

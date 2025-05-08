@@ -50,6 +50,7 @@ object Translation {
         def nextBlock(exit: Exit, entry: Entry): Unit = {
             builder.add(AutoSSA.autoSSA(blockBuilder.finish(exit)))
             blockBuilder = BlockBuilder(entry)
+            tempVars.reset()
         }
         def localsForJump(): Expression = {
             // Implicit conversion into pairs using HssaDSL
@@ -109,13 +110,13 @@ object Translation {
         }
     
         private def generateConditional(conditional: ScopeTree.Conditional): Unit = {
-            val (compute, tempVar, uncompute) = generateExpression(conditional.test)
+            val (computeTest, tempVar, uncomputeTest) = generateExpression(conditional.test)
             val truthVar = relation.nextTempVar()
             val truth = truthVar :== ("equal", (tempVar, 0)) := ()
             val (thenLabel, elseLabel) = (relation.nextLabel(), relation.nextLabel())
 
             relation.blockBuilder.addAssignments(
-                compute ++ truth ++ uncompute
+                computeTest ++ truth ++ uncomputeTest
             )
             relation.nextBlock(->(thenLabel, elseLabel) := (relation.localsForJump(), truthVar),
                                 (relation.localsForJump(), 0) :=<- thenLabel)
@@ -138,7 +139,34 @@ object Translation {
         }
 
         private def generateLoop(loop: ScopeTree.Loop): Unit = {
+            val (doLabel, loopJump) = (relation.nextLabel(), relation.nextLabel())
+            val jumpVar = relation.nextJumpVar()
+            relation.nextBlock(->(doLabel) := (relation.localsForJump(), 0),
+                                (relation.localsForJump(), jumpVar) :=<- Seq(doLabel, loopJump))
 
+            val (computeTest, tempVar, uncomputeTest) = generateExpression(loop.test)
+            val truthVar = relation.nextTempVar()
+            val truth = truthVar :== ("equal", (tempVar, 0)) := ()
+            val checkTruth = () :== (~"dup", truthVar) := (jumpVar)
+
+            relation.blockBuilder.addAssignments(
+                computeTest ++ truth ++ checkTruth ++ invert(truth) ++ uncomputeTest
+            )
+            loop.doStatements.foreach(generateStatement(_))
+            val (computeAssertion, tempVarAssertion, uncomputeAssertion) = generateExpression(loop.assertion)
+            val (loopLabel, doJump) = (relation.nextLabel(), relation.nextLabel())
+            val assertVar = relation.nextTempVar()
+            val assertion = assertVar :== ("equal", (tempVarAssertion, 0)) := ()
+
+            relation.blockBuilder.addAssignments(
+                computeAssertion ++ assertion ++ uncomputeAssertion
+            )
+            relation.nextBlock(->(doJump, loopLabel) := (relation.localsForJump(), assertVar),
+                                (relation.localsForJump(), 0) :=<- loopLabel)
+            loop.loopStatements.foreach(generateStatement(_))
+
+            relation.nextBlock(->(loopJump) := (relation.localsForJump(), 0),
+                                (relation.localsForJump(), 0) :=<- doJump)
         }
 
         private def generateAssignment(assignment: ScopeTree.Assignment): Unit = {
