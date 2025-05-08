@@ -1,18 +1,20 @@
 package de.thm.mni.hybridcomputing.cli
 
 import de.thm.mni.hybridcomputing.cli
+import de.thm.mni.hybridcomputing.cli.CliChain.Value
 import de.thm.mni.hybridcomputing.cli.Evaluation.Dump
 import de.thm.mni.hybridcomputing.cli.Parsing.{LexicalGrammar, TokenTypes}
 import de.thm.mni.hybridcomputing.cli.Parsing.TokenTypes.LPAR
 import de.thm.mni.hybridcomputing.hssa
-import de.thm.mni.hybridcomputing.hssa.Syntax
+import de.thm.mni.hybridcomputing.hssa.{Formatting, Syntax}
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
 import de.thm.mni.hybridcomputing.hssa.modular.Modular
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.LexicalGrammar.{Input, symbol}
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.{LexicalGrammar, Tokens}
+import de.thm.mni.hybridcomputing.hssa.transformation.optimizations.LocalConstantPropagation
 import de.thm.mni.hybridcomputing.util.DynamicCache
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
-import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.{Collector, Severity}
 import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, ParserUtilities, SourceFile, Token, TokenReader}
 
 import java.nio.file.{Path, Paths}
@@ -40,13 +42,17 @@ object CliChain {
         case class HSSA(program: Syntax.Program) extends Value
         case class File(
                          path: Option[Path],
-                         name: String,
-                         content: Option[String]
+                         name: Option[String],
+                         in_memory_content: Option[String]
                        ) extends Value {
             
-            def asSourceFile: SourceFile = content.map(SourceFile.fromString)
+            def asSourceFile: SourceFile = in_memory_content.map(SourceFile.fromString)
               .orElse(path.map(SourceFile.fromFile))
               .getOrElse(throw new RuntimeException("File has no path nor content"))
+        }
+        object File {
+            def fromPath(path: Path): File = File(Some(path), Some(path.getFileName.toString), None)
+            def fromContent(content: String): File = File(None, None, Some(content))
         }
         
         case class Sequence[T <: Value](seq: Seq[T]) extends Value
@@ -172,7 +178,15 @@ object Evaluation {
     object Dump extends Function {
         override def instantiate(args: Arguments): CliChain.Function = this.apply
         def apply(input: CliChain.Value): CliChain.Value = {
-            println(input)
+            
+            input match {
+                case Value.Sequence(seq) => seq.foreach(this.apply)
+                case Value.File(path, name, Some(in_memory_content)) =>
+                    println(in_memory_content)
+                case Value.HSSA(program) =>
+                    this.apply(Value.File.fromContent(Formatting.format(program)))
+                case in => println(in)
+            }
             
             CliChain.Value.Unit
         }
@@ -185,7 +199,7 @@ object Evaluation {
                 
                 val p = Path.of(path)
                 
-                _ => CliChain.Value.File(Some(p), p.getFileName.toString, None)
+                _ => CliChain.Value.File.fromPath(p)
         },
         "tap" -> {
             args => {
@@ -220,11 +234,17 @@ object Evaluation {
                     hssa.parsing.Lexing.lex(f.asSourceFile)
                 ))
         }),
+        "hssa.optimize.lcp" -> (_ => {
+            case CliChain.Value.HSSA(program) =>
+                CliChain.Value.HSSA(
+                    LocalConstantPropagation(LanguageError.Collector()).apply(program)
+                )
+        }),
         "hssa.exec" -> (_ => {
             case CliChain.Value.HSSA(program) =>
-                CliChain.Value.File(None, "output.txt", Some(
+                CliChain.Value.File.fromContent(
                     Interpretation(program.language).interpret(program).toString
-                ))
+                )
         })
     )
     

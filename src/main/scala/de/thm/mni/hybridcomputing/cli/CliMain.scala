@@ -13,6 +13,7 @@ object CliMain:
                 """load "./programs/tristan.hssa"
                   |
                   |hssa.parse
+                  |tap {hssa.optimize.lcp; dump}
                   |hssa.exec
                   |""".stripMargin)
             
