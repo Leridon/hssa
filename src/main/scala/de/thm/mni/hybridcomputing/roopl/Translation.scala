@@ -47,15 +47,32 @@ object Translation {
         def nextJumpVar(): String = tempVars.next("_j")
         def nextLabel(): String = builder.label_generator.next("L")
         // Use to end the current block and start a new one
-        def nextBlock(exit: Exit, entry: Entry): Unit = {
+        def nextBlock(exitLabels: Seq[String], exitJump: Expression, entryJump: Expression, entryLabels: Seq[String]): Unit = {
+            val exit = ->(exitLabels) := (localsForJump(), exitJump)
+            val entry = (localsForJump(), entryJump) :=<- entryLabels
             builder.add(AutoSSA.autoSSA(blockBuilder.finish(exit)))
             blockBuilder = BlockBuilder(entry)
             tempVars.reset()
         }
+        def nextBlock(exitLabels: String, exitJump: Expression, entryJump: Expression, entryLabels: String): Unit = {
+            nextBlock(Seq(exitLabels), exitJump, entryJump, Seq(entryLabels))
+        }
+        def nextBlock(exitLabels: (String, String), exitJump: Expression, entryJump: Expression, entryLabels: String): Unit = {
+            nextBlock(exitLabels.toList, exitJump, entryJump, Seq(entryLabels))
+        }
+        def nextBlock(exitLabels: String, exitJump: Expression, entryJump: Expression, entryLabels: (String, String)): Unit = {
+            nextBlock(Seq(exitLabels), exitJump, entryJump, entryLabels.toList)
+        }
+        def nextBlock(exitLabels: (String, String), exitJump: Expression, entryJump: Expression, entryLabels: (String, String)): Unit = {
+            nextBlock(exitLabels.toList, exitJump, entryJump, entryLabels.toList)
+        }
+        
         def localsForJump(): Expression = {
             // Implicit conversion into pairs using HssaDSL
             locals.reduce((a, b) => (a,b))
         }
+
+
     }
 
     private object Generator {
@@ -98,82 +115,93 @@ object Translation {
             val (compute, tempVar, uncomputeCompute) = generateExpression(block.varCompute)
             val computeVar = block.variable :== ("id", ()) := tempVar
 
-            relation.blockBuilder.addAssignments(compute ++ computeVar)
+            relation.blockBuilder.addAssignments(compute, computeVar)
             block.body.foreach(generateStatement(_))
 
             val (uncompute, tempVar2, uncomputeUncompute) = generateExpression(block.varUncompute)
             val uncomputeVar = () :== (~"dup", tempVar2) := block.variable
 
-            relation.blockBuilder.addAssignments(uncompute ++ uncomputeVar ++ uncomputeUncompute)
+            relation.blockBuilder.addAssignments(uncompute, uncomputeVar, uncomputeUncompute)
             // Pop variable from locals
             relation.locals.pop()
         }
     
         private def generateConditional(conditional: ScopeTree.Conditional): Unit = {
+            // Check condition
             val (computeTest, tempVar, uncomputeTest) = generateExpression(conditional.test)
             val truthVar = relation.nextTempVar()
             val truth = truthVar :== ("equal", (tempVar, 0)) := ()
             val (thenLabel, elseLabel) = (relation.nextLabel(), relation.nextLabel())
 
             relation.blockBuilder.addAssignments(
-                computeTest ++ truth ++ uncomputeTest
+                computeTest, truth, uncomputeTest
             )
-            relation.nextBlock(->(thenLabel, elseLabel) := (relation.localsForJump(), truthVar),
-                                (relation.localsForJump(), 0) :=<- thenLabel)
+            // Jump to then or else
+            relation.nextBlock((thenLabel, elseLabel), truthVar,
+                                0, thenLabel)
+            // Then
             conditional.thenStatements.foreach(generateStatement(_))
 
+            // Else
             val (thenJump, elseJump) = (relation.nextLabel(), relation.nextLabel())
-            relation.nextBlock(->(thenJump) := (relation.localsForJump(), 0),
-                                (relation.localsForJump(), 0) :=<- elseLabel)
+            relation.nextBlock((thenJump), 0,
+                                0, elseLabel)
             conditional.elseStatements.foreach(generateStatement(_))
 
             val jumpVar = relation.nextJumpVar()
-            relation.nextBlock(->(elseJump) := (relation.localsForJump(), 0),
-                                (relation.localsForJump(), jumpVar) :=<- Seq(thenJump, elseJump))
-
+            relation.nextBlock((elseJump), 0,
+                                jumpVar, (thenJump, elseJump))
+            
+            // Check assertion
             val (computeAssertion, tempVarAssertion, uncomputeAssertion) = generateExpression(conditional.assertion)
             val assertion = () :== (~"equal", (tempVarAssertion, 0)) := jumpVar
             relation.blockBuilder.addAssignments(
-                computeAssertion ++ assertion ++ uncomputeAssertion
+                computeAssertion, assertion, uncomputeAssertion
             )
         }
 
         private def generateLoop(loop: ScopeTree.Loop): Unit = {
+            // Jump to do block (from condition is checked there)
             val (doLabel, loopJump) = (relation.nextLabel(), relation.nextLabel())
             val jumpVar = relation.nextJumpVar()
-            relation.nextBlock(->(doLabel) := (relation.localsForJump(), 0),
-                                (relation.localsForJump(), jumpVar) :=<- Seq(doLabel, loopJump))
+            relation.nextBlock((doLabel), 0,
+                                jumpVar, (doLabel, loopJump))
 
+            // Check from condition (must be true the first time and false in later checks)
             val (computeTest, tempVar, uncomputeTest) = generateExpression(loop.test)
             val truthVar = relation.nextTempVar()
             val truth = truthVar :== ("equal", (tempVar, 0)) := ()
             val checkTruth = () :== (~"dup", truthVar) := (jumpVar)
 
             relation.blockBuilder.addAssignments(
-                computeTest ++ truth ++ checkTruth ++ invert(truth) ++ uncomputeTest
+                computeTest, truth, checkTruth, invert(truth), uncomputeTest
             )
+            // Do
             loop.doStatements.foreach(generateStatement(_))
+            // End loop or do 'loop'
             val (computeAssertion, tempVarAssertion, uncomputeAssertion) = generateExpression(loop.assertion)
             val (loopLabel, doJump) = (relation.nextLabel(), relation.nextLabel())
             val assertVar = relation.nextTempVar()
             val assertion = assertVar :== ("equal", (tempVarAssertion, 0)) := ()
 
             relation.blockBuilder.addAssignments(
-                computeAssertion ++ assertion ++ uncomputeAssertion
+                computeAssertion, assertion, uncomputeAssertion
             )
-            relation.nextBlock(->(doJump, loopLabel) := (relation.localsForJump(), assertVar),
-                                (relation.localsForJump(), 0) :=<- loopLabel)
+            relation.nextBlock((doJump, loopLabel), assertVar,
+                                0, (loopLabel))
+            // Loop
             loop.loopStatements.foreach(generateStatement(_))
 
-            relation.nextBlock(->(loopJump) := (relation.localsForJump(), 0),
-                                (relation.localsForJump(), 0) :=<- doJump)
+            // Back to do
+            relation.nextBlock((loopJump), 0,
+                                0, (doJump))
         }
 
         private def generateAssignment(assignment: ScopeTree.Assignment): Unit = {
             val (compute, tempVar, uncompute) = generateExpression(assignment.value)
             // TODO: Arrays
             relation.blockBuilder.addAssignments(
-                compute ++ (assignment.assignee.name :== (convert(assignment.op), tempVar) := assignment.assignee.name) ++ uncompute
+                compute, (assignment.assignee.name :== (convert(assignment.op), tempVar) := assignment.assignee.name), uncompute
             )
         }
 
