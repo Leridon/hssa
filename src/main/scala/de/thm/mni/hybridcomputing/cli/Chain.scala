@@ -5,6 +5,8 @@ import de.thm.mni.hybridcomputing.cli.CliChain.Value
 import de.thm.mni.hybridcomputing.cli.Evaluation.Dump
 import de.thm.mni.hybridcomputing.cli.Parsing.{LexicalGrammar, TokenTypes}
 import de.thm.mni.hybridcomputing.cli.Parsing.TokenTypes.LPAR
+import de.thm.mni.hybridcomputing.cli.functions.General
+import de.thm.mni.hybridcomputing.roopl
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.{BindingTree, Formatting, Syntax, TypeChecking, Wellformedness}
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
@@ -45,6 +47,7 @@ object CliChain {
         case object Unit extends Value
         case class ModularHSSA(program: Modular.Syntax.Program) extends Value
         case class HSSA(program: Syntax.Program) extends Value
+        case class Roopl(program: roopl.Syntax.Program) extends Value
         case class File(
                          path: Option[Path],
                          name: Option[String],
@@ -178,11 +181,11 @@ object Evaluation {
     case class ChainValue(function: CliChain.Function) extends ArgumentValue
     case class StringValue(value: String) extends ArgumentValue
     
-    trait Function {
+    abstract class Function(val name: String) {
         def instantiate(args: Arguments): CliChain.Function
     }
     
-    object Dump extends Function {
+    object Dump extends Function("dump") {
         override def instantiate(args: Arguments): CliChain.Function = this.apply
         def apply(input: CliChain.Value): CliChain.Value = {
             
@@ -201,7 +204,19 @@ object Evaluation {
         }
     }
     
-    val functions: Map[String, Function] = Map(
+    val functions: Map[String, Function] = Seq(
+        General.Load,
+    ).map(f => f.name -> f).toMap /*Map(
+        "load" -> new Function("load") {
+            override def instantiate(args: Arguments): CliChain.Function = {
+                val path = args.expectPositionedString()
+                
+                val p = Path.of(path)
+                
+                _ => CliChain.Value.File.fromPath(p)
+            }
+        },
+        
         "load" -> {
             args =>
                 val path = args.expectPositionedString()
@@ -296,7 +311,7 @@ object Evaluation {
                     Interpretation(program.language).interpret(program).toString
                 )
         })
-    )
+    )*/
     
     private def evaluate(argument: SimpleArgumentValue): ArgumentValue = argument match {
         case ChainArgument(chain) => ChainValue(evaluate(chain))
