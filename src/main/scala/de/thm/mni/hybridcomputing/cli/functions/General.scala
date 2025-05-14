@@ -4,6 +4,7 @@ import de.thm.mni.hybridcomputing.cli.CliChain.Value
 import de.thm.mni.hybridcomputing.cli.{CliChain, Evaluation}
 import de.thm.mni.hybridcomputing.cli.Evaluation.Arguments
 import de.thm.mni.hybridcomputing.hssa.Formatting
+import de.thm.mni.hybridcomputing.roopl
 import java.nio.file.Path
 
 object General {
@@ -67,6 +68,8 @@ object General {
                     println(in_memory_content)
                 case Value.HSSA(program) =>
                     this.apply(Value.File.fromContent(Formatting.format(program)))
+                case Value.Roopl(program) =>
+                    this.apply(Value.File.fromContent(roopl.Formatting.format(program)))
                 case in => println(in)
             }
             

@@ -11,9 +11,13 @@ import de.thm.mni.hybridcomputing.roopl.Syntax.ObjectType.ClassArray
 
 object Formatting {
     case class Options(parenthesizeExpressions: Boolean = false, indentBy: Int = 4)
+
+    def format(prog: Program): String = {
+        Formatting(Options()).format(prog)
+    }
 }
 
-class Formatting(options: Formatting.Options) {
+class Formatting(options: Formatting.Options = Formatting.Options()) {
 
     val spaces = (" " * options.indentBy)
     val tab = spaces * (_: Int)

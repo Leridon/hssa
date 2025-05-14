@@ -28,6 +28,7 @@ import scala.collection.immutable.{AbstractSeq, LinearSeq}
 import scala.collection.mutable.ListBuffer
 import scala.util.parsing.combinator.ImplicitConversions
 import scala.util.parsing.input.Position
+import de.thm.mni.hybridcomputing.cli.functions.RooplFunctions
 
 sealed trait ChainExpression
 case class Sequence(chain: Seq[ChainExpression]) extends ChainExpression
@@ -48,6 +49,7 @@ object CliChain {
         case class ModularHSSA(program: Modular.Syntax.Program) extends Value
         case class HSSA(program: Syntax.Program) extends Value
         case class Roopl(program: roopl.Syntax.Program) extends Value
+        case class RooplWellformed(program: roopl.wellformedness.ScopeTree.Program) extends Value
         case class File(
                          path: Option[Path],
                          name: Option[String],
@@ -187,7 +189,8 @@ object Evaluation {
     
     val functions: Map[String, Function] = Seq[Seq[Function]](
         General.all,
-        HSSAFunctions.all
+        HSSAFunctions.all,
+        RooplFunctions.all
     ).flatten.map(f => f.name -> f).toMap
     
     private def evaluate(argument: SimpleArgumentValue): ArgumentValue = argument match {
