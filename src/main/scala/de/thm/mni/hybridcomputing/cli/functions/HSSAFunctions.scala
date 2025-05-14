@@ -1,13 +1,12 @@
 package de.thm.mni.hybridcomputing.cli.functions
 
-import de.thm.mni.hybridcomputing.cli.functions.HSSAFunctions.Optimizations
 import de.thm.mni.hybridcomputing.cli.{CliChain, Evaluation}
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
-import de.thm.mni.hybridcomputing.hssa.{BindingTree, Language, TypeChecking, Wellformedness}
 import de.thm.mni.hybridcomputing.hssa.modular.Modular
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
+import de.thm.mni.hybridcomputing.hssa.{BindingTree, Language, TypeChecking, Wellformedness}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.reversibility.Direction.FORWARDS
 
@@ -22,7 +21,8 @@ object HSSAFunctions {
             Parse,
             AllInOne,
             Exec,
-            Graphs
+            Graphs,
+            Check
         ),
         Optimizations.all
     ).flatten
@@ -35,26 +35,19 @@ object HSSAFunctions {
                 CliChain.Value.HSSA(hssa.parsing.Parsing(lang).parse(
                     hssa.parsing.Lexing.lex(f.asSourceFile)
                 ))
+            case hssa: CliChain.Value.HSSA => hssa
         }
     }
     
-    object AllInOne extends Function("hssa") {
+    object Check extends Function("hssa.check") {
         override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
-            case f@CliChain.Value.File(Some(path), _, _) =>
+            case in@CliChain.Value.HSSA(prog) =>
                 val lang = hssa.Language.Canon
-                
-                val (mod_prog, _) = Modular.Parsing(lang).parseProject(path)
-                
-                val prog = Modular.link(mod_prog)
                 
                 Wellformedness(lang).check(prog).raiseIfNonEmpty()
                 TypeChecking(lang).check(BindingTree.init(prog)).raiseIfNonEmpty()
                 
-                Interpretation(lang).interpret(prog, "main", Basic.Unit, Basic.Unit, FORWARDS)
-                
-                CliChain.Value.File.fromContent(
-                    Interpretation(prog.language).interpret(prog).toString
-                )
+                in
         }
     }
     
@@ -66,6 +59,10 @@ object HSSAFunctions {
                 )
         }
     }
+    
+    val AllInOne: Function = Function.combine("hssa", Seq(
+        Parse, Check, Exec
+    ))
     
     object Graphs extends Function("hssa.graphs") {
         override def instantiate(args: Evaluation.Arguments): CliChain.Function = {

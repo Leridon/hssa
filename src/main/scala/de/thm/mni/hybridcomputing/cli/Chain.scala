@@ -187,6 +187,16 @@ object Evaluation {
         def instantiate(args: Arguments): CliChain.Function
     }
     
+    object Function {
+        def combine(name: String, seq: Seq[Function]): Function = new Function("") {
+            override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
+                val instantiated = seq.map(_.instantiate(args))
+                
+                in => instantiated.foldLeft(in)((v, f) => f(v))
+            }
+        }
+    }
+    
     val functions: Map[String, Function] = Seq[Seq[Function]](
         General.all,
         HSSAFunctions.all,
