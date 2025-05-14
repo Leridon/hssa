@@ -66,13 +66,11 @@ object Translation {
         def nextBlock(exitLabels: (String, String), exitJump: Expression, entryJump: Expression, entryLabels: (String, String)): Unit = {
             nextBlock(exitLabels.toList, exitJump, entryJump, entryLabels.toList)
         }
-        
+
         def localsForJump(): Expression = {
             // Implicit conversion into pairs using HssaDSL
             locals.reduce((a, b) => (a,b))
         }
-
-
     }
 
     private object Generator {
@@ -100,7 +98,7 @@ object Translation {
                 case ScopeTree.Uncall(callee, method, args) => ???
                 case block: ScopeTree.Block => generateBlock(block)
         }
-    
+
         given Expressionable[Variable] with
                 def toExpression(v: Variable): de.thm.mni.hybridcomputing.hssa.Syntax.Expression = v.name.name
 
@@ -125,7 +123,7 @@ object Translation {
             // Pop variable from locals
             relation.locals.pop()
         }
-    
+
         private def generateConditional(conditional: ScopeTree.Conditional): Unit = {
             // Check condition
             val (computeTest, tempVar, uncomputeTest) = generateExpression(conditional.test)
@@ -151,7 +149,7 @@ object Translation {
             val jumpVar = relation.nextJumpVar()
             relation.nextBlock((elseJump), 0,
                                 jumpVar, (thenJump, elseJump))
-            
+
             // Check assertion
             val (computeAssertion, tempVarAssertion, uncomputeAssertion) = generateExpression(conditional.assertion)
             val assertion = () :== (~"equal", (tempVarAssertion, 0)) := jumpVar
