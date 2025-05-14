@@ -2,10 +2,10 @@ package de.thm.mni.hybridcomputing.cli
 
 import de.thm.mni.hybridcomputing.cli
 import de.thm.mni.hybridcomputing.cli.CliChain.Value
-import de.thm.mni.hybridcomputing.cli.Evaluation.Dump
 import de.thm.mni.hybridcomputing.cli.Parsing.{LexicalGrammar, TokenTypes}
 import de.thm.mni.hybridcomputing.cli.Parsing.TokenTypes.LPAR
-import de.thm.mni.hybridcomputing.cli.functions.General
+import de.thm.mni.hybridcomputing.cli.functions.{General, HSSAFunctions}
+import de.thm.mni.hybridcomputing.cli.functions.General.Dump
 import de.thm.mni.hybridcomputing.roopl
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.{BindingTree, Formatting, Syntax, TypeChecking, Wellformedness}
@@ -185,133 +185,10 @@ object Evaluation {
         def instantiate(args: Arguments): CliChain.Function
     }
     
-    object Dump extends Function("dump") {
-        override def instantiate(args: Arguments): CliChain.Function = this.apply
-        def apply(input: CliChain.Value): CliChain.Value = {
-            
-            input match {
-                case Value.Sequence(seq) => seq.foreach(this.apply)
-                case Value.File(path, name, Some(in_memory_content)) =>
-                    if (name.isDefined) println(s"File '${name.get}':")
-                    
-                    println(in_memory_content)
-                case Value.HSSA(program) =>
-                    this.apply(Value.File.fromContent(Formatting.format(program)))
-                case in => println(in)
-            }
-            
-            CliChain.Value.Unit
-        }
-    }
-    
-    val functions: Map[String, Function] = Seq(
-        General.Load,
-    ).map(f => f.name -> f).toMap /*Map(
-        "load" -> new Function("load") {
-            override def instantiate(args: Arguments): CliChain.Function = {
-                val path = args.expectPositionedString()
-                
-                val p = Path.of(path)
-                
-                _ => CliChain.Value.File.fromPath(p)
-            }
-        },
-        
-        "load" -> {
-            args =>
-                val path = args.expectPositionedString()
-                
-                val p = Path.of(path)
-                
-                _ => CliChain.Value.File.fromPath(p)
-        },
-        "tap" -> {
-            args => {
-                import CliChain.Function.*
-                val f = args.expectPositionedChain().withImplicitDump
-                
-                input => {
-                    f(input)
-                    
-                    input
-                }
-            }
-        },
-        "foreach" -> (args => {
-            import CliChain.Function.*
-            val f = args.expectPositionedChain().withImplicitDump
-            
-            {
-                case CliChain.Value.Sequence(seq) =>
-                    seq.foreach(f)
-                    
-                    CliChain.Value.Unit
-            }
-        }),
-        "dump" -> Dump,
-        "drop" -> (_ => _ => CliChain.Value.Unit),
-        "hssa.parse" -> (_ => {
-            case f: CliChain.Value.File =>
-                val lang = hssa.Language.Canon
-                
-                CliChain.Value.HSSA(hssa.parsing.Parsing(lang).parse(
-                    hssa.parsing.Lexing.lex(f.asSourceFile)
-                ))
-        }),
-        "hssa.optimize.lcp" -> (_ => {
-            case CliChain.Value.HSSA(program) =>
-                CliChain.Value.HSSA(
-                    LocalConstantPropagation(LanguageError.Collector()).apply(program)
-                )
-        }),
-        "hssa.graphs" -> (_ => {
-            case CliChain.Value.HSSA(program) =>
-                val binding_tree = BindingTree.init(program)
-                
-                val files = new ListBuffer[CliChain.Value.File]
-                
-                files.addOne(CliChain.Value.File.fromContent(
-                    Visualization.CallGraphVisualization.apply(binding_tree), "call_graph.dot"
-                ))
-                
-                binding_tree.relations.map(_.relation).foreach(rel => {
-                    files.addOne(CliChain.Value.File.fromContent(
-                        Visualization.ControlFlowGraphVisualization.apply(rel), s"rel_${rel.syntax.name}_cfg.dot"
-                    ))
-                    
-                    rel.blocks.foreach(block => {
-                        files.addOne(CliChain.Value.File.fromContent(
-                            Visualization.BlockCircuitVisualization.apply(block), s"rel_${rel.syntax.name}_block${block.context.get.block_index}.dot"
-                        ))
-                    })
-                })
-                
-                CliChain.Value.Sequence(files.toSeq)
-        }),
-        "hssa" -> (_ => {
-            case f@CliChain.Value.File(Some(path), _, _) =>
-                val lang = hssa.Language.Canon
-                
-                val (mod_prog, _) = Modular.Parsing(lang).parseProject(path)
-                
-                val prog = Modular.link(mod_prog)
-                
-                Wellformedness(lang).check(prog).raiseIfNonEmpty()
-                TypeChecking(lang).check(BindingTree.init(prog)).raiseIfNonEmpty()
-                
-                Interpretation(lang).interpret(prog, "main", Basic.Unit, Basic.Unit, FORWARDS)
-                
-                CliChain.Value.File.fromContent(
-                    Interpretation(prog.language).interpret(prog).toString
-                )
-        }),
-        "hssa.exec" -> (_ => {
-            case CliChain.Value.HSSA(program) =>
-                CliChain.Value.File.fromContent(
-                    Interpretation(program.language).interpret(program).toString
-                )
-        })
-    )*/
+    val functions: Map[String, Function] = Seq[Seq[Function]](
+        General.all,
+        HSSAFunctions.all
+    ).flatten.map(f => f.name -> f).toMap
     
     private def evaluate(argument: SimpleArgumentValue): ArgumentValue = argument match {
         case ChainArgument(chain) => ChainValue(evaluate(chain))
