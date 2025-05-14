@@ -3,8 +3,10 @@ package de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
 import de.thm.mni.hybridcomputing.hssa.modular.Modular
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
+import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.reversibility.Direction
 import org.scalatest.wordspec.AnyWordSpec
+
 import java.nio.file.Path
 
 class InterpretationTests extends AnyWordSpec {
@@ -26,6 +28,19 @@ class InterpretationTests extends AnyWordSpec {
             
             s"succeed backwards" in {
                 run(rel.name.name, Direction.BACKWARDS)
+            }
+        }
+    })
+    
+    program.definitions.filter(rel => rel.name.name.endsWith(".test_fails")).foreach(rel => {
+        s"Interpretation of ${rel.name.name}" should {
+            
+            s"fail forwards" in {
+                assertThrows[LanguageError.AbortDueToErrors](run(rel.name.name, Direction.FORWARDS))
+            }
+            
+            s"fail backwards" in {
+                assertThrows[LanguageError.AbortDueToErrors](run(rel.name.name, Direction.BACKWARDS))
             }
         }
     })

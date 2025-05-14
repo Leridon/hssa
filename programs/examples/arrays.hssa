@@ -1,0 +1,33 @@
+rel arrays.new_is_invertible.test:
+    (), 0 := begin<-
+    a := array.new 8 := ()
+    () := ~array.new 8 := a
+    ->end := (),0
+
+rel arrays.readwrite.test:
+    (), 0 := begin<-
+    a.0 := array.new 8 := ()
+    a.1, () := array.readwrite 0 := a.0, 1
+    a.2, () := array.readwrite 2 := a.1, 2
+    a.3, () := array.readwrite 3 := a.2, 3
+    a.4, () := array.readwrite 4 := a.3, 4
+
+    a.5, 1 := array.readwrite 0 := a.4, ()
+    a.6, 2 := array.readwrite 2 := a.5, ()
+    a.7, 3 := array.readwrite 3 := a.6, ()
+    a.8, 4 := array.readwrite 4 := a.7, ()
+    () := ~array.new 8 := a.8
+    ->end := (),0
+
+rel arrays.unallocate_fails_when_size_differs.test_fails:
+    (), 0 := begin<-
+    a := array.new 16 := ()
+    () := ~array.new 24 := a
+    ->end := (),0
+
+rel arrays.unallocate_fails_when_not_empty.test_fails:
+    (), 0 := begin<-
+    a := array.new 16 := ()
+    a.1, () := array.readwrite 0 := a, 5
+    () := ~array.new 16 := a.1
+    ->end := (),0
