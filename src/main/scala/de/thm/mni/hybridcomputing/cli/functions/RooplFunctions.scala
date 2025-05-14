@@ -13,12 +13,18 @@ import de.thm.mni.hybridcomputing.hssa.plugin.{Basic, Arithmetic, Information}
 import de.thm.mni.hybridcomputing.roopl.Translation
 
 object RooplFunctions {
+    import Evaluation.Function
+
     def all: Seq[Evaluation.Function] = Seq[Evaluation.Function](
         Syntax,
         Wellformedness,
         Translate,
-        Roopl
+        AllInOne
     )
+
+    val AllInOne: Function = Function.combine("roopl", Seq(
+        Syntax, Wellformedness, Translate
+    ))
 
     object Syntax extends Evaluation.Function("roopl.parse") {
 
@@ -49,14 +55,6 @@ object RooplFunctions {
                 CliChain.Value.HSSA(
                     Translation.translateRooplToHssa(r.program, language)
                 )
-            }
-        }
-    }
-
-    object Roopl extends Evaluation.Function("roopl") {
-        override def instantiate(args: Arguments): CliChain.Function = {
-            case f: CliChain.Value.File => {
-                Translate.instantiate(args)(Wellformedness.instantiate(args)(Syntax.instantiate(args)(f)))
             }
         }
     }
