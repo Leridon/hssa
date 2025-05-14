@@ -52,7 +52,7 @@ object EliminateImplicitNondeterminism {
     }
     
     object AutoDiscard {
-        def apply(b: Syntax.Block): Syntax.Block = this.apply(BindingTree.Block(null, b))
+        def apply(b: Syntax.Block): Syntax.Block = this.apply(BindingTree.Block(None, b))
         
         def apply(b: BindingTree.Block): Syntax.Block = {
             val undiscarded = b.block_local_variables -- b.finalizations.keySet

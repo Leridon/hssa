@@ -214,6 +214,8 @@ object ScopeTree {
     
     class Program(val classProgram: ClassGraph.Program) extends Scope {
         val classes: Seq[Class] = classProgram.classes.valueSet().toSeq.map(c => new Class(this, c))
+        val mainClass = classes.find(_.name == classProgram.mainClasses.head.clazz.name).get
+        val mainMethod = mainClass.methods.find(_.name == Syntax.MethodIdentifier("main")).get
 
         override def program: Program = this
         override def clazz: Class = null

@@ -25,7 +25,7 @@ object AutoSSA {
         
         val name_generator = new UniqueNameGenerator(".")
         
-        name_generator.withExternalReservation(BindingTree.Block(null, block).all_variable_usages.keySet.contains)
+        name_generator.withExternalReservation(BindingTree.Block(None, block).all_variable_usages.keySet.contains)
         
         def handle(e: Syntax.Expression, role: VariableRole): Syntax.Expression = {
             e match

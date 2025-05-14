@@ -1,0 +1,95 @@
+class Main
+    method main()
+        local int x = 1
+        local int y = 10
+
+        if x = 0 then
+          x += 2
+        else
+          local int z = 0
+          z += 5 - 2
+          if x = 2 then
+            x += 3
+          else
+            x += 5
+          fi x = 5
+          z += (20 * 2) + (3 * (4 - 1) / 12) - (7 * 3)
+          z -= 5 - 3 - 2
+          delocal int z = 22
+        fi x = 2
+
+        from x = 6 do
+          x += 1
+        loop
+          x += 1
+          y -= 1
+        until x > y
+
+        x <=> y
+
+        delocal int y = 11
+        delocal int x = 8
+
+/* HSSA code (incorrect, mock-up)
+rel main():
+  (), 0 := begin <-
+  x := add 1 := 0
+  y := add 10 := 0
+
+  // If
+  // Calculate expression
+  _t.0 := equal x, 0 := ()
+  // result is 1 or 0 in hssa, we need to narrow down the result to one or zero for jump labels
+  // 1 is true, 0 is false
+  _t.1 := equal _t.0, 0 := ()
+  () := ~equal x, 0 := _t.0
+  -> L1,L2 := (x, y), _t.1
+
+  // then
+  (x, y), 0 := L1 <-
+  x.1 := add 2 := x
+  -> L3 := (x.1, y), 0
+
+  // else
+  (x, y), 0 := L2 <-
+  // ...
+  -> L4 := (x, y), 0
+
+  // exit
+  (x, y), _j.0 := L3,L4 <-
+  // Calculate expression
+  _t.2 := equal x, 2 := ()
+  () := ~equal _t.2, 0 := _j.0
+  () := ~equal x, 2 := _t.2
+
+  // loop
+  -> L5 := (x, y), 0
+
+  // do
+  (x, y), _j.1 := L6, L5 <-
+  // Calculate test
+  _t.0 := less x, y := ()
+  // Test must be true if L5 and false if L6
+  _j.1 := id _t.0 := ()
+  x.1 := add -10 := x
+  // Calculate assert (leave if true and goto loop if false)
+  _t.1 := greater x, y := ()
+  -> L7, L8 := (x.1, y), _t.1
+
+  // loop
+  (x, y), 0 := L7 <-
+  x.1 := add 1 := x
+  y.1 := add -1 := y
+  -> L6 := (x.1, y.1), 0
+
+  // Leave loop
+  (x, y), 0 := L8 <-
+
+  (x.1, y.1) := id := (y, x)
+
+  4 := id := y.1
+  2 := id := x.1
+
+  -> end := (), 0
+
+*/

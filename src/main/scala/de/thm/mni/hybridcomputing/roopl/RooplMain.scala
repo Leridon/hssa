@@ -11,6 +11,10 @@ import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import java.nio.file.NoSuchFileException
 import de.thm.mni.hybridcomputing.roopl.Syntax.Program
 import de.thm.mni.hybridcomputing.roopl.wellformedness.{ClassGraph,ScopeTree}
+import de.thm.mni.hybridcomputing.hssa.Language
+import de.thm.mni.hybridcomputing.hssa.plugin.*
+import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
+import de.thm.mni.hybridcomputing.hssa.Chains
 
 object RooplMain {
   def main(args: Array[String]): Unit = {
@@ -32,21 +36,38 @@ object RooplMain {
     if (file == "") usage()
 
     try {
+      println("Check syntax...")
       val tokenStream: TokenReader[TokenClass] = lex(SourceFile.fromFile(Paths.get(file)))
       if showTokens then
         tokenStream.readAll().foreach(token => println(s"$token @ ${token.position.toString}"))
         sys.exit(0)
 
       val syntax: Program = Parsing.parse(tokenStream)
+      println("Syntax OK")
 
       if showFormat then
         val formatter = Formatting(new Formatting.Options(parenthesizeExpressions = false, indentBy = 4))
         println(formatter.format(syntax))
         sys.exit(0)
 
+      println("Check semantics...")
       // Run semantic analysis (each check will raise if any errors are found)
       val graph: ClassGraph.Program = ClassGraph.check(syntax)
       val scopes: ScopeTree.Program = ScopeTree.check(graph)
+      println("Semantics OK")
+
+      // Translation
+      println()
+      println("Translate to HSSA")
+      println()
+
+      val language = Language(Seq(Basic, Arithmetic, Information), Language.Canon.semantics)
+      val program: de.thm.mni.hybridcomputing.hssa.Syntax.Program = Translation.translateRooplToHssa(scopes, language)
+      println(de.thm.mni.hybridcomputing.hssa.Formatting.format(program))
+
+      println("Check and run generated HSSA")
+      println()
+      println(Chains(language).checkAndExecute(program))
     } catch {
       case e: NoSuchFileException =>
         println(s"File '$file' does not exist!")
