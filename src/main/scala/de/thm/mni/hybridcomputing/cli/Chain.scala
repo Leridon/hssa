@@ -188,7 +188,7 @@ object Evaluation {
     }
     
     object Function {
-        def combine(name: String, seq: Seq[Function]): Function = new Function("") {
+        def combine(name: String, seq: Seq[Function]): Function = new Function(name) {
             override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
                 val instantiated = seq.map(_.instantiate(args))
                 
