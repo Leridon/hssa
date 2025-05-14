@@ -1,16 +1,13 @@
 package de.thm.mni.hybridcomputing.hssa.transformation.optimizations
 
+import de.thm.mni.hybridcomputing.hssa.Syntax
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
-import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
+import de.thm.mni.hybridcomputing.hssa.transformation.repairs.AutoSSA
+import de.thm.mni.hybridcomputing.hssa.util.HssaDSL.*
 import de.thm.mni.hybridcomputing.hssa.util.{RelationBuilder, Transformer}
-import de.thm.mni.hybridcomputing.hssa.{Inversion, Syntax}
-
-import scala.annotation.tailrec
-import scala.collection.mutable.ListBuffer
 
 object ControlFlowOptimization {
-        /*
+    
     object MergeStrictlyConsecutiveBlocks extends Transformer.RelationTransformer {
         def apply(relation: Syntax.Relation): Syntax.Relation = {
             val builder = new RelationBuilder(relation)
@@ -20,13 +17,18 @@ object ControlFlowOptimization {
             
             // Two blocks are merged by merging their statements and inserting a single assignment to glue them together
             def merge(a: Syntax.Block, b: Syntax.Block): Syntax.Block = {
-                new Syntax.Block(
-                    a.sequence.init
-                      ++
-                      Seq(Syntax.Assignment(b.entry.initialized, Syntax.Expression.Variable("id"), Syntax.Expression.Unit(), a.exit.finalized))
-                      ++
-                      b.sequence.tail
+                val merged = block(
+                    a.entry,
+                    Seq(
+                        a.assignments,
+                        Seq(Syntax.Assignment(b.entry.initialized, Syntax.Expression.Variable("id"), Syntax.Expression.Unit(), a.exit.finalizes)),
+                        b.assignments
+                    ),
+                    b.exit
                 )
+                
+                // Potentially autorename reused variables
+                AutoSSA.autoSSA(merged)
             }
             
             connectingLabels.foreach(label => {
@@ -41,7 +43,7 @@ object ControlFlowOptimization {
             
             builder.compile()
         }
-    }*/
+    }
     
     /*
     object RemoveRedirections extends Transformer.RelationTransformer {

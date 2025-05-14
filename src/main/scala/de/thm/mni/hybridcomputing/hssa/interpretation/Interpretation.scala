@@ -133,7 +133,7 @@ case class Interpretation(language: Language) {
                             
                             val result = Try(evaluateApplication(called_rel, instantiationArg, consumedArg)).recoverWith({
                                 case e: AbortDueToErrors =>
-                                    e.errors.foreach(e => e.setPosition(asgn.position).raise()); throw e
+                                    e.errors.foreach(e => e.setPosition(asgn.position)); throw e
                             }).get
                             
                             block_context.define(assign(target, result))

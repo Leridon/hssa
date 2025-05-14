@@ -5,6 +5,8 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.*
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
+import de.thm.mni.hybridcomputing.hssa.util.HssaDSL
+import de.thm.mni.hybridcomputing.hssa.util.HssaDSL.*
 
 import scala.collection.MapView
 import scala.util.Try
@@ -63,6 +65,8 @@ class LocalConstantPropagation(collector: LanguageError.Collector = LanguageErro
             case Expression.Invert(a) => None
         
         def willAlwaysFail: Boolean = this.flat.isEmpty
+        
+        override def toString: String = s"$expression --> $value"
     }
     
     type AnyReplacement = Replacement[Syntax.Expression]
@@ -149,13 +153,13 @@ class LocalConstantPropagation(collector: LanguageError.Collector = LanguageErro
         val variables_with_replacements = fw_replacements.keySet ++ bw_replacements.keySet
         
         if (block.program.language.semantics.runtime_violations_are_undefined) {
-            val has_conflicts = variables_with_replacements.exists(v => fw_replacements.contains(v) && bw_replacements.contains(v))
+            
+            val has_conflicts = variables_with_replacements.exists(v => (for(fw <- fw_replacements.get(v); bw <- bw_replacements.get(v)) yield fw == bw).contains(true))
             
             // Blocks with detected conflicts always cause a violation. When they are considered undefined, we can just empty the block.1
-            if (has_conflicts) return Syntax.Block(
-                Syntax.Entry(Syntax.Expression.Unit(), block.syntax.entry.labels),
-                Seq(),
-                Syntax.Exit(block.syntax.entry.labels, Syntax.Expression.Unit()),
+            if (has_conflicts) return HssaDSL.block(
+                ((), 0) :=<- block.syntax.entry.labels,
+                ->(block.syntax.exit.labels) := ((), 0)
             )
         }
         

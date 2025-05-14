@@ -191,9 +191,6 @@ class TypeChecking(language: Language) {
             })
         })
         
-        env.print()
-        println()
-        
         collector
     }
 }
