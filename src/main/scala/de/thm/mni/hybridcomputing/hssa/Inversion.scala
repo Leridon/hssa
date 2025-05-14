@@ -29,7 +29,9 @@ object Inversion {
                 Syntax.Assignment(source, Syntax.Expression.Invert(rel), instance_argument, target)
         }
         
-        def invert(block: Syntax.Block): Syntax.Block = Syntax.Block(this.invert(block.exit), block.assignments.map(this.invert).reverse, this.invert(block.entry))
+        def invert(assignments: Seq[Syntax.Assignment]): Seq[Syntax.Assignment] = assignments.map(this.invert).reverse
+        
+        def invert(block: Syntax.Block): Syntax.Block = Syntax.Block(this.invert(block.exit), this.invert(block.assignments), this.invert(block.entry))
         
         def invert(relation: Relation): Relation = Relation(relation.name, relation.parameter, relation.blocks.map(invert).reverse)
         
