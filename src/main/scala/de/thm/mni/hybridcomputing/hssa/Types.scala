@@ -7,7 +7,7 @@ import scala.collection.mutable
 
 object Types {
     
-    sealed trait Type {
+    trait Type {
         override def toString: String = resolve(this) match
             case Int => "int"
             case Pair(a, b) => s"($a, $b)"
