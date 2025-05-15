@@ -28,7 +28,11 @@ case class Interpretation(language: Language) {
         exp match {
             case Expression.Literal(value) => value
             case Expression.Variable(name) => context.get(name.name)
-              .getOrElse(new HSSAError(LanguageError.Severity.Error, s"Variable ${name} is not defined.").raise())
+              .getOrElse({
+                  new HSSAError(LanguageError.Severity.Error, s"Variable $name is not defined.")
+                    .setPosition(exp.position)
+                    .raise()
+              })
             case Expression.Pair(a, b) => Value.Pair(evaluate(a, context), evaluate(b, context))
             case Expression.Unit() => Basic.Unit
             case Expression.Invert(sub) => evaluate(sub, context) match
@@ -133,7 +137,9 @@ case class Interpretation(language: Language) {
                             
                             val result = Try(evaluateApplication(called_rel, instantiationArg, consumedArg)).recoverWith({
                                 case e: AbortDueToErrors =>
-                                    e.errors.foreach(e => e.setPosition(asgn.position)); throw e
+                                    e.errors.foreach(e => {
+                                        if(e.position == null) e.setPosition(asgn.position)
+                                    }); throw e
                             }).get
                             
                             block_context.define(assign(target, result))
