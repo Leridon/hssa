@@ -93,7 +93,8 @@ object HSSAFunctions {
     
     object Optimizations {
         def all: Seq[Evaluation.Function] = Seq(
-            LocalConstantPropagation
+            LocalConstantPropagation,
+            FullOptimizer
         )
         
         object LocalConstantPropagation extends Function("hssa.optimize.lcp") {
@@ -101,6 +102,15 @@ object HSSAFunctions {
                 case CliChain.Value.HSSA(program) =>
                     CliChain.Value.HSSA(
                         hssa.transformation.optimizations.LocalConstantPropagation(LanguageError.Collector()).apply(program)
+                    )
+            }
+        }
+        
+        object FullOptimizer extends Function("hssa.optimize") {
+            override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
+                case CliChain.Value.HSSA(program) =>
+                    CliChain.Value.HSSA(
+                        hssa.transformation.Optimization.optimize(program)
                     )
             }
         }
