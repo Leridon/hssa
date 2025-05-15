@@ -12,6 +12,7 @@ import java.nio.file.Path
 class InterpretationTests extends AnyWordSpec {
     val program: Syntax.Program = Modular.Chains(Language.Canon).parseAndLink(Path.of("programs/tests.hssa").toAbsolutePath)
     
+    
     def run(name: String, direction: Direction): Unit = {
         print(s"Running '$name' $direction: ")
         
@@ -23,11 +24,31 @@ class InterpretationTests extends AnyWordSpec {
         s"Interpretation of ${rel.name.name}" should {
             
             s"succeed forwards" in {
-                run(rel.name.name, Direction.FORWARDS)
+                try{
+                    run(rel.name.name, Direction.FORWARDS)
+                } catch {
+                    case e: LanguageError.AbortDueToErrors =>
+                        e.errors.foreach(e => {
+                            println(e)
+                            println()
+                        })
+                        
+                        fail("Interpretation has thrown an error")
+                }
             }
             
             s"succeed backwards" in {
-                run(rel.name.name, Direction.BACKWARDS)
+                try{
+                    run(rel.name.name, Direction.BACKWARDS)
+                } catch {
+                    case e: LanguageError.AbortDueToErrors =>
+                        e.errors.foreach(e => {
+                            println(e)
+                            println()
+                        })
+                        
+                        fail("Interpretation has thrown an error")
+                }
             }
         }
     })
