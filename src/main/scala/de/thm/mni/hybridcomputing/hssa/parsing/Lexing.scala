@@ -60,7 +60,8 @@ object Lexing {
                 "," ^^^ symbol(COMMA) |
                 "~" ^^^ symbol(TILDE) |
                 ":" ^^^ symbol(COLON) |
-                "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt))
+                "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
+                "'.'".r ^^ (l => symbol(INTLIT, l.charAt(1).toInt))
               )(in).map(_(in.pos))
     }
     
