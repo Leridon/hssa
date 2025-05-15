@@ -110,16 +110,23 @@ object Translation {
             // Add variable to locals, so it can be propagated between sub-blocks
             relation.locals.push(block.variable)
             
-            val (compute, tempVar) = generateExpression(block.varCompute)
-            val computeVar = block.variable :== ("id", ()) := tempVar
+            val (local_compute, local_temp_var) = generateExpression(block.varCompute)
             
-            relation.blockBuilder.addAssignments(compute, computeVar)
-            block.body.foreach(generateStatement(_))
+            relation.blockBuilder.addAssignments(
+                local_compute,
+                block.variable :== ("dup", local_temp_var) := (),
+                invert(local_compute) // We need to clean up any potential temporaries left behind
+            )
             
-            val (uncompute, tempVar2) = generateExpression(block.varUncompute)
-            val uncomputeVar = () :== (~"dup", tempVar2) := block.variable
+            block.body.foreach(generateStatement)
             
-            relation.blockBuilder.addAssignments(uncompute, uncomputeVar, invert(uncompute))
+            val (delocal_compute, delocal_temp_var) = generateExpression(block.varUncompute)
+            
+            relation.blockBuilder.addAssignments(
+                delocal_compute,
+                () :== (~"dup", delocal_temp_var) := block.variable,
+                invert(delocal_compute)
+            )
             // Pop variable from locals
             relation.locals.pop()
         }
