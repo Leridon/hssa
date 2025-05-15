@@ -25,4 +25,12 @@ object BuiltinCreationHelpers {
     def unit_input(f: => Value): InstantiatedFunction = {
         case Basic.Unit => f
     }
+    
+    def consume(expected_value: Value): InstantiatedFunction = {
+        case v if v == expected_value => Basic.Unit
+    }
+    
+    def produce(value: Value): InstantiatedFunction = {
+        case Basic.Unit => value
+    }
 }

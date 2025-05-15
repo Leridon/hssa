@@ -12,6 +12,10 @@ object Arrays extends Plugin {
     
     object ArrayType extends Types.Type
     
+    def array_parameter(f: scala.Array[Value] => InstantiatedFunction): Function = {
+        case Array(elements) => f(elements)
+    }
+    
     override def requirements: Seq[Plugin] = super.requirements
     override def builtins: Seq[Plugin.Builtin] = Seq(
         
@@ -35,5 +39,9 @@ object Arrays extends Plugin {
                     )
             })
         ).name("array.readwrite", Types.ParameterizedRelation(Types.Int, Types.Pair(ArrayType, new Types.MetaVariable), Types.Pair(ArrayType, new Types.MetaVariable))),
+        FunctionPair(
+            array_parameter(array => produce(Basic.Int(array.length))),
+            array_parameter(array => consume(Basic.Int(array.length))),
+        ).name("array.length", Types.ParameterizedRelation(ArrayType, Types.Unit, Types.Int)),
     )
 }
