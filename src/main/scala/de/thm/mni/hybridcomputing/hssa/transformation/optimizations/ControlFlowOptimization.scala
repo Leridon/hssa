@@ -13,7 +13,10 @@ object ControlFlowOptimization {
             val builder = new RelationBuilder(relation)
             
             // Find all labels that connect strictly consecutive blocks once
-            val connectingLabels = builder.labels.filter(label => builder.getByEntryLabel(label).entry.labels.length == 1 && builder.getByExitLabel(label).exit.labels.length == 1)
+            val connectingLabels = builder.labels.filter(label => {
+                builder.getAllByExitLabel(label).length == 1 & builder.getAllByEntryLabel(label).length == 1 &&
+                  builder.getByEntryLabel(label).entry.labels.length == 1 && builder.getByExitLabel(label).exit.labels.length == 1
+            })
             
             // Two blocks are merged by merging their statements and inserting a single assignment to glue them together
             def merge(a: Syntax.Block, b: Syntax.Block): Syntax.Block = {
