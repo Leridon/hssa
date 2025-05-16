@@ -5,10 +5,12 @@ rel mmem.test:
    ()    :=      ~dup 0      :=    p
 m.2, p.1 := mmem.allocate 5  :=   m.1
    ()    :=      ~dup 3      :=   p.1
-m.3, ()  := mmem.readwrite 0 := m.2, 17
-m.4, 17  := mmem.readwrite 0 := m.3, ()
-  m.5    := ~mmem.allocate 8 := m.4, 0
-   ()    :=    ~mmem.new     :=   m.5
+m.3, p.2 := mmem.allocate 1  :=   m.2
+   ()    :=      ~dup 8      :=   p.2
+m.4, ()  := mmem.readwrite 0 := m.3, 17
+m.5, 17  := mmem.readwrite 0 := m.4, ()
+  m.6    := ~mmem.allocate 9 := m.5, 0
+   ()    :=    ~mmem.new     :=   m.6
                  -> end      :=  (), 0
 
 
