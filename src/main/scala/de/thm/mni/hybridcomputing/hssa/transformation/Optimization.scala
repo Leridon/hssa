@@ -12,7 +12,7 @@ object Optimization {
         
         var prog = program
         
-        prog = LocalConstantPropagation(errors).apply(prog)
+        prog = LocalConstantPropagation.apply(prog)
         prog = MergeStrictlyConsecutiveBlocks.apply(prog)
         
         prog

@@ -3,12 +3,10 @@ package de.thm.mni.hybridcomputing.cli.functions
 import de.thm.mni.hybridcomputing.cli.{CliChain, Evaluation}
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
-import de.thm.mni.hybridcomputing.hssa.modular.Modular
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
+import de.thm.mni.hybridcomputing.hssa.transformation.repairs.EliminateImplicitNondeterminism.AutoDiscard
 import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
 import de.thm.mni.hybridcomputing.hssa.{BindingTree, Language, TypeChecking, Wellformedness}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
-import de.thm.mni.hybridcomputing.util.reversibility.Direction.FORWARDS
 
 import scala.collection.mutable.ListBuffer
 
@@ -26,6 +24,19 @@ object HSSAFunctions {
         ),
         Optimizations.all
     ).flatten
+    
+    /*
+    object InPlaceFormat extends Function("mssa.fixup") {
+        override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
+            case p: CliChain.Value.ModularHSSA =>
+                
+                CliChain.Value.Sequence(p.program.programs.map(prog => {
+                    CliChain.Value.File.fromContent(hssa.modular.Modular.Formatting.format(prog))
+                }))
+                
+                AutoDiscard.apply()
+        }
+    }*/
     
     object Parse extends Function("hssa.parse") {
         override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
@@ -101,7 +112,7 @@ object HSSAFunctions {
             override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
                 case CliChain.Value.HSSA(program) =>
                     CliChain.Value.HSSA(
-                        hssa.transformation.optimizations.LocalConstantPropagation(LanguageError.Collector()).apply(program)
+                        hssa.transformation.optimizations.LocalConstantPropagation.apply(program)
                     )
             }
         }

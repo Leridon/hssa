@@ -25,7 +25,7 @@ object Main {
             
             Wellformedness(language).check(prog).raiseIfNonEmpty()
             
-            prog = LocalConstantPropagation(LanguageError.Collector()).apply(prog)
+            prog = LocalConstantPropagation.apply(prog)
             
             //val flattened = Inlining.flatten(BindingTree.init(prog).getRelation("test").get.relation)
             
