@@ -1,34 +1,20 @@
 package de.thm.mni.hybridcomputing.cli
 
-import de.thm.mni.hybridcomputing.cli
-import de.thm.mni.hybridcomputing.cli.CliChain.Value
-import de.thm.mni.hybridcomputing.cli.Parsing.{LexicalGrammar, TokenTypes}
-import de.thm.mni.hybridcomputing.cli.Parsing.TokenTypes.LPAR
-import de.thm.mni.hybridcomputing.cli.functions.{General, HSSAFunctions}
+import de.thm.mni.hybridcomputing.cli.Parsing.TokenTypes
 import de.thm.mni.hybridcomputing.cli.functions.General.Dump
-import de.thm.mni.hybridcomputing.roopl
-import de.thm.mni.hybridcomputing.hssa
-import de.thm.mni.hybridcomputing.hssa.{BindingTree, Formatting, Syntax, TypeChecking, Wellformedness}
-import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
+import de.thm.mni.hybridcomputing.cli.functions.{General, HSSAFunctions, RooplFunctions}
+import de.thm.mni.hybridcomputing.hssa.Syntax
 import de.thm.mni.hybridcomputing.hssa.modular.Modular
+import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.LexicalGrammar
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.LexicalGrammar.{Input, symbol}
-import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.{LexicalGrammar, Tokens}
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
-import de.thm.mni.hybridcomputing.hssa.transformation.optimizations.LocalConstantPropagation
-import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
-import de.thm.mni.hybridcomputing.util.DynamicCache
+import de.thm.mni.hybridcomputing.{cli, hssa, roopl}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
-import de.thm.mni.hybridcomputing.util.errors.LanguageError.{Collector, Severity}
-import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, ParserUtilities, SourceFile, Token, TokenReader}
-import de.thm.mni.hybridcomputing.util.reversibility.Direction.FORWARDS
-import org.apache.commons.io.FileUtils
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity
+import de.thm.mni.hybridcomputing.util.parsing.*
 
-import java.nio.file.{Path, Paths}
-import scala.collection.immutable.{AbstractSeq, LinearSeq}
-import scala.collection.mutable.ListBuffer
+import java.nio.file.Path
 import scala.util.parsing.combinator.ImplicitConversions
 import scala.util.parsing.input.Position
-import de.thm.mni.hybridcomputing.cli.functions.RooplFunctions
 
 sealed trait ChainExpression
 case class Sequence(chain: Seq[ChainExpression]) extends ChainExpression

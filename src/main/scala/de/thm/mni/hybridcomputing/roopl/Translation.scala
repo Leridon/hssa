@@ -19,7 +19,6 @@ import de.thm.mni.hybridcomputing.hssa.transformation.repairs.AutoSSA
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Variable
 import de.thm.mni.hybridcomputing.hssa.util.HssaDSL
 import de.thm.mni.hybridcomputing.roopl.Syntax.VariableIdentifier
-import de.thm.mni.hybridcomputing.hssa.transformation.repairs.EliminateImplicitNondeterminism.AutoDiscard
 import scala.collection.mutable
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Method
 import de.thm.mni.hybridcomputing.hssa.Syntax.Statement
