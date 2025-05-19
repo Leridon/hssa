@@ -11,7 +11,7 @@ class AutoSSATests extends AnyFlatSpec:
     
     "Auto SSA" should "work" in {
         
-        val result = AutoSSA.autoSSA(
+        val result = AutoSSA.apply(
             block(
                 ("x", 0) :=<- "L0",
                 "x" :== ("add", 1) := "x",

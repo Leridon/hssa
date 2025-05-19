@@ -1,22 +1,19 @@
 package de.thm.mni.hybridcomputing.hssa.transformation.optimizations
 
+import de.thm.mni.hybridcomputing.hssa.*
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
-import de.thm.mni.hybridcomputing.hssa.*
-import de.thm.mni.hybridcomputing.util.errors.LanguageError
-import de.thm.mni.hybridcomputing.hssa.util.HssaDSL
 import de.thm.mni.hybridcomputing.hssa.util.HssaDSL.*
+import de.thm.mni.hybridcomputing.hssa.util.{HssaDSL, Transformer}
 
 import scala.collection.MapView
 import scala.util.Try
 
 /**
  * Local Constant Propagation applies within basic blocks
- *
- * @param collector A collector for warnings
  */
-class LocalConstantPropagation(collector: LanguageError.Collector = LanguageError.Collector()) {
+object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer {
     
     extension (self: Syntax.Expression) {
         /**
@@ -154,7 +151,7 @@ class LocalConstantPropagation(collector: LanguageError.Collector = LanguageErro
         
         if (block.program.language.semantics.runtime_violations_are_undefined) {
             
-            val has_conflicts = variables_with_replacements.exists(v => (for(fw <- fw_replacements.get(v); bw <- bw_replacements.get(v)) yield fw == bw).contains(true))
+            val has_conflicts = variables_with_replacements.exists(v => (for (fw <- fw_replacements.get(v); bw <- bw_replacements.get(v)) yield fw == bw).contains(true))
             
             // Blocks with detected conflicts always cause a violation. When they are considered undefined, we can just empty the block.1
             if (has_conflicts) return HssaDSL.block(
@@ -189,21 +186,4 @@ class LocalConstantPropagation(collector: LanguageError.Collector = LanguageErro
             apply(BindingTree.Block(block.context, step_result))
         }
     }
-    
-    def apply(program: Syntax.Program): Syntax.Program = {
-        val bindingTree = BindingTree.Program(program)
-        
-        Syntax.Program(
-            bindingTree.relations.map(rel => {
-                Syntax.Relation(
-                    rel.relation.syntax.name,
-                    rel.relation.syntax.parameter,
-                    rel.relation.blocks.map(block => apply(block))
-                )
-            }),
-            program.language,
-        )
-    }
-    
-    class WillAlwaysFail(asgn: Syntax.Assignment) extends HSSAError(LanguageError.Severity.Warning, s"Assignment will always fail.", asgn.position)
 }

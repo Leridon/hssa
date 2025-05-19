@@ -14,12 +14,14 @@ trait BindingTree {
 
 object BindingTree {
     def init(program: Syntax.Program) = Program(program)
+    def init(relation: Syntax.Relation) = Relation(None, relation)
+    def init(block: Syntax.Block) = Block(None, block)
     
     class Program(val syntax: Syntax.Program) extends BindingTree {
         val builtins: Seq[GlobalBuiltinVariable] = syntax.language.builtins.map(b => GlobalBuiltinVariable(b.value.name, this, b))
         
         val relations: Seq[GlobalRelationVariable] = syntax.definitions.map(rel => {
-            GlobalRelationVariable(rel.name.name, this, Relation(this, rel))
+            GlobalRelationVariable(rel.name.name, this, Relation(Some(this), rel))
         })
         
         private val entries: MultiMap[String, GlobalRelationVariable | GlobalBuiltinVariable] = MultiMap(
@@ -41,7 +43,7 @@ object BindingTree {
         override def root: Program = this
     }
     
-    class Relation(val parent: Program, val syntax: Syntax.Relation) extends BindingTree {
+    class Relation(val context: Option[Program], val syntax: Syntax.Relation) extends BindingTree {
         val parameter_variables: MultiMap[Syntax.Identifier, Expression.Variable] = MultiMap(syntax.parameter.variables.map(v => v.name -> v) *)
         
         val blocks: Seq[Block] = syntax.blocks.zipWithIndex.map({ case (block, i) => Block(Some(Block.Context(this, i)), block) })
@@ -59,10 +61,10 @@ object BindingTree {
         
         def lookup(name: String): Option[Variable] = {
             if this.parameter_variables.contains(name) then Some(ParameterVariable(name, this))
-            else this.parent.lookup(name)
+            else this.context.flatMap(_.lookup(name))
         }
         
-        override def root: Program = this.parent
+        override def root: Program = this.context.get
         
         override def equals(obj: Any): Boolean = obj match {
             case r: Relation => r eq this

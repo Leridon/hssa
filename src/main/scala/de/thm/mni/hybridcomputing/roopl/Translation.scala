@@ -19,7 +19,6 @@ import de.thm.mni.hybridcomputing.hssa.transformation.repairs.AutoSSA
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Variable
 import de.thm.mni.hybridcomputing.hssa.util.HssaDSL
 import de.thm.mni.hybridcomputing.roopl.Syntax.VariableIdentifier
-import de.thm.mni.hybridcomputing.hssa.transformation.repairs.EliminateImplicitNondeterminism.AutoDiscard
 import scala.collection.mutable
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Method
 import de.thm.mni.hybridcomputing.hssa.Syntax.Statement
@@ -50,7 +49,7 @@ object Translation {
         def nextBlock(exitLabels: Seq[String], exitJump: Expression, entryJump: Expression, entryLabels: Seq[String]): Unit = {
             val exit = ->(exitLabels) := (localsForJump(), exitJump)
             val entry = (localsForJump(), entryJump) :=<- entryLabels
-            builder.add(AutoSSA.autoSSA(blockBuilder.finish(exit)))
+            builder.add(AutoSSA.apply(blockBuilder.finish(exit)))
             blockBuilder = BlockBuilder(entry)
             tempVars.reset()
         }
@@ -81,7 +80,7 @@ object Translation {
             method.body.foreach(generateStatement(_))
             
             // TODO: Handle parameters properly
-            relation.builder.add(AutoSSA.autoSSA(relation.blockBuilder.finish(->("end") := (relation.parameter, 0))))
+            relation.builder.add(AutoSSA.apply(relation.blockBuilder.finish(->("end") := (relation.parameter, 0))))
         }
         
         private def generateStatement(statement: ScopeTree.StatementNode): Unit = {

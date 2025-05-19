@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa.transformations
 
-import de.thm.mni.hybridcomputing.hssa.transformation.repairs.EliminateImplicitNondeterminism.AutoDiscard
+import de.thm.mni.hybridcomputing.hssa.transformation.repairs.AutoDiscard
 import de.thm.mni.hybridcomputing.hssa.plugin.Information
 import de.thm.mni.hybridcomputing.hssa.util.HssaDSL.*
 import org.scalatest.flatspec.AnyFlatSpec

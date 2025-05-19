@@ -79,14 +79,12 @@ object Syntax {
                 case entry: Syntax.Entry => Expression.Unit()
                 case exit: Syntax.Exit => Expression.Unit()
         
-        
         extension (self: Syntax.Exit | Syntax.Entry) {
             def labels: List[Identifier] = self match {
                 case Syntax.Entry(initialized, target) => target.toList
                 case Syntax.Exit(target, argument) => target.toList
             }
         }
-        
         
         extension (self: Syntax.Expression)
             def variables: List[Variable] = {
