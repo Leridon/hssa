@@ -31,7 +31,7 @@ object ControlFlowOptimization {
                 )
                 
                 // Potentially autorename reused variables
-                AutoSSA.autoSSA(merged)
+                AutoSSA.apply(merged)
             }
             
             connectingLabels.foreach(label => {

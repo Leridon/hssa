@@ -2,30 +2,28 @@ package de.thm.mni.hybridcomputing.hssa.transformation.repairs
 
 import de.thm.mni.hybridcomputing.hssa.BindingTree.Block.VariableRole
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
+import de.thm.mni.hybridcomputing.hssa.util.Transformer
 import de.thm.mni.hybridcomputing.hssa.{BindingTree, Syntax}
 import de.thm.mni.hybridcomputing.util.UniqueNameGenerator
 
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 
-object AutoSSA {
+/**
+ * Automatically apply versioning to reused variable names within a block.
+ * Assumes each variable is finalized correctly before being reused as a name. If a live-variable is reinitialized (or a dead variable refinalized), the procedure fails.
+ * Also assumes that dead variables are not used.
+ */
+object AutoSSA extends Transformer.WithContext.BlockTransformer {
     
-    /**
-     * Automatically apply versioning to reused variable names within a block.
-     * Assumes each variable is finalized correctly before being reused as a name. If a live-variable is reinitialized (or a dead variable refinalized), the procedure fails.
-     * Also assumes that dead variables are not used.
-     *
-     * @param block
-     * @return
-     */
-    def autoSSA(block: Syntax.Block): Syntax.Block = {
+    override def apply(block: BindingTree.Block): Syntax.Block = {
         case class VariableState(replaced: String, var live: Boolean)
         
         val variable_map = mutable.Map[String, VariableState]()
         
         val name_generator = new UniqueNameGenerator(".")
         
-        name_generator.withExternalReservation(BindingTree.Block(None, block).all_variable_usages.keySet.contains)
+        name_generator.withExternalReservation(block.all_variable_usages.keySet.contains)
         
         def handle(e: Syntax.Expression, role: VariableRole): Syntax.Expression = {
             e match
@@ -55,8 +53,8 @@ object AutoSSA {
         }
         
         Syntax.Block(
-            Syntax.Entry(handle(block.entry.initialized, VariableRole.Init), block.entry.labels),
-            block.assignments.map(asgn => {
+            Syntax.Entry(handle(block.syntax.entry.initialized, VariableRole.Init), block.syntax.entry.labels),
+            block.syntax.assignments.map(asgn => {
                 
                 val new_in = handle(asgn.source, VariableRole.Final)
                 val new_par = handle(asgn.instance_argument, VariableRole.Use)
@@ -65,7 +63,7 @@ object AutoSSA {
                 
                 Syntax.Assignment(new_out, new_rel, new_par, new_in)
             }),
-            Syntax.Exit(block.exit.labels, handle(block.exit.argument, VariableRole.Final)),
+            Syntax.Exit(block.syntax.exit.labels, handle(block.syntax.exit.argument, VariableRole.Final)),
         )
     }
 }

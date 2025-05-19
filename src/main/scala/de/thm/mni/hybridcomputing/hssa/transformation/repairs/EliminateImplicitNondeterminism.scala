@@ -51,6 +51,9 @@ object EliminateImplicitNondeterminism {
         }
     }
     
+    /**
+     * AutoDiscard fixes the SSA and SSF properties of HSSA code by inserting usages of the discard primitive for unfinalized and unintialized variables.
+     */
     object AutoDiscard extends Transformer.WithContext.BlockTransformer {
         def apply(b: BindingTree.Block): Syntax.Block = {
             val undiscarded = b.block_local_variables -- b.finalizations.keySet
