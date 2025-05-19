@@ -4,6 +4,13 @@ def TODO(s: String = ""): Nothing = {
     throw new NotImplementedError(s)
 }
 
+class IDEqual[T <: AnyRef](val value: T) {
+    override def equals(obj: Any): Boolean = obj match {
+        case that: IDEqual[_] => this.value eq that.value
+        case _ => false
+    }
+}
+
 
 extension [A](self: List[A]) {
     def filterIsInstance[B](implicit c: Class[B]): List[B] = self.filter(c.isInstance).map(c.cast)
