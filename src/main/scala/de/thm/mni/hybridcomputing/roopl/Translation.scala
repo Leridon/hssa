@@ -36,7 +36,7 @@ object Translation {
     }
     
     class Relation(val name: String, val parameter: Expression) {
-        val builder: RelationBuilder = RelationBuilder(name, parameter, Seq())
+        val builder: RelationBuilder = RelationBuilder(name, parameter)
         val locals: mutable.Stack[Expression] = mutable.Stack[Expression]()
         val tempVars = UniqueNameGenerator(".")
         // Keeps the currently unfinished block, the first block always entries with "begin"
@@ -252,8 +252,8 @@ object Translation {
                     (assignment, temp)
                 case ScopeTree.Expression.Reference(ref) =>
                     // TODO: Arrays
-                    val assignment = temp :== ("dup", ref.name) := ()
-                    (assignment, temp)
+                    //val assignment = temp :== ("dup", ref.name) := ()
+                    (Seq(), ref.name.name)
                 // How do we represent Nil?
                 case ScopeTree.Expression.Nil =>
                     val assignment = temp :== ("id", ()) := ()
@@ -262,11 +262,16 @@ object Translation {
                     val (computeL, lVar) = generateExpression(left)
                     val (computeR, rVar) = generateExpression(right)
                     
-                    val res: Assignment = op match
+                    val res: Seq[Assignment] = op match
                         case Operator.ADD | Operator.SUB | Operator.XOR =>
                             // This consumes lVar but also returns an uncompute down the line, which leads to double initialization & finalization
                             // This is fixed by AutoSSA which replaces the second occurrences with an entirely new intermediate variable, solving this problem
-                            temp :== (convert(op), rVar) := lVar
+                            val l_temp = relation.nextTempVar()
+                            
+                            Seq(
+                                l_temp :== ("dup", lVar) := (),
+                                temp :== (convert(op), rVar) := l_temp
+                            )
                         
                         case _ => temp :== (convert(op), (lVar, rVar)) := ()
                     

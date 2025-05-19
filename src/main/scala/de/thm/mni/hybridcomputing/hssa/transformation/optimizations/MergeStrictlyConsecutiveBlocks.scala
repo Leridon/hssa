@@ -39,7 +39,7 @@ object MergeStrictlyConsecutiveBlocks extends Transformer.RelationTransformer {
             builder.remove(from)
             builder.remove(to)
             
-            builder.add(merge(from, to))
+            builder.add(merge(from.block(), to.block()))
         })
         
         builder.compile()

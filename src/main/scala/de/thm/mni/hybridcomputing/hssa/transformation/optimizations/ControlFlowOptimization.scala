@@ -1,10 +1,15 @@
 package de.thm.mni.hybridcomputing.hssa.transformation.optimizations
 
-import de.thm.mni.hybridcomputing.hssa.Syntax
+import de.thm.mni.hybridcomputing.hssa.{BindingTree, Inversion, Syntax}
+import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
+import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
+import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.transformation.repairs.AutoSSA
 import de.thm.mni.hybridcomputing.hssa.util.HssaDSL.*
 import de.thm.mni.hybridcomputing.hssa.util.{RelationBuilder, Transformer}
+
+import scala.annotation.tailrec
 
 object ControlFlowOptimization {
     
@@ -35,32 +40,33 @@ object ControlFlowOptimization {
             builder.compile()
         }
     }
+    */
+    
+    /*
     
     class RemoveUnreachableCode(strict: Boolean) extends Transformer.RelationTransformer {
+        private def reach(block: Syntax.Block): Set[String] = {
+            block.exit.argument match {
+                case Expression.Pair(_, Expression.Literal(Basic.Int(constant_condition))) => block.exit.labels.lift(constant_condition).map(_.name).toSet
+                case _ => block.exit.labels.map(_.name).toSet
+            }
+        }
+        
+        private def reachForwards(relation: Syntax.Relation): Set[String] = {
+            val cfg = BindingTree.get(relation)
+            
+            @tailrec
+            def reachRecursively(reachable: Set[String]): Set[String] = {
+                val exit = reachable.flatMap(l => cfg.getEntryByLabel(l).map(_.block)).flatMap(b => reach(b.syntax))
+                
+                if (exit != reachable) reachRecursively(exit)
+                else reachable
+            }
+            
+            reachRecursively(Set("begin"))
+        }
+        
         override def apply(relation: Syntax.Relation): Syntax.Relation = {
-            
-            def reach(block: Syntax.Block): Set[String] = {
-                block.exit match {
-                    case Syntax.ConditionalExit(l1, l2, Syntax.Expression.Pair(_, Syntax.Expression.Literal(Basic.True))) => Set(l1)
-                    case Syntax.ConditionalExit(l1, l2, Syntax.Expression.Pair(_, Syntax.Expression.Literal(Basic.False))) => Set(l2)
-                    case other => other.labels.toSet
-                }
-            }
-            
-            def reachForwards(relation: Syntax.Relation): Set[String] = {
-                val cfg = new BlockIndex(relation)
-                
-                @tailrec
-                def reachRecursively(reachable: Set[String]): Set[String] = {
-                    val exit = reachable.map(cfg.byEntryLabel).flatMap(reach)
-                    
-                    if (exit != reachable) reachRecursively(exit)
-                    else reachable
-                }
-                
-                reachRecursively(Set("begin"))
-            }
-            
             // Analyse reachability in both directions
             val fw = reachForwards(relation)
             val bw = reachForwards(Inversion.Local.invert(relation))
@@ -71,8 +77,8 @@ object ControlFlowOptimization {
             val builder = new RelationBuilder(relation)
             
             // Remove all blocks that have no reachable label in them
-            builder.filterBlocks(b => b.entry.labels.exists(R.contains))
-            
+            builder.filterBlocksInPlace(b => b.entry.labels.exists(l => R.contains(l.name)))
+                        
             builder.updateStatements({
                 case Syntax.ConditionalExit(target1, target2, argument) if !R.contains(target1) => Syntax.UnconditionalExit(target2, argument)
                 case Syntax.ConditionalExit(target1, target2, argument) if !R.contains(target2) => Syntax.UnconditionalExit(target1, argument)
@@ -83,8 +89,5 @@ object ControlFlowOptimization {
             
             builder.compile()
         }
-    }
-    
-    
-     */
+    }*/
 }
