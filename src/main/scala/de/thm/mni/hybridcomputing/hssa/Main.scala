@@ -5,7 +5,7 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Basic, Information}
-import de.thm.mni.hybridcomputing.hssa.transformation.optimizations.{Inlining, LocalConstantPropagation}
+import de.thm.mni.hybridcomputing.hssa.transformation.optimizations.{LocalConstantPropagation}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 

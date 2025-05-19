@@ -1,25 +1,19 @@
-package de.thm.mni.hybridcomputing.hssa.transformation.optimizations
+package de.thm.mni.hybridcomputing.hssa.transformation.normalizations
 
-import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Identifier}
-import de.thm.mni.hybridcomputing.hssa.transformation.normalizations.Normalization
-import de.thm.mni.hybridcomputing.hssa.util.RelationBuilder
 import de.thm.mni.hybridcomputing.hssa.{BindingTree, Syntax}
+import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
+import de.thm.mni.hybridcomputing.hssa.util.Transformer
 
-object Inlining {
-
-    
-    /**
-     * Flattening a relation moves its parameter into the input and output arguments.
-     * This will change its signature, but not the function it computes.
-     *
-     * @param rel
-     * @return
-     */
-    def flatten(rel: BindingTree.Relation): Syntax.Relation = {
+/**
+ * Flattening a relation moves its parameter into the input and output arguments.
+ * This will change its signature, but not the function it computes.
+ */
+object RelationParameterFlattening extends Transformer.WithContext.RelationTransformer {
+    def apply(rel: BindingTree.Relation): Syntax.Relation = {
         // Don't change relations that are already in flattened form
         if (rel.syntax.parameter.isInstanceOf[Syntax.Expression.Unit]) return rel.syntax
         
-        val with_pair_expression = Normalization.to_pair_expression_normal_form(rel)
+        val with_pair_expression = EntryExitPairExpressionNormalization.apply(rel)
         
         def insert_parameter(original: Expression.Pair): Expression.Pair = Syntax.Expression.Pair(Syntax.Expression.Pair(original.a, rel.syntax.parameter), original.b)
         
@@ -37,16 +31,5 @@ object Inlining {
                 )
             })
         )
-    }
-    
-    
-    def inline(rel: BindingTree.Relation): Unit = {
-        /*val builder = RelationBuilder(rel)
-        
-        rel.blocks.foreach(block => {
-            block.syntax.assignments.foreach(asgn => {
-            
-            })
-        })*/
     }
 }
