@@ -11,6 +11,7 @@ import de.thm.mni.hybridcomputing.roopl.wellformedness.ClassGraph
 import de.thm.mni.hybridcomputing.hssa.Language
 import de.thm.mni.hybridcomputing.hssa.plugin.{Basic, Arithmetic, Information}
 import de.thm.mni.hybridcomputing.roopl.Translation
+import de.thm.mni.hybridcomputing.hssa.plugin.ManagedMemory
 
 object RooplFunctions {
     import Evaluation.Function
@@ -51,7 +52,7 @@ object RooplFunctions {
     object Translate extends Evaluation.Function("roopl.translate") {
         override def instantiate(args: Arguments): CliChain.Function = {
             case r: CliChain.Value.RooplWellformed => {
-                val language = Language(Seq(Basic, Arithmetic, Information), Language.Canon.semantics)
+                val language = Language(Seq(Basic, Arithmetic, Information, ManagedMemory), Language.Canon.semantics)
                 CliChain.Value.HSSA(
                     Translation.translateRooplToHssa(r.program, language)
                 )
