@@ -24,7 +24,7 @@
     - [x] Type checking
     - [ ] Possibly add more and cleverer semantic checks in the future
 - [-] Translation into HSSA
-    - [-] Translate integer expressions
-    - [-] Translate control flow statements
-    - [ ] Implement memory management in a way sensible to roopl++ as well as fitting into hssa
-    - [ ] Translate object construction/destruction, vtables, calls etc.
+    - [x] Translate integer expressions
+    - [x] Translate control flow statements
+    - [x] Implement memory management in a way sensible to roopl++ as well as fitting into hssa
+    - [-] Translate object construction/destruction, vtables, calls etc.
