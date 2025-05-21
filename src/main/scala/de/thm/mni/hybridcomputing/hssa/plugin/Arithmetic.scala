@@ -60,7 +60,6 @@ object Arithmetic extends Language.Plugin {
             comparison("greater", _ > _),
             comparison("greaterequal", _ >= _),
             binary_preserve_left("sub", (a, b) => a - b, (a, b) => a + b),
-            binary_preserve_left("minus", (a, b) => b - a, (a, b) => b + a),
             binary_preserve_left("xor", (a, b) => a ^ b, (a, b) => a ^ b),
             binary_preserve_left("add", (a, b) => b + a, (a, b) => b - a),
             binary_preserve_both("mul", (a, b) => a * b),

@@ -50,7 +50,7 @@ _t.2  :=      add 5      :=   0
  x.0  :=    add _t.2     :=   x
   0   :=     ~add 5      := _t.2
 _t.3  :=      add 5      :=   0
- y.0  :=   minus _t.3    :=   y
+ y.0  :=   ~add _t.3    :=   y
   0   :=     ~add 5      := _t.3
 _t.4  :=     dup y.0     :=  ()
  x.1  :=    xor _t.4     :=  x.0

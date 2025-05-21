@@ -216,17 +216,17 @@ object Translation {
             )
         }
         
-        private def convert(op: Syntax.AssignmentOperator): String = {
+        private def convert(op: Syntax.AssignmentOperator): Expression = {
             op match
                 case AssignmentOperator.ADD => "add"
-                case AssignmentOperator.SUB => "minus"
+                case AssignmentOperator.SUB => ~"add"
                 case AssignmentOperator.XOR => "xor"
         }
         
-        private def convert(op: Syntax.Operator): String = {
+        private def convert(op: Syntax.Operator): Expression = {
             op match
                 case Operator.ADD => "add"
-                case Operator.SUB => "minus"
+                case Operator.SUB => ~"add"
                 case Operator.XOR => "xor"
                 case Operator.MUL => "mul"
                 case Operator.DIV => "div"
