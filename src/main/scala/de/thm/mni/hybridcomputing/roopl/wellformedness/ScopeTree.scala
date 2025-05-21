@@ -244,7 +244,10 @@ object ScopeTree {
     class Method(val parent: Class, val graphMethod: ClassGraph.Method) extends Scope {
         val name: Syntax.MethodIdentifier = graphMethod.name
         
-        val parameters: Seq[Variable] = graphMethod.parameters.valueSet().toSeq.map(p => Variable(p.name, p.typ, p.position, this))
+        val parameterOrder = graphMethod.syntax.parameters.map(_.name).zipWithIndex.toMap
+        val parameters: Seq[Variable] = graphMethod.parameters.valueSet().toSeq
+            .map(p => Variable(p.name, p.typ, p.position, this))
+            .sortBy(v => parameterOrder.getOrElse(v.name, Int.MaxValue))
         // Because calls reference other methods, we can only call buildStatementNodes after all Methods have been initialized (lazy-load)
         lazy val body: Seq[StatementNode] = buildStatementNodes(graphMethod.syntax.body, this)
 
