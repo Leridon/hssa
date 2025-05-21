@@ -11,6 +11,7 @@ import de.thm.mni.hybridcomputing.hssa.Syntax.Identifier
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.Syntax.Assignment
 import de.thm.mni.hybridcomputing.hssa.util.HssaDSL.*
+import de.thm.mni.hybridcomputing.hssa;
 import de.thm.mni.hybridcomputing.util.UniqueNameGenerator
 import de.thm.mni.hybridcomputing.hssa.Inversion.Local.invert
 import de.thm.mni.hybridcomputing.roopl.Syntax.AssignmentOperator
@@ -24,31 +25,64 @@ import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Method
 import de.thm.mni.hybridcomputing.hssa.Syntax.Statement
 import de.thm.mni.hybridcomputing.hssa.util.BlockBuilder
 import scala.runtime.stdLibPatches.language.experimental.genericNumberLiterals
+import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.VariableReference
+import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing
 
 object Translation {
+    given Expressionable[Variable] with
+        def toExpression(v: Variable): Expression = v.name.name
     
-    def translateRooplToHssa(program: ScopeTree.Program, language: Language): de.thm.mni.hybridcomputing.hssa.Syntax.Program = {
-        // Only do main method for now. Later this will have to be done for all methods of all classes
-        val main = Relation("main", Expression.Unit())
-        Generator.generateRelation(main, program.mainMethod)
-        
-        de.thm.mni.hybridcomputing.hssa.Syntax.Program(Seq(main.builder.compile()), language)
+    given Expressionable[Syntax.VariableIdentifier] with
+        def toExpression(v: Syntax.VariableIdentifier): Expression = v.name
+
+    given Expressionable[Seq[Variable]] with
+        def toExpression(s: Seq[Variable]): Expression = s match
+            case Seq() => Expression.Unit()
+            case _ => s.map[Expression](identity).reduce((a, b) => (a, b))
+
+    def translateRooplToHssa(program: ScopeTree.Program, language: Language): hssa.Syntax.Program = {
+        // Setup managed memory and call roopl main
+        val main: RelationBuilder = RelationBuilder("main", ())
+        val setup = Seq(
+                "m" :== ("mmem.new", ()) := (),
+                // Create _this for main
+                ("m", "_main") :== ("mmem.allocate", 1) := "m")
+        main.add(AutoSSA(hssa.Syntax.Block(
+            ((), 0) :=<- "begin",
+            setup ++
+            (("m", "_main") :== (s"_${program.mainClass.name}.${program.mainMethod.name}", ()) := ("m", "_main")) ++
+            invert(setup),
+            ->("end") := ((), 0)
+        )))
+
+        // Generate program
+        val relations: Seq[hssa.Syntax.Relation] = program.classes.flatMap(clazz => {
+            clazz.methods.map(method => {
+                val relation = Relation(s"_${clazz.name}.${method.name}", method.parameters)
+                Generator.generateRelation(relation, method)
+                relation.builder.compile()
+            })
+        }).appended(main.compile())
+
+        hssa.Syntax.Program(relations, language)
     }
-    
-    class Relation(val name: String, val parameter: Expression) {
-        val builder: RelationBuilder = RelationBuilder(name, parameter)
-        val locals: mutable.Stack[Expression] = mutable.Stack[Expression]()
+
+    class Relation(val name: String, val parameter: Seq[Variable]) {
+        // _this refers to the object on which a method is called
+        // All methods have a callee except main, for which a special object is created
+        val builder: RelationBuilder = RelationBuilder(name, ())
+        val locals: mutable.Stack[Variable] = mutable.Stack[Variable]()
         val tempVars = UniqueNameGenerator(".")
         // Keeps the currently unfinished block, the first block always entries with "begin"
-        var blockBuilder = BlockBuilder((parameter, 0) :=<- "begin")
+        var blockBuilder = BlockBuilder((Generator.hssaParameters(parameter), 0) :=<- "begin")
         
         def nextTempVar(): String = tempVars.next("_t")
         def nextJumpVar(): String = tempVars.next("_j")
         def nextLabel(): String = builder.label_generator.next("L")
         // Use to end the current block and start a new one
         def nextBlock(exitLabels: Seq[String], exitJump: Expression, entryJump: Expression, entryLabels: Seq[String]): Unit = {
-            val exit = ->(exitLabels) := (localsForJump(), exitJump)
-            val entry = (localsForJump(), entryJump) :=<- entryLabels
+            val exit = ->(exitLabels) := (locals.toSeq, exitJump)
+            val entry = (locals.toSeq, entryJump) :=<- entryLabels
             builder.add(AutoSSA.apply(blockBuilder.finish(exit)))
             blockBuilder = BlockBuilder(entry)
             tempVars.reset()
@@ -65,11 +99,6 @@ object Translation {
         def nextBlock(exitLabels: (String, String), exitJump: Expression, entryJump: Expression, entryLabels: (String, String)): Unit = {
             nextBlock(exitLabels.toList, exitJump, entryJump, entryLabels.toList)
         }
-        
-        def localsForJump(): Expression = {
-            // Implicit conversion into pairs using HssaDSL
-            locals.reduce((a, b) => (a, b))
-        }
     }
     
     private object Generator {
@@ -79,8 +108,13 @@ object Translation {
             this.relation = relation
             method.body.foreach(generateStatement(_))
             
-            // TODO: Handle parameters properly
-            relation.builder.add(AutoSSA.apply(relation.blockBuilder.finish(->("end") := (relation.parameter, 0))))
+            relation.builder.add(AutoSSA.apply(relation.blockBuilder.finish(->("end") := (hssaParameters(relation.parameter), 0))))
+        }
+
+        def hssaParameters(parameters: Seq[Variable]): Expression = {
+            parameters match
+                case Seq() => ("_this", "_m")
+                case _ => (("_this", "_m"), parameters)
         }
         
         private def generateStatement(statement: ScopeTree.StatementNode): Unit = {
@@ -93,16 +127,10 @@ object Translation {
                 case ScopeTree.Delete(typ, name) => ???
                 case ScopeTree.Copy(typ, from, to) => ???
                 case ScopeTree.Uncopy(typ, from, to) => ???
-                case ScopeTree.Call(callee, method, args) => ???
-                case ScopeTree.Uncall(callee, method, args) => ???
+                case ScopeTree.Call(callee, method, args) => generateCall(callee, method, args, false)
+                case ScopeTree.Uncall(callee, method, args) => generateCall(callee, method, args, false)
                 case block: ScopeTree.Block => generateBlock(block)
         }
-        
-        given Expressionable[Variable] with
-            def toExpression(v: Variable): de.thm.mni.hybridcomputing.hssa.Syntax.Expression = v.name.name
-        
-        given Expressionable[Syntax.VariableIdentifier] with
-            def toExpression(v: Syntax.VariableIdentifier): de.thm.mni.hybridcomputing.hssa.Syntax.Expression = v.name
         
         // Compute variable, do body, uncompute variable and garbage
         private def generateBlock(block: ScopeTree.Block): Unit = {
@@ -214,6 +242,26 @@ object Translation {
             relation.blockBuilder.addAssignment(
                 (swap.left.name, swap.right.name) :== ("id", ()) := (swap.right.name, swap.left.name)
             )
+        }
+
+        private def generateCall(callee: Option[VariableReference], _method: Option[Method], args: Seq[Option[Variable]], invert: Boolean): Unit = {
+            // All .get calls have been checked in ScopeTree and cannot fail
+            val method = _method.get
+            val (clazz: ScopeTree.Class, target: String) = callee match
+                case None => (method.parent, "_this")
+                case Some(varRef) => ((varRef.variable.get.typ match
+                    case Typing.Class(typ) => typ
+                    case Typing.ClassArray(typ) => typ
+                    // Wellformedness ensures this case never happens
+                    case _ => ???
+                    ), varRef.variable.get.name.name)
+
+            var call: Expression = s"_${clazz.name}.${method.name}"
+            if invert then call = ~call
+            relation.blockBuilder.addAssignment(
+                ((target, "_m"), args.map(_.get)) :== (call, ()) := ((target, "_m"), args.map(_.get))
+            )
+
         }
         
         private def convert(op: Syntax.AssignmentOperator): Expression = {

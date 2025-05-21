@@ -1,0 +1,59 @@
+class Main
+    method main()
+        local int x = 0
+        x += 2
+        call test(x)
+        delocal int x = 3
+    method test(int y)
+        y += 1
+
+class A
+    method test(int x, int y, A a, Main m)
+        call test2(x, y, a, m)
+    method test2(int x, int y, A a, Main m)
+        skip
+
+/*
+rel _Main.main:
+   (_this, _m), 0    :=  begin <-
+        _t.0         :=   add 0    :=         0
+         x           :=  dup _t.0  :=         ()
+         0           :=   ~add 0   :=        _t.0
+        _t.1         :=   add 2    :=         0
+        x.0          :=  add _t.1  :=         x
+         0           :=   ~add 2   :=        _t.1
+(_this.0, _m.0), x.1 := _Main.test :=  (_this, _m), x.0
+        _t.2         :=   add 3    :=         0
+         ()          := ~dup _t.2  :=        x.1
+         0           :=   ~add 3   :=        _t.2
+                          -> end   := (_this.0, _m.0), 0
+
+
+rel _Main.test:
+((_this, _m), y), 0 := begin <-
+       _t.0         :=  add 1   :=           0
+        y.0         := add _t.0 :=           y
+         0          :=  ~add 1  :=         _t.0
+                        -> end  := ((_this, _m), y.0), 0
+
+
+rel _A.test2:
+((_this, _m), ((x, y), a), m), 0 := begin <-
+                                     -> end  := ((_this, _m), ((x, y), a), m), 0
+
+
+rel _A.test:
+   ((_this, _m), ((x, y), a), m), 0     := begin <-
+(_this.0, _m.0), ((x.0, y.0), a.0), m.0 := _A.test2 :=         (_this, _m), ((x, y), a), m
+                                            -> end  := ((_this.0, _m.0), ((x.0, y.0), a.0), m.0), 0
+
+
+rel main:
+   (), 0     :=     begin <-
+    m.0      :=     mmem.new     :=      ()
+m.1, _main.0 := mmem.allocate 1  :=     m.0
+m.2, _main.1 :=    _Main.main    := m.1, _main.0
+    m.3      := ~mmem.allocate 1 := m.2, _main.1
+     ()      :=    ~mmem.new     :=     m.3
+                     -> end      :=    (), 0
+*/
