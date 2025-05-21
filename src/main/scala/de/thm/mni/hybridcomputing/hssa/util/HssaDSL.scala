@@ -17,6 +17,8 @@ object HssaDSL {
         def :=(source: Syntax.Expression): Syntax.Exit = Syntax.Exit(labels, source)
     }
     
+    case class IncompleteEntry(labels: Seq[Syntax.Identifier])
+    
     def ->(labels: Seq[String]): IncompleteExit = IncompleteExit(labels.map(Syntax.Identifier.apply))
     @targetName("incompleteExitFromVarArgs")
     def ->(labels: String*): IncompleteExit = IncompleteExit(labels.map(Syntax.Identifier.apply))
@@ -25,6 +27,10 @@ object HssaDSL {
     def ->(labels: Seq[Identifier]): IncompleteExit = IncompleteExit(labels)
     @targetName("incompleteExitFromVarArgs3")
     def ->(labels: Identifier*): IncompleteExit = IncompleteExit(labels)
+    
+    def <--(labels: String*): IncompleteEntry = IncompleteEntry(labels.map(Syntax.Identifier.apply))
+    @targetName("incompleteEntrytFromVarArgs2")
+    def <--(labels: Seq[Identifier]): IncompleteEntry = IncompleteEntry(labels)
     
     extension (self: Syntax.Expression) {
         def :=<-(labels: Seq[String]): Syntax.Entry = {
@@ -44,6 +50,7 @@ object HssaDSL {
         
         def :==(rel_par: (Syntax.Expression, Syntax.Expression)): IncompleteApplication = IncompleteApplication(self, rel_par._1, rel_par._2)
         def :=(rel: Syntax.Expression): IncompleteApplication = IncompleteApplication(self, rel, Syntax.Expression.Unit())
+        def :=(rel: IncompleteEntry): Syntax.Entry = Syntax.Entry(self, rel.labels)
         
         def unary_~ : Syntax.Expression.Invert = Syntax.Expression.Invert(self)
     }
