@@ -64,7 +64,7 @@ object Translation {
         val locals: mutable.Stack[Variable] = mutable.Stack[Variable]()
         val tempVars = UniqueNameGenerator(".")
         // Keeps the currently unfinished block, the first block always entries with "begin"
-        var blockBuilder = BlockBuilder((Generator.hssaParameters(parameter), 0) :=<- "begin")
+        var blockBuilder = BlockBuilder(builder, (Generator.hssaParameters(parameter), 0) :=<- "begin")
         
         def nextTempVar(): String = tempVars.next("_t")
         def nextJumpVar(): String = tempVars.next("_j")
@@ -74,8 +74,8 @@ object Translation {
         def nextBlock(exitLabels: Seq[String], exitJump: Expression, entryJump: Expression, entryLabels: Seq[String]): Unit = {
             val exit = ->(exitLabels) := (locals.toSeq, exitJump)
             val entry = (locals.toSeq, entryJump) :=<- entryLabels
-            builder.add(blockBuilder.finish(exit))
-            blockBuilder = BlockBuilder(entry)
+            blockBuilder.finish(exit)
+            blockBuilder = BlockBuilder(builder, entry)
             tempVars.reset()
         }
         def nextBlock(exitLabels: String, exitJump: Expression, entryJump: Expression, entryLabels: String): Unit = {
@@ -98,7 +98,7 @@ object Translation {
         def generateMain(program: ScopeTree.Program): hssa.Syntax.Relation = {
             // Setup managed memory, initialize object of main class and call roopl main
             this.relation = Relation("main", Seq())
-            relation.blockBuilder = BlockBuilder(((), 0) :=<- ("begin"))
+            relation.blockBuilder = BlockBuilder(relation.builder, ((), 0) :=<- ("begin"))
             relation.builder.parameter = ()
 
             val (gen, mainObj) = generateObject(program.mainClass)
@@ -111,11 +111,11 @@ object Translation {
                     ("m", ()) :== ("mmem.readwrite", "_main") := ("m", mainObj)
             )
 
-            relation.blockBuilder.addAssignments(
+            relation.blockBuilder.adds(
                 (setup) ++
                 (("m") :== (s"_${program.mainClass.name}.${program.mainMethod.name}", ("_main")) := ("m")) ++
                 (invert(setup)))
-            relation.builder.add(relation.blockBuilder.finish(->("end") := ((), 0)))
+            relation.blockBuilder.finish(->("end") := ((), 0))
 
             relation.builder.compile()
         }
@@ -124,13 +124,13 @@ object Translation {
             this.relation = relation
             method.body.foreach(generateStatement(_))
             
-            relation.builder.add(relation.blockBuilder.finish(->("end") := (hssaParameters(relation.parameter), 0)))
+            relation.blockBuilder.finish(->("end") := (hssaParameters(relation.parameter), 0))
         }
 
         def generateVtable(clazz: ScopeTree.Class): hssa.Syntax.Relation = {
             val builder = RelationBuilder(s"_${clazz.name}.vtable", ("_method"))
-            var block = BlockBuilder(((), 0) :=<- ("begin"))
-            block.addAssignment(
+            var block = BlockBuilder(builder, ((), 0) :=<- ("begin"))
+            block.add(
                 "i" :== ("dup", "_method") := ()
             )
 
@@ -138,21 +138,21 @@ object Translation {
                 (relation.nextLabel(), "res" :== ("dup", s"_${clazz.name}.${method.name}") := (), relation.nextLabel())
             })
 
-            builder.add(block.finish(
+            block.finish(
                 ->(methods.map(_._1)) := ((), "i")
-            ))
+            )
 
             methods.foreach((entry, code, exit) =>
-                block = BlockBuilder(((), 0) :=<- entry)
-                block.addAssignment(code)
-                builder.add(block.finish(->(exit) := ("res", 0)))
+                block = BlockBuilder(builder, ((), 0) :=<- entry)
+                block.add(code)
+                block.finish(->(exit) := ("res", 0))
             )
 
-            block = BlockBuilder(("res", "i") :=<- methods.map(_._3))
-            block.addAssignment(
+            block = BlockBuilder(builder, ("res", "i") :=<- methods.map(_._3))
+            block.add(
                 () :== (~"dup", "_method") := "i"
             )
-            builder.add(block.finish(->("end") := ("res", 0)))
+            block.finish(->("end") := ("res", 0))
 
             builder.compile()
         }
@@ -185,7 +185,7 @@ object Translation {
             
             val (local_compute, local_temp_var) = generateExpression(block.varCompute)
             
-            relation.blockBuilder.addAssignments(
+            relation.blockBuilder.adds(
                 local_compute,
                 block.variable :== ("dup", local_temp_var) := (),
                 invert(local_compute) // We need to clean up any potential temporaries left behind
@@ -195,7 +195,7 @@ object Translation {
             
             val (delocal_compute, delocal_temp_var) = generateExpression(block.varUncompute)
             
-            relation.blockBuilder.addAssignments(
+            relation.blockBuilder.adds(
                 delocal_compute,
                 () :== (~"dup", delocal_temp_var) := block.variable,
                 invert(delocal_compute)
@@ -211,7 +211,7 @@ object Translation {
             val truth = truthVar :== ("equal", (tempVar, 0)) := ()
             val (thenLabel, elseLabel) = (relation.nextLabel(), relation.nextLabel())
             
-            relation.blockBuilder.addAssignments(
+            relation.blockBuilder.adds(
                 computeTest, truth, invert(computeTest)
             )
             // Jump to then or else
@@ -233,7 +233,7 @@ object Translation {
             // Check assertion
             val (computeAssertion, tempVarAssertion) = generateExpression(conditional.assertion)
             val assertion = () :== (~"equal", (tempVarAssertion, 0)) := jumpVar
-            relation.blockBuilder.addAssignments(
+            relation.blockBuilder.adds(
                 computeAssertion, assertion, invert(computeAssertion)
             )
         }
@@ -251,7 +251,7 @@ object Translation {
             val truth = truthVar :== ("equal", (tempVar, 0)) := ()
             val checkTruth = () :== (~"dup", truthVar) := (jumpVar)
             
-            relation.blockBuilder.addAssignments(
+            relation.blockBuilder.adds(
                 computeTest, truth, checkTruth, invert(truth), invert(computeTest)
             )
             // Do
@@ -262,7 +262,7 @@ object Translation {
             val assertVar = relation.nextTempVar()
             val assertion = assertVar :== ("equal", (tempVarAssertion, 0)) := ()
             
-            relation.blockBuilder.addAssignments(
+            relation.blockBuilder.adds(
                 computeAssertion, assertion, invert(computeAssertion)
             )
             relation.nextBlock((doJump, loopLabel), assertVar,
@@ -278,14 +278,14 @@ object Translation {
         private def generateAssignment(assignment: ScopeTree.Assignment): Unit = {
             val (compute, tempVar) = generateExpression(assignment.value)
             // TODO: Arrays
-            relation.blockBuilder.addAssignments(
+            relation.blockBuilder.adds(
                 compute, (assignment.assignee.name :== (convert(assignment.op), tempVar) := assignment.assignee.name), invert(compute)
             )
         }
         
         private def generateSwap(swap: ScopeTree.Swap): Unit = {
             // TODO: Arrays
-            relation.blockBuilder.addAssignment(
+            relation.blockBuilder.add(
                 (swap.left.name, swap.right.name) :== ("id", ()) := (swap.right.name, swap.left.name)
             )
         }
@@ -304,7 +304,7 @@ object Translation {
 
             var call: Expression = s"_${clazz.name}.${method.name}"
             if invert then call = ~call
-            relation.blockBuilder.addAssignment(
+            relation.blockBuilder.add(
                 ((target, "_m"), args.map(_.get)) :== (call, ()) := ((target, "_m"), args.map(_.get))
             )
         }
@@ -316,7 +316,7 @@ object Translation {
                 case Typing.Class(typ) => 
                     val (gen, objVar) = generateObject(typ)
                     name.variable.get.owner match
-                        case b: ScopeTree.Block => relation.blockBuilder.addAssignments(
+                        case b: ScopeTree.Block => relation.blockBuilder.adds(
                             gen,
                             (name.name, ()) :== ("id", ()) := (objVar, name.name)
                         )
@@ -329,7 +329,7 @@ object Translation {
                 case Typing.Class(typ) => 
                     val (gen, objVar) = generateObject(typ)
                     name.variable.get.owner match
-                        case b: ScopeTree.Block => relation.blockBuilder.addAssignments(
+                        case b: ScopeTree.Block => relation.blockBuilder.adds(
                             gen,
                             (name.name, ()) :== (~"id", ()) := (objVar, name.name)
                         )

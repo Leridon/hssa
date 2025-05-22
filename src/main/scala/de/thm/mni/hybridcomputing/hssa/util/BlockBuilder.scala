@@ -6,21 +6,21 @@ import de.thm.mni.hybridcomputing.hssa.Syntax.Exit
 import de.thm.mni.hybridcomputing.hssa.Syntax.Block
 import de.thm.mni.hybridcomputing.hssa.transformation.repairs.AutoSSA
 
-class BlockBuilder(val entry: Entry) {
+class BlockBuilder(val relation: RelationBuilder, val entry: Entry) {
     var statements: Seq[Assignment] = Seq()
 
-    def addAssignments(assignments: (Seq[Assignment] | Assignment)*): Unit = {
+    def adds(assignments: (Seq[Assignment] | Assignment)*): Unit = {
         statements = statements ++ assignments.flatMap {
             case s: Assignment => Seq(s)
             case seq: Seq[_] => seq.asInstanceOf[Seq[Assignment]]
         }
     }
 
-    def addAssignment(assignment: Assignment): Unit = {
+    def add(assignment: Assignment): Unit = {
         statements = statements :+ assignment
     }
 
-    def finish(exit: Exit): Block = {
-        AutoSSA.apply(Block(entry, statements, exit))
+    def finish(exit: Exit): Unit = {
+        relation.add(AutoSSA.apply(Block(entry, statements, exit)))
     }
 }
