@@ -112,15 +112,28 @@ object ScopeTree {
         }
 
         def check(statement: New, scope: Scope, errors: LanguageError.Collector): Unit = {
-            checkObjectReferenceTypes(statement.typ, statement.name, scope, statement, errors)
+            val typ = deriveObjectType(statement.syntaxType, scope, errors)
+            checkObjectReferenceTypes(typ, statement.name, scope, statement, errors)
+            if typ.isDefined then statement.typ = typ.get
         }
 
         def check(statement: Delete, scope: Scope, errors: LanguageError.Collector): Unit = {
-            checkObjectReferenceTypes(statement.typ, statement.name, scope, statement, errors)
+            val typ = deriveObjectType(statement.syntaxType, scope, errors)
+            checkObjectReferenceTypes(typ, statement.name, scope, statement, errors)
+            if typ.isDefined then statement.typ = typ.get
         }
 
-        private def checkObjectReferenceTypes(typ: Syntax.ObjectType, reference: VariableReference, scope: Scope, position: Positioned, errors: LanguageError.Collector): Unit = {
-            val convertedType: Option[Type] = typ match
+        private def checkObjectReferenceTypes(typ: Option[Typing.ArrayType | Typing.Class], reference: VariableReference, scope: Scope, position: Positioned, errors: LanguageError.Collector): Unit = {
+            typ match
+                case None => errors.add(ImpossibleTyping(position))
+                case Some(objectType) => Typing.typeOf(reference, scope) match
+                    case None => errors.add(ImpossibleTyping(position))
+                    // TODO: This might be too restrictive
+                    case Some(variableType) => if variableType != objectType then errors.add(BadTyping(objectType, variableType, position))
+        }
+
+        private def deriveObjectType(typ: Syntax.ObjectType, scope: Scope, errors: LanguageError.Collector): Option[Typing.ArrayType | Typing.Class] = {
+            typ match
                 case Syntax.ObjectType.Class(name) => Typing.classFromName(name, scope) match
                     case None => None
                     case Some(clazz) => Some(Typing.Class(clazz))
@@ -132,21 +145,19 @@ object ScopeTree {
                     Typing.classFromName(name, scope) match
                         case None => None
                         case Some(clazz) => Some(Typing.ClassArray(clazz))
-            convertedType match
-                case None => errors.add(ImpossibleTyping(typ))
-                case Some(objectType) => Typing.typeOf(reference, scope) match
-                    case None => errors.add(ImpossibleTyping(position))
-                    // TODO: This might be too restrictive
-                    case Some(variableType) => if variableType != objectType then errors.add(BadTyping(objectType, variableType, position))
         }
 
         def check(statement: Copy, scope: Scope, errors: LanguageError.Collector): Unit = {
-            checkObjectReferenceTypes(statement.typ, statement.from, scope, statement, errors)
-            checkObjectReferenceTypes(statement.typ, statement.to, scope, statement, errors)
+            val typ = deriveObjectType(statement.syntaxType, scope, errors)
+            checkObjectReferenceTypes(typ, statement.from, scope, statement, errors)
+            checkObjectReferenceTypes(typ, statement.to, scope, statement, errors)
+            if typ.isDefined then statement.typ = typ.get
         }
         def check(statement: Uncopy, scope: Scope, errors: LanguageError.Collector): Unit = {
-            checkObjectReferenceTypes(statement.typ, statement.from, scope, statement, errors)
-            checkObjectReferenceTypes(statement.typ, statement.to, scope, statement, errors)
+            val typ = deriveObjectType(statement.syntaxType, scope, errors)
+            checkObjectReferenceTypes(typ, statement.from, scope, statement, errors)
+            checkObjectReferenceTypes(typ, statement.to, scope, statement, errors)
+            if typ.isDefined then statement.typ = typ.get
         }
 
         def check(statement: Call, scope: Scope, errors: LanguageError.Collector): Unit = {
@@ -378,10 +389,10 @@ object ScopeTree {
     // Other statements (except those not needed anymore like Skip and Block)
     case class Assignment(assignee: VariableReference, op: Syntax.AssignmentOperator, value: Expression) extends Statement
     case class Swap(left: VariableReference, right: VariableReference) extends Statement
-    case class New(typ: Syntax.ObjectType, name: VariableReference) extends Statement
-    case class Delete(typ: Syntax.ObjectType, name: VariableReference) extends Statement
-    case class Copy(typ: Syntax.ObjectType, from: VariableReference, to: VariableReference) extends Statement
-    case class Uncopy(typ: Syntax.ObjectType, from: VariableReference, to: VariableReference) extends Statement
+    case class New(syntaxType: Syntax.ObjectType, name: VariableReference, var typ: Typing.ArrayType | Typing.Class = null) extends Statement
+    case class Delete(syntaxType: Syntax.ObjectType, name: VariableReference, var typ: Typing.ArrayType | Typing.Class = null) extends Statement
+    case class Copy(syntaxType: Syntax.ObjectType, from: VariableReference, to: VariableReference, var typ: Typing.ArrayType | Typing.Class = null) extends Statement
+    case class Uncopy(syntaxType: Syntax.ObjectType, from: VariableReference, to: VariableReference, var typ: Typing.ArrayType | Typing.Class = null) extends Statement
     case class Call(callee: Option[VariableReference], method: Option[Method], args: Seq[Option[Variable]]) extends Statement
     case class Uncall(callee: Option[VariableReference], method: Option[Method], args: Seq[Option[Variable]]) extends Statement
 

@@ -4,6 +4,7 @@ import de.thm.mni.hybridcomputing.hssa.Syntax.Entry
 import de.thm.mni.hybridcomputing.hssa.Syntax.Assignment
 import de.thm.mni.hybridcomputing.hssa.Syntax.Exit
 import de.thm.mni.hybridcomputing.hssa.Syntax.Block
+import de.thm.mni.hybridcomputing.hssa.transformation.repairs.AutoSSA
 
 class BlockBuilder(val entry: Entry) {
     var statements: Seq[Assignment] = Seq()
@@ -20,6 +21,6 @@ class BlockBuilder(val entry: Entry) {
     }
 
     def finish(exit: Exit): Block = {
-        Block(entry, statements, exit)
+        AutoSSA.apply(Block(entry, statements, exit))
     }
 }
