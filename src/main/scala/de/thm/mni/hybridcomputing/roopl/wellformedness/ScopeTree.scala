@@ -9,32 +9,31 @@ import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing.{Type, NonIntType}
 import de.thm.mni.hybridcomputing.util.parsing.Positioned
 
 object ScopeTree {
-    // ScopeTree structure
     trait Scope {
         def program: Program
         def lookupVariable(name: VariableIdentifier): Option[Variable]
-    }
-
-    trait ClassScope extends Scope {
         def clazz: Class
     }
 
-    trait MethodScope extends ClassScope {
+    trait MethodScope extends Scope {
         def method: Method
     }
-    
-    class Program(val classProgram: ClassGraph.Program) extends Scope {
+
+    abstract class Variable(val name: VariableIdentifier, val owner: Scope, val definition: SourcePosition)
+    // We keep the syntax tree type as well as the semantic type as this heavily simplifies usage of our data structures
+    case class UntypedVariable(override val name: VariableIdentifier, override val definition: SourcePosition, override val owner: Scope, typ: Syntax.DataType) extends Variable(name, owner, definition)
+
+
+    class Program(val classProgram: ClassGraph.Program) {
         val classes: Seq[Class] = classProgram.classes.valueSet().toSeq.map(c => new Class(this, c))
         val mainClass = classes.find(_.name == classProgram.mainClasses.head.clazz.name).get
         val mainMethod = mainClass.methods.find(_.name == Syntax.MethodIdentifier("main")).get
-
-        override def program: Program = this
-        override def lookupVariable(name: VariableIdentifier): Option[Variable] = None
     }
-    class Class(val parent: Program, val graphClass: ClassGraph.Class) extends ClassScope {
+
+    class Class(val parent: Program, val graphClass: ClassGraph.Class) extends Scope {
         val name: Syntax.ClassIdentifier = graphClass.name
 
-        val fields: Seq[Variable] = graphClass.fields.valueSet().toSeq.map(f => Variable(f.name, f.typ, f.position, this))
+        var fields: Seq[Variable] = graphClass.fields.valueSet().toSeq.map(f => UntypedVariable(f.name, f.position, this, f.typ))
         val methods: Seq[Method] = graphClass.methods.valueSet().toSeq.map(m => new Method(this, m))
 
         def superClasses(): Seq[Class] = {
@@ -49,15 +48,17 @@ object ScopeTree {
         override def lookupVariable(name: VariableIdentifier): Option[Variable] =
             fields.find(_.name == name).orElse(superClasses().map(_.lookupVariable(name)).find(_.isDefined).flatMap(identity))
     }
+
     class Method(val parent: Class, val graphMethod: ClassGraph.Method) extends MethodScope {
         val name: Syntax.MethodIdentifier = graphMethod.name
         
         val parameterOrder = graphMethod.syntax.parameters.map(_.name).zipWithIndex.toMap
-        val parameters: Seq[Variable] = graphMethod.parameters.valueSet().toSeq
-            .map(p => Variable(p.name, p.typ, p.position, this))
+        var parameters: Seq[Variable] = graphMethod.parameters.valueSet().toSeq
+            .map(p => UntypedVariable(p.name, p.position, this, p.typ))
             .sortBy(v => parameterOrder.getOrElse(v.name, Int.MaxValue))
-        // Because calls reference other methods, we can only call buildStatementNodes after all Methods have been initialized (lazy-load)
-        lazy val body: Seq[StatementNode] = buildStatementNodes(graphMethod.syntax.body, this)
+        var translatableBody: Seq[Translatable.StatementNode] = Seq()
+        // Because statement may reference classes and methods, the initialBody can only be built after the rest of the tree has been initialized
+        lazy val initialBody: Seq[StatementNode] = buildStatementNodes(graphMethod.syntax.body, this)
 
         // The method that is overriden by this is the method with the same name in the closest ancestor
         def superMethod(): Option[Method] = parent.superClasses().find(c => c.methods.exists(m => m.name == this.name)).flatMap(_.methods.find(_.name == this.name))
@@ -68,14 +69,16 @@ object ScopeTree {
         override def lookupVariable(name: VariableIdentifier): Option[Variable] =
             parameters.find(_.name == name).orElse(parent.lookupVariable(name))
     }
-    class Block[S](val parent: MethodScope,
+
+    class Block(val parent: MethodScope,
                 val varType: Syntax.DataType,
                 val varName: VariableIdentifier,
                 val varCompute: Expression,
-                var varUncompute: Expression,
+                val varUncompute: Expression,
                 val statement: Syntax.Statement) extends MethodScope {
-        val variable: Variable = Variable(varName, varType, varName.position, this)
-        lazy val body: Seq[StatementNode] = buildStatementNodes(statement, this)
+        var variable: Variable = UntypedVariable(varName, varName.position, this, varType)
+        var translatableBody: Seq[Translatable.StatementNode] = Seq()
+        lazy val initialBody: Seq[StatementNode] = buildStatementNodes(statement, this)
 
         override def program: Program = parent.program
         override def clazz: Class = parent.clazz
@@ -86,9 +89,6 @@ object ScopeTree {
             else parent.lookupVariable(name)
         }
     }
-
-    // We keep the syntax tree type as well as the semantic type as this heavily simplifies usage of our data structures
-    case class Variable(val name: VariableIdentifier, val syntacticType: Syntax.DataType, val definition: SourcePosition, val owner: Scope, var typ: Type = null)
 
 
     // Builds a list of statements and scopes (blocks). This will allow us to parse the full statement tree, while also handling scopes properly
@@ -104,7 +104,7 @@ object ScopeTree {
         val result = statement match
             case Syntax.Statement.ObjectBlock(typ, name, statement) =>
                 // Since object blocks are only syntactic sugar we can get rid of them here by transforming them like a local block
-                Block[Statement](scope, Syntax.DataType.Class.apply(typ),
+                Block(scope, Syntax.DataType.Class.apply(typ),
                                     name,
                                     Expression.Nil,
                                     Expression.Nil,
@@ -172,28 +172,29 @@ object ScopeTree {
             case Syntax.VariableReference.Array(name, index) => VariableReference(scope.lookupVariable(name), Some(buildExpression(index, scope)), name)
     }
 
-    type StatementOrBlock[S] = S | Block[S]
-    type StatementNode = StatementOrBlock[Statement]
-
-    // Semantic conversion of statements, this simplifies further evaluation because the Syntax objects are not well suited for semantic analysis
-    sealed abstract class Statement extends Positioned
-
-    // Statements possibly containing blocks
-    sealed abstract class BlockStatement extends Statement
-    case class Conditional(val test: Expression, val thenStatements: Seq[StatementNode], val elseStatements: Seq[StatementNode], val assertion: Expression) extends BlockStatement
-    case class Loop(val test: Expression, val doStatements: Seq[StatementNode], val loopStatements: Seq[StatementNode], val assertion: Expression) extends BlockStatement
 
     // If variable is None, an error will be thrown during wellformedness checking
-    case class VariableReference(val variable: Option[Variable], val index: Option[Expression], val name: VariableIdentifier)
+    case class VariableReference(variable: Option[Variable], index: Option[Expression], name: VariableIdentifier)
+
+    type StatementNode = ScopeTreeStatement | Block
+
+    // Semantic conversion of statements, this simplifies further evaluation because the Syntax objects are not well suited for semantic analysis
+    abstract class Statement extends Positioned
+    sealed abstract class ScopeTreeStatement extends Statement
+
+    // Statements possibly containing blocks
+    case class Conditional(test: Expression, thenStatements: Seq[StatementNode], elseStatements: Seq[StatementNode], assertion: Expression) extends ScopeTreeStatement
+    case class Loop(test: Expression, doStatements: Seq[StatementNode], loopStatements: Seq[StatementNode], assertion: Expression) extends ScopeTreeStatement
+
     // Other statements (except those not needed anymore like Skip and Block)
-    case class Assignment(assignee: VariableReference, op: Syntax.AssignmentOperator, value: Expression) extends Statement
-    case class Swap(left: VariableReference, right: VariableReference) extends Statement
-    case class New(syntaxType: Syntax.ObjectType, name: VariableReference, var typ: Typing.ArrayType | Typing.Class = null) extends Statement
-    case class Delete(syntaxType: Syntax.ObjectType, name: VariableReference, var typ: Typing.ArrayType | Typing.Class = null) extends Statement
-    case class Copy(syntaxType: Syntax.ObjectType, from: VariableReference, to: VariableReference, var typ: Typing.ArrayType | Typing.Class = null) extends Statement
-    case class Uncopy(syntaxType: Syntax.ObjectType, from: VariableReference, to: VariableReference, var typ: Typing.ArrayType | Typing.Class = null) extends Statement
-    case class Call(callee: Option[VariableReference], method: Option[Method], args: Seq[Option[Variable]]) extends Statement
-    case class Uncall(callee: Option[VariableReference], method: Option[Method], args: Seq[Option[Variable]]) extends Statement
+    case class Assignment(assignee: VariableReference, op: Syntax.AssignmentOperator, value: Expression) extends ScopeTreeStatement
+    case class Swap(left: VariableReference, right: VariableReference) extends ScopeTreeStatement
+    case class New(syntaxType: Syntax.ObjectType, name: VariableReference) extends ScopeTreeStatement
+    case class Delete(syntaxType: Syntax.ObjectType, name: VariableReference) extends ScopeTreeStatement
+    case class Copy(syntaxType: Syntax.ObjectType, from: VariableReference, to: VariableReference) extends ScopeTreeStatement
+    case class Uncopy(syntaxType: Syntax.ObjectType, from: VariableReference, to: VariableReference) extends ScopeTreeStatement
+    case class Call(callee: Option[VariableReference], method: Option[Method], args: Seq[Option[Variable]]) extends ScopeTreeStatement
+    case class Uncall(callee: Option[VariableReference], method: Option[Method], args: Seq[Option[Variable]]) extends ScopeTreeStatement
 
     sealed abstract class Expression extends Positioned
     object Expression {
