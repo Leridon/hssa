@@ -28,6 +28,7 @@ object Typing {
     case class ClassArray(typ: ScopeTree.Class) extends ArrayType {
         override def toString(): String = s"ClassArray(${typ.name})"
     }
+    type ObjectType = ArrayType | Class
 
     def typeOf(expression: ScopeTree.Expression, scope: Scope): Option[Type] = {
         expression match
@@ -75,7 +76,7 @@ object Typing {
 
     private def determineVariableTypes(sb: ScopeTree.StatementNode, errors: LanguageError.Collector): Unit = {
         sb match
-            case block: ScopeTree.Block =>
+            case block: ScopeTree.Block[ScopeTree.Statement] =>
                 deriveType(block.program, block.variable, errors)
                 block.body.foreach(determineVariableTypes(_, errors))
             case ScopeTree.Conditional(test, thenStatement, elseStatement, assertion) =>

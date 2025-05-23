@@ -23,6 +23,7 @@
     - [x] Wellformedness checks
     - [x] Type checking
     - [ ] Possibly add more and cleverer semantic checks in the future
+    - [-] Refactor ScopeTree to be generic so that statements can be swapped with better representations after i.e type-checking is done. This would improve and simplify translation
 - [-] Translation into HSSA
     - [x] Translate integer expressions
     - [x] Translate control flow statements

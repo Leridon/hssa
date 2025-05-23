@@ -10,7 +10,7 @@ import de.thm.mni.hybridcomputing.roopl.parsing.Parsing
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import java.nio.file.NoSuchFileException
 import de.thm.mni.hybridcomputing.roopl.Syntax.Program
-import de.thm.mni.hybridcomputing.roopl.wellformedness.{ClassGraph,ScopeTree}
+import de.thm.mni.hybridcomputing.roopl.wellformedness.{ClassGraph,ScopeTree,Wellformedness}
 import de.thm.mni.hybridcomputing.hssa.Language
 import de.thm.mni.hybridcomputing.hssa.plugin.*
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
@@ -53,7 +53,7 @@ object RooplMain {
       println("Check semantics...")
       // Run semantic analysis (each check will raise if any errors are found)
       val graph: ClassGraph.Program = ClassGraph.check(syntax)
-      val scopes: ScopeTree.Program = ScopeTree.check(graph)
+      val scopes: ScopeTree.Program = Wellformedness.check(graph)
       println("Semantics OK")
 
       // Translation
