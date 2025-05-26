@@ -11,7 +11,7 @@ import de.thm.mni.hybridcomputing.hssa.util.Transformer
 object RelationParameterFlattening extends Transformer.WithContext.RelationTransformer {
     def apply(rel: BindingTree.Relation): Syntax.Relation = {
         // Don't change relations that are already in flattened form
-        if (rel.syntax.parameter.isInstanceOf[Syntax.Expression.Unit]) return rel.syntax
+        if (this.isFlattened(rel.syntax)) return rel.syntax
         
         val with_pair_expression = EntryExitPairExpressionNormalization.apply(rel)
         
@@ -32,4 +32,6 @@ object RelationParameterFlattening extends Transformer.WithContext.RelationTrans
             })
         )
     }
+    
+    def isFlattened(rel: Syntax.Relation): Boolean = rel.parameter.isInstanceOf[Syntax.Expression.Unit]
 }

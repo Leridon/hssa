@@ -2,10 +2,11 @@ package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Identifier, Program, Relation}
+import de.thm.mni.hybridcomputing.hssa.util.Transformer
 
 object Inversion {
     
-    object Local {
+    object Local extends Transformer.BlockTransformer {
         def invert(label: Identifier): Identifier = label match
             case Identifier(Language.EndLabel) => Identifier(Language.BeginLabel).setPosition(label.position)
             case Identifier(Language.BeginLabel) => Identifier(Language.EndLabel).setPosition(label.position)
@@ -30,6 +31,8 @@ object Inversion {
         }
         
         def invert(assignments: Seq[Syntax.Assignment]): Seq[Syntax.Assignment] = assignments.map(this.invert).reverse
+        
+        override def apply(block: Syntax.Block): Syntax.Block = this.invert(block)
         
         def invert(block: Syntax.Block): Syntax.Block = Syntax.Block(this.invert(block.exit), this.invert(block.assignments), this.invert(block.entry))
         

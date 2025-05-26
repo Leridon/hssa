@@ -12,36 +12,7 @@ import de.thm.mni.hybridcomputing.hssa.util.{RelationBuilder, Transformer}
 import scala.annotation.tailrec
 
 object ControlFlowOptimization {
-    
-    /*
-    object RemoveRedirections extends Transformer.RelationTransformer {
-        def apply(relation: Syntax.Relation): Syntax.Relation = {
-            val builder = new RelationBuilder(relation)
-            
-            case class Redirection(block: Syntax.Block, from: String, to: String)
-            
-            val redirections: Seq[Redirection] = builder.blocks.flatMap(block => {
-                if (!block.hasConditionalEntry &&
-                  !block.hasConditionalExit &&
-                  block.assignments.isEmpty &&
-                  block.entry.initialized == block.exit.finalized
-                ) Seq(Redirection(block, block.entry.labels.head, block.exit.labels.head))
-                else Seq()
-            }).toSeq
-            
-            // Remove blocks that do the redirections
-            redirections.foreach(redirect => {
-                builder.remove(redirect.block)
-            })
-            
-            // Update references to redirected labels
-            builder.updateLabels(redirections.map(r => r.to -> r.from).toMap)
-            
-            builder.compile()
-        }
-    }
-    */
-    
+        
     /*
     
     class RemoveUnreachableCode(strict: Boolean) extends Transformer.RelationTransformer {

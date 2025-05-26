@@ -16,7 +16,9 @@ class RelationBuilder(
                        var name: String,
                        var parameter: Syntax.Expression
                      ) {
-    private val blocks: ListBuffer[RelationBuilder.BlockBuilder] = new ListBuffer[RelationBuilder.BlockBuilder]
+    private val _blocks: ListBuffer[RelationBuilder.BlockBuilder] = new ListBuffer[RelationBuilder.BlockBuilder]
+    
+    def blocks: Seq[RelationBuilder.BlockBuilder] = _blocks.toSeq
     
     def this(relation: Syntax.Relation) = {
         this(relation.name.name, relation.parameter)
@@ -24,25 +26,25 @@ class RelationBuilder(
         relation.blocks.foreach(b => this.add(b))
     }
     
-    def getByEntryLabel(label: String): RelationBuilder.BlockBuilder = blocks.find(b => b.entry.labels.contains(label)).get
-    def getByExitLabel(label: String): RelationBuilder.BlockBuilder = blocks.find(b => b.exit.labels.contains(label)).get
+    def getByEntryLabel(label: String): RelationBuilder.BlockBuilder = _blocks.find(b => b.entry.labels.contains(label)).get
+    def getByExitLabel(label: String): RelationBuilder.BlockBuilder = _blocks.find(b => b.exit.labels.contains(label)).get
     
-    def getAllByEntryLabel(label: String): Seq[RelationBuilder.BlockBuilder] = blocks.filter(b => b.entry.labels.contains(label)).toSeq
-    def getAllByExitLabel(label: String): Seq[RelationBuilder.BlockBuilder] = blocks.filter(b => b.exit.labels.contains(label)).toSeq
+    def getAllByEntryLabel(label: String): Seq[RelationBuilder.BlockBuilder] = _blocks.filter(b => b.entry.labels.contains(label)).toSeq
+    def getAllByExitLabel(label: String): Seq[RelationBuilder.BlockBuilder] = _blocks.filter(b => b.exit.labels.contains(label)).toSeq
     
-    def labels: Set[String] = this.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet.map(_.name)
+    def labels: Set[String] = this._blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet.map(_.name)
     
     def remove(block: RelationBuilder.BlockBuilder): Unit = {
-        this.blocks.remove(this.blocks.indexOf(block))
+        this._blocks.remove(this._blocks.indexOf(block))
     }
     
-    def add(block: Syntax.Block): Unit = {
-        this.blocks.addOne(RelationBuilder.BlockBuilder(this, block))
+    def add(block: Syntax.Block): RelationBuilder.BlockBuilder = {
+        RelationBuilder.BlockBuilder(this, block).tap(this._blocks.addOne)
     }
     
-    def compile(): Syntax.Relation = Syntax.Relation(name, parameter, this.blocks.map(_.block()).toSeq)
+    def compile(): Syntax.Relation = Syntax.Relation(name, parameter, this._blocks.map(_.block()).toSeq) // TODO: Do a topological sort on the blocks
     
-    def filterBlocksInPlace(f: Syntax.Block => Boolean): Unit = this.blocks.filterInPlace(b => f(b.block()))
+    def filterBlocksInPlace(f: Syntax.Block => Boolean): Unit = this._blocks.filterInPlace(b => f(b.block()))
     
     val label_generator: UniqueNameGenerator = new UniqueNameGenerator("")
       .withExternalReservation(name => this.allLabelUsages.exists(_.label == name))
@@ -55,11 +57,11 @@ class RelationBuilder(
                 case _ => Nil
         }
         
-        this.blocks.toList.flatMap(b => getUsages(b, b.entry) ++ getUsages(b, b.exit))
+        this._blocks.toList.flatMap(b => getUsages(b, b.entry) ++ getUsages(b, b.exit))
     }
     
     def updateLabels(f: RelationBuilder.LabelUsage => String): Unit = {
-        this.blocks.foreach(_.updateLabels(f))
+        this._blocks.foreach(_.updateLabels(f))
     }
 }
 

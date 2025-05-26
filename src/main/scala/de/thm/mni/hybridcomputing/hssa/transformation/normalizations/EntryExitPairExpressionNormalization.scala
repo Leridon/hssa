@@ -18,7 +18,6 @@ object EntryExitPairExpressionNormalization extends BlockTransformer {
     
     override def apply(block: BindingTree.Block): Syntax.Block = {
         
-        
         val ExpandResult(entry_expression, entry_expansion_assignment) = block.syntax.entry.initialized match
             case pair: Expression.Pair => ExpandResult(pair, None)
             case exp =>
@@ -52,4 +51,6 @@ object EntryExitPairExpressionNormalization extends BlockTransformer {
             ->(block.syntax.exit.labels) := exit_expression
         )
     }
+    
+
 }
