@@ -1,0 +1,39 @@
+rel _Main.main:
+ (_this, _m), 0  :=   begin <-
+      _t.0       :=      id       :=        ()
+       a         :=   dup _t.0    :=        ()
+       ()        :=      ~id      :=       _t.0
+    _vtable      := dup _A.vtable :=        ()
+     _new.0      :=      id       :=     _vtable
+    a.0, ()      :=      id       :=    _new.0, a
+      _t.1       :=     add 2     :=        0
+      x.0        :=   add _t.1    :=        x
+       0         :=    ~add 2     :=       _t.1
+(a.1, _m.0), x.1 :=    _A.test    :=  (a.0, _m), x.0
+   _vtable.0     := dup _A.vtable :=        ()
+     _new.1      :=      id       :=    _vtable.0
+    a.2, ()      :=      ~id      :=   _new.1, a.1
+      _t.2       :=      id       :=        ()
+       ()        :=   ~dup _t.2   :=       a.2
+       ()        :=      ~id      :=       _t.2
+                       -> end     := (_this, _m.0), 0
+
+
+rel _A.test:
+((_this, _m), x), 0 := begin <-
+       _t.0         :=  add 1   :=           0
+        x.0         := add _t.0 :=           x
+         0          :=  ~add 1  :=         _t.0
+                        -> end  := ((_this, _m), x.0), 0
+
+
+rel main:
+ (), 0   :=       begin <-
+   m     :=       mmem.new        :=    ()
+m.1, _main :=    mmem.allocate 1    :=    m
+ m.2, ()   := mmem.readwrite _main  :=  _new.0
+m.3, _main.1 :=      _Main.main       := m.1, _main
+ _new.0  := ~mmem.readwrite _main :=  m.2, ()
+   m.4     :=   ~mmem.allocate 1    := m, _main
+   ()    :=       ~mmem.new       :=    m
+                   -> end         :=  (), 0
