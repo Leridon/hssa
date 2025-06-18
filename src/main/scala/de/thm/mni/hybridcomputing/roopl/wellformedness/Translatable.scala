@@ -16,7 +16,7 @@ object Translatable {
     type StatementNode = WellformedStatement | Block
 
     // If variable is None, an error will be thrown during wellformedness checking
-    case class VariableReference(variable: TypedVariable, index: Option[Expression])
+    case class VariableReference(variable: TypedVariable, index: Option[Expression], name: VariableIdentifier)
 
     // Semantic conversion of statements, this simplifies further evaluation because the Syntax objects are not well suited for semantic analysis
     sealed abstract class WellformedStatement extends Statement

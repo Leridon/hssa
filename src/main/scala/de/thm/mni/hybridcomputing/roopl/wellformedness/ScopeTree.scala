@@ -78,6 +78,8 @@ object ScopeTree {
                 val statement: Syntax.Statement) extends MethodScope {
         var variable: Variable = UntypedVariable(varName, varName.position, this, varType)
         var translatableBody: Seq[Translatable.StatementNode] = Seq()
+        var translatableCompute: Translatable.Expression = null
+        var translatableUncompute: Translatable.Expression = null
         lazy val initialBody: Seq[StatementNode] = buildStatementNodes(statement, this)
 
         override def program: Program = parent.program

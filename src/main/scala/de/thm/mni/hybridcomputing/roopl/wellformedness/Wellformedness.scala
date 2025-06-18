@@ -48,6 +48,13 @@ object Wellformedness {
         statement match
             case block: Block => 
                 block.translatableBody = block.initialBody.map(check(_, block, errors))
+                val varType = block.variable.asInstanceOf[TypedVariable].typ
+                expectExpressionType(varType, block.varCompute, scope, errors) match
+                    case None => ()
+                    case Some(exp) => block.translatableCompute = exp
+                expectExpressionType(varType, block.varUncompute, scope, errors) match
+                    case None => ()
+                    case Some(exp) => block.translatableUncompute = exp
                 block
             case s: Conditional => check(s, scope, errors)
             case s: Loop => check(s, scope, errors)
@@ -69,7 +76,8 @@ object Wellformedness {
 
         if test.isDefined && assertion.isDefined then
             Translatable.Conditional(test.get, thenStatements, elseStatements, assertion.get)
-        BadStatement()
+        else
+            BadStatement()
     }
 
     private def check(statement: Loop, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
@@ -80,7 +88,8 @@ object Wellformedness {
 
         if test.isDefined && assertion.isDefined then
             Translatable.Loop(test.get, doStatements, loopStatements, assertion.get)
-        BadStatement()
+        else
+            BadStatement()
     }
 
     private def check(statement: Assignment, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
@@ -107,7 +116,8 @@ object Wellformedness {
 
         if assignee.isDefined && value.isDefined then
             Translatable.Assignment(assignee.get, statement.op, value.get)
-        BadStatement()
+        else
+            BadStatement()
     }
 
     private def check(statement: Swap, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
@@ -126,7 +136,8 @@ object Wellformedness {
 
         if left.isDefined && right.isDefined then
             Translatable.Swap(left.get, right.get)
-        BadStatement()
+        else
+            BadStatement()
     }
 
     private def check(statement: New, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
@@ -253,7 +264,7 @@ object Wellformedness {
 
     private def expectExpressionType(expect: Type, expression: Expression, scope: Scope, errors: LanguageError.Collector): Option[Translatable.Expression] = {
         Typing.typeOf(expression, scope) match
-            case Some(`expect`) => mapExpression(expression)
+            case Some(typ) if typ.isA(expect) => mapExpression(expression)
             case None =>
                 errors.add(Errors.ImpossibleTyping(expression))
                 None
@@ -284,10 +295,10 @@ object Wellformedness {
         reference.variable match
             case Some(variable: TypedVariable) =>
                 reference.index match 
-                    case None => Some(Translatable.VariableReference(variable, None))
+                    case None => Some(Translatable.VariableReference(variable, None, reference.name))
                     case Some(index) => mapExpression(index) match
                         case None => None
-                        case Some(indexExpression) => Some(Translatable.VariableReference(variable, Some(indexExpression)))
+                        case Some(indexExpression) => Some(Translatable.VariableReference(variable, Some(indexExpression), reference.name))
             case _ => None
     }
 

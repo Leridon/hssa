@@ -24,8 +24,8 @@ import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Method
 import de.thm.mni.hybridcomputing.hssa.Syntax.Statement
 import de.thm.mni.hybridcomputing.hssa.util.BlockBuilder
 import scala.runtime.stdLibPatches.language.experimental.genericNumberLiterals
-import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.VariableReference
 import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing
+import de.thm.mni.hybridcomputing.roopl.wellformedness.Translatable
 
 object Translation {
     given Expressionable[Variable] with
@@ -122,7 +122,7 @@ object Translation {
         
         def generateRelation(relation: Relation, method: Method): Unit = {
             this.relation = relation
-            method.body.foreach(generateStatement(_))
+            method.translatableBody.foreach(generateStatement)
             
             relation.blockBuilder.finish(->("end") := (hssaParameters(relation.parameter), 0))
         }
@@ -163,18 +163,18 @@ object Translation {
                 case _ => (("_m"), parameters)
         }
         
-        private def generateStatement(statement: ScopeTree.StatementNode): Unit = {
+        private def generateStatement(statement: Translatable.StatementNode): Unit = {
             statement match
-                case conditional: ScopeTree.Conditional => generateConditional(conditional)
-                case loop: ScopeTree.Loop => generateLoop(loop)
-                case assignment: ScopeTree.Assignment => generateAssignment(assignment)
-                case swap: ScopeTree.Swap => generateSwap(swap)
-                case ScopeTree.New(_, name, typ) => generateNew(typ, name)
-                case ScopeTree.Delete(_, name, typ) => generateDelete(typ, name)
-                case ScopeTree.Copy(_, from, to, typ) => ???
-                case ScopeTree.Uncopy(_, from, to, typ) => ???
-                case ScopeTree.Call(callee, method, args) => generateCall(callee, method, args, false)
-                case ScopeTree.Uncall(callee, method, args) => generateCall(callee, method, args, false)
+                case conditional: Translatable.Conditional => generateConditional(conditional)
+                case loop: Translatable.Loop => generateLoop(loop)
+                case assignment: Translatable.Assignment => generateAssignment(assignment)
+                case swap: Translatable.Swap => generateSwap(swap)
+                case Translatable.New(typ, name) => generateNew(typ, name)
+                case Translatable.Delete(typ, name) => generateDelete(typ, name)
+                case Translatable.Copy(typ, from, to) => ???
+                case Translatable.Uncopy(typ, from, to) => ???
+                case Translatable.Call(callee, method, args) => generateCall(callee, method, args, false)
+                case Translatable.Uncall(callee, method, args) => generateCall(callee, method, args, false)
                 case block: ScopeTree.Block => generateBlock(block)
         }
         
@@ -183,7 +183,7 @@ object Translation {
             // Add variable to locals, so it can be propagated between sub-blocks
             relation.locals.push(block.variable)
             
-            val (local_compute, local_temp_var) = generateExpression(block.varCompute)
+            val (local_compute, local_temp_var) = generateExpression(block.translatableCompute)
             
             relation.blockBuilder.adds(
                 local_compute,
@@ -191,9 +191,9 @@ object Translation {
                 invert(local_compute) // We need to clean up any potential temporaries left behind
             )
             
-            block.body.foreach(generateStatement)
+            block.translatableBody.foreach(generateStatement)
             
-            val (delocal_compute, delocal_temp_var) = generateExpression(block.varUncompute)
+            val (delocal_compute, delocal_temp_var) = generateExpression(block.translatableUncompute)
             
             relation.blockBuilder.adds(
                 delocal_compute,
@@ -204,7 +204,7 @@ object Translation {
             relation.locals.pop()
         }
         
-        private def generateConditional(conditional: ScopeTree.Conditional): Unit = {
+        private def generateConditional(conditional: Translatable.Conditional): Unit = {
             // Check condition
             val (computeTest, tempVar) = generateExpression(conditional.test)
             val truthVar = relation.nextTempVar()
@@ -218,13 +218,13 @@ object Translation {
             relation.nextBlock((thenLabel, elseLabel), truthVar,
                 0, thenLabel)
             // Then
-            conditional.thenStatements.foreach(generateStatement(_))
+            conditional.thenStatements.foreach(generateStatement)
             
             // Else
             val (thenJump, elseJump) = (relation.nextLabel(), relation.nextLabel())
             relation.nextBlock((thenJump), 0,
                 0, elseLabel)
-            conditional.elseStatements.foreach(generateStatement(_))
+            conditional.elseStatements.foreach(generateStatement)
             
             val jumpVar = relation.nextJumpVar()
             relation.nextBlock((elseJump), 0,
@@ -238,7 +238,7 @@ object Translation {
             )
         }
         
-        private def generateLoop(loop: ScopeTree.Loop): Unit = {
+        private def generateLoop(loop: Translatable.Loop): Unit = {
             // Jump to do block (from condition is checked there)
             val (doLabel, loopJump) = (relation.nextLabel(), relation.nextLabel())
             val jumpVar = relation.nextJumpVar()
@@ -255,7 +255,7 @@ object Translation {
                 computeTest, truth, checkTruth, invert(truth), invert(computeTest)
             )
             // Do
-            loop.doStatements.foreach(generateStatement(_))
+            loop.doStatements.foreach(generateStatement)
             // End loop or do 'loop'
             val (computeAssertion, tempVarAssertion) = generateExpression(loop.assertion)
             val (loopLabel, doJump) = (relation.nextLabel(), relation.nextLabel())
@@ -268,14 +268,14 @@ object Translation {
             relation.nextBlock((doJump, loopLabel), assertVar,
                 0, (loopLabel))
             // Loop
-            loop.loopStatements.foreach(generateStatement(_))
+            loop.loopStatements.foreach(generateStatement)
             
             // Back to do
             relation.nextBlock((loopJump), 0,
                 0, (doJump))
         }
         
-        private def generateAssignment(assignment: ScopeTree.Assignment): Unit = {
+        private def generateAssignment(assignment: Translatable.Assignment): Unit = {
             val (compute, tempVar) = generateExpression(assignment.value)
             // TODO: Arrays
             relation.blockBuilder.adds(
@@ -283,52 +283,50 @@ object Translation {
             )
         }
         
-        private def generateSwap(swap: ScopeTree.Swap): Unit = {
+        private def generateSwap(swap: Translatable.Swap): Unit = {
             // TODO: Arrays
             relation.blockBuilder.add(
                 (swap.left.name, swap.right.name) :== ("id", ()) := (swap.right.name, swap.left.name)
             )
         }
 
-        private def generateCall(callee: Option[VariableReference], _method: Option[Method], args: Seq[Option[Variable]], invert: Boolean): Unit = {
-            // All .get calls have been checked in ScopeTree and cannot fail
-            val method = _method.get
+        private def generateCall(callee: Option[Translatable.VariableReference], method: Method, args: Seq[Variable], invert: Boolean): Unit = {
             val (clazz: ScopeTree.Class, target: String) = callee match
                 case None => (method.parent, "_this")
-                case Some(varRef) => ((varRef.variable.get.typ match
+                case Some(varRef) => ((varRef.variable.typ match
                     case Typing.Class(typ) => typ
                     case Typing.ClassArray(typ) => typ
                     // Wellformedness ensures this case never happens
                     case _ => ???
-                    ), varRef.variable.get.name.name)
+                    ), varRef.variable.name.name)
 
             var call: Expression = s"_${clazz.name}.${method.name}"
             if invert then call = ~call
             relation.blockBuilder.add(
-                ((target, "_m"), args.map(_.get)) :== (call, ()) := ((target, "_m"), args.map(_.get))
+                ((target, "_m"), args) :== (call, ()) := ((target, "_m"), args)
             )
         }
 
-        private def generateNew(typ: Typing.ArrayType | Typing.Class, name: VariableReference): Unit = {
+        private def generateNew(typ: Typing.ArrayType | Typing.Class, name: Translatable.VariableReference): Unit = {
             typ match
                 case Typing.IntegerArray => ???
                 case Typing.ClassArray(typ) => ???
                 case Typing.Class(typ) => 
                     val (gen, objVar) = generateObject(typ)
-                    name.variable.get.owner match
+                    name.variable.owner match
                         case b: ScopeTree.Block => relation.blockBuilder.adds(
                             gen,
                             (name.name, ()) :== ("id", ()) := (objVar, name.name)
                         )
         }
 
-        private def generateDelete(typ: Typing.ArrayType | Typing.Class, name: VariableReference): Unit = {
+        private def generateDelete(typ: Typing.ArrayType | Typing.Class, name: Translatable.VariableReference): Unit = {
             typ match
                 case Typing.IntegerArray => ???
                 case Typing.ClassArray(typ) => ???
                 case Typing.Class(typ) => 
                     val (gen, objVar) = generateObject(typ)
-                    name.variable.get.owner match
+                    name.variable.owner match
                         case b: ScopeTree.Block => relation.blockBuilder.adds(
                             gen,
                             (name.name, ()) :== (~"id", ()) := (objVar, name.name)
@@ -377,21 +375,21 @@ object Translation {
         }
         
         // Compute expression into temporary variable and return it
-        private def generateExpression(expression: ScopeTree.Expression): (Seq[Assignment], String) = {
+        private def generateExpression(expression: Translatable.Expression): (Seq[Assignment], String) = {
             val temp = relation.nextTempVar()
             expression match
-                case ScopeTree.Expression.Literal(value) =>
+                case Translatable.Expression.Literal(value) =>
                     val assignment = temp :== ("add", value) := 0
                     (assignment, temp)
-                case ScopeTree.Expression.Reference(ref) =>
+                case Translatable.Expression.Reference(ref) =>
                     // TODO: Arrays
                     //val assignment = temp :== ("dup", ref.name) := ()
                     (Seq(), ref.name.name)
                 // How do we represent Nil?
-                case ScopeTree.Expression.Nil =>
+                case Translatable.Expression.Nil =>
                     val assignment = temp :== ("id", ()) := ()
                     (assignment, temp)
-                case ScopeTree.Expression.Binary(left, op, right) =>
+                case Translatable.Expression.Binary(left, op, right) =>
                     val (computeL, lVar) = generateExpression(left)
                     val (computeR, rVar) = generateExpression(right)
                     
