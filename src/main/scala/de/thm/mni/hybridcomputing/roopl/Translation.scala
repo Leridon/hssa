@@ -23,7 +23,6 @@ import scala.collection.mutable
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Method
 import de.thm.mni.hybridcomputing.hssa.Syntax.Statement
 import de.thm.mni.hybridcomputing.hssa.util.BlockBuilder
-import scala.runtime.stdLibPatches.language.experimental.genericNumberLiterals
 import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing
 import de.thm.mni.hybridcomputing.roopl.wellformedness.Translatable
 
@@ -72,8 +71,8 @@ object Translation {
         def nextLabel(): String = builder.label_generator.next("L")
         // Use to end the current block and start a new one
         def nextBlock(exitLabels: Seq[String], exitJump: Expression, entryJump: Expression, entryLabels: Seq[String]): Unit = {
-            val exit = ->(exitLabels) := (locals.toSeq, exitJump)
-            val entry = (locals.toSeq, entryJump) :=<- entryLabels
+            val exit = ->(exitLabels) := (("_m", locals.toSeq), exitJump)
+            val entry = (("_m", locals.toSeq), entryJump) :=<- entryLabels
             blockBuilder.finish(exit)
             blockBuilder = BlockBuilder(builder, entry)
             tempVars.reset()
@@ -183,6 +182,7 @@ object Translation {
             // Add variable to locals, so it can be propagated between sub-blocks
             relation.locals.push(block.variable)
             
+            // TODO: If this contains a reference to an object the local variable must act as a copy of that reference
             val (local_compute, local_temp_var) = generateExpression(block.translatableCompute)
             
             relation.blockBuilder.adds(
