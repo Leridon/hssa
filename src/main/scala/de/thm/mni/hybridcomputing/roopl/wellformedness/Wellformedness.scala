@@ -146,7 +146,9 @@ object Wellformedness {
         val ref = mapVarRef(statement.name)
 
         (typ, ref) match
-            case (Some(objectType), Some(varRef)) => Translatable.New(objectType, varRef)
+            case (Some(objectType), Some(varRef)) => mapObjectType(objectType) match
+                case Some(objTyp) => Translatable.New(objTyp, varRef)
+                case _ => BadStatement()
             case _ => BadStatement()
     }
 
@@ -156,7 +158,9 @@ object Wellformedness {
         val ref = mapVarRef(statement.name)
 
         (typ, ref) match
-            case (Some(objectType), Some(varRef)) => Translatable.Delete(objectType, varRef)
+            case (Some(objectType), Some(varRef)) => mapObjectType(objectType) match
+                case Some(objTyp) => Translatable.Delete(objTyp, varRef)
+                case _ => BadStatement()
             case _ => BadStatement()
     }
 
@@ -168,7 +172,9 @@ object Wellformedness {
         val to = mapVarRef(statement.to)
 
         (typ, from, to) match
-            case (Some(objectType), Some(from), Some(to)) => Translatable.Copy(objectType, from, to)
+            case (Some(objectType), Some(from), Some(to)) => mapObjectType(objectType) match
+                case Some(objTyp) => Translatable.Copy(objTyp, from, to)
+                case _ => BadStatement()
             case _ => BadStatement()
     }
 
@@ -180,7 +186,9 @@ object Wellformedness {
         val to = mapVarRef(statement.to)
 
         (typ, from, to) match
-            case (Some(objectType), Some(from), Some(to)) => Translatable.Uncopy(objectType, from, to)
+            case (Some(objectType), Some(from), Some(to)) => mapObjectType(objectType) match
+                case Some(objTyp) => Translatable.Uncopy(objTyp, from, to)
+                case _ => BadStatement()
             case _ => BadStatement()
     }
 
@@ -295,10 +303,10 @@ object Wellformedness {
         reference.variable match
             case Some(variable: TypedVariable) =>
                 reference.index match 
-                    case None => Some(Translatable.VariableReference(variable, None, reference.name))
+                    case None => Some(Translatable.VariableReference(variable, None))
                     case Some(index) => mapExpression(index) match
                         case None => None
-                        case Some(indexExpression) => Some(Translatable.VariableReference(variable, Some(indexExpression), reference.name))
+                        case Some(indexExpression) => Some(Translatable.VariableReference(variable, Some(indexExpression)))
             case _ => None
     }
 
@@ -308,13 +316,22 @@ object Wellformedness {
                 case None => None
                 case Some(clazz) => Some(Typing.Class(clazz))
             case Syntax.ObjectType.IntegerArray(size) =>
-                expectExpressionType(Typing.Integer, buildExpression(size, scope), scope, errors)
-                Some(Typing.IntegerArray)
+                val sizeExpression = buildExpression(size, scope)
+                expectExpressionType(Typing.Integer, sizeExpression, scope, errors)
+                Some(Typing.IntegerArray(sizeExpression))
             case Syntax.ObjectType.ClassArray(name, size) =>
-                expectExpressionType(Typing.Integer, buildExpression(size, scope), scope, errors)
+                val sizeExpression = buildExpression(size, scope)
+                expectExpressionType(Typing.Integer, sizeExpression, scope, errors)
                 Typing.classFromName(name, scope) match
                     case None => None
-                    case Some(clazz) => Some(Typing.ClassArray(clazz))
+                    case Some(clazz) => Some(Typing.ClassArray(clazz, sizeExpression))
+    }
+
+    private def mapObjectType(typ: Typing.ObjectType): Option[Translatable.Types.ObjectType] = {
+        typ match
+            case Typing.IntegerArray(size) => mapExpression(size).map(Translatable.Types.IntegerArray(_))
+            case Typing.ClassArray(typ, size) => mapExpression(size).map(Translatable.Types.ClassArray(typ, _))
+            case Typing.Class(typ) => Some(Translatable.Types.Class(typ))
     }
 
     private def checkObjectReferenceTypes(typ: Option[Typing.ObjectType], reference: VariableReference, scope: Scope, position: Positioned, errors: LanguageError.Collector): Unit = {

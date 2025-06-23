@@ -19,13 +19,13 @@ object Typing {
     }
     sealed abstract class NonIntType extends Type
     case object NilType extends NonIntType
-    sealed abstract class ArrayType extends NonIntType
+    sealed abstract class ArrayType(val size: ScopeTree.Expression) extends NonIntType
     case object Integer extends Type
     case class Class(typ: ScopeTree.Class) extends NonIntType {
         override def toString(): String = s"Class(${typ.name})"
     }
-    case object IntegerArray extends ArrayType
-    case class ClassArray(typ: ScopeTree.Class) extends ArrayType {
+    case class IntegerArray(override val size: ScopeTree.Expression) extends ArrayType(size)
+    case class ClassArray(typ: ScopeTree.Class, override val size: ScopeTree.Expression) extends ArrayType(size) {
         override def toString(): String = s"ClassArray(${typ.name})"
     }
     type ObjectType = ArrayType | Class
@@ -96,13 +96,13 @@ object Typing {
             case ut: ScopeTree.UntypedVariable =>
                 val resultType: Option[Type] = ut.typ match
                     case Syntax.DataType.Integer => Some(Integer)
-                    case Syntax.DataType.IntegerArray => Some(IntegerArray)
+                    case Syntax.DataType.IntegerArray => Some(IntegerArray(null))
                     case Syntax.DataType.Class(name) => classFromName(name, program).map(Class(_)) match
                         case Some(typ) => Some(typ)
                         case None =>
                             errors.add(MissingType(ut))
                             None
-                    case Syntax.DataType.ClassArray(name) => classFromName(name, program).map(ClassArray(_)) match
+                    case Syntax.DataType.ClassArray(name) => classFromName(name, program).map(ClassArray(_, null)) match
                         case Some(typ) => Some(typ)
                         case None =>
                             errors.add(MissingType(ut))
@@ -115,8 +115,8 @@ object Typing {
 
     private def baseType(arrayType: ArrayType): Type = {
         arrayType match
-            case IntegerArray => Integer
-            case ClassArray(name) => Class(name)
+            case IntegerArray(_) => Integer
+            case ClassArray(name, _) => Class(name)
     }
 
     // Type errors

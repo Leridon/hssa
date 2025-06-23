@@ -37,3 +37,4 @@
         - [-] Handle referencing errors (i.e. nil pointers?)
         - [-] Arrays
         - [] Optimize local variables/fields that are never borrowed anywhere to be static (having a single pointer in hssa) instead of being references that live on the heap
+    - [] Properly catch translation errors
