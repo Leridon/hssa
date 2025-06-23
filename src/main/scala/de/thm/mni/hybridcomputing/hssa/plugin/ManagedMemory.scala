@@ -38,7 +38,7 @@ object ManagedMemory extends Plugin {
                     }.map(_._2).getOrElse(Errors.AllocationError().raise())
                     
                     for (i <- Range(pointer, pointer + size)) {
-                        memory.content.update(i, Basic.Unit)
+                        memory.content.update(i, Basic.Int(0))
                     }
 
                     Value.Pair(
@@ -48,7 +48,7 @@ object ManagedMemory extends Plugin {
             }),
             int_parameter(size => {
                 case Value.Pair(memory: MMem, pointer: Basic.Int)
-                    if memory.content.slice(pointer.value, pointer.value + size).forall(_ == Basic.Unit) => {
+                    if memory.content.slice(pointer.value, pointer.value + size).forall(_ == Basic.Int(0)) => {
                         if size == 0 then Errors.ZeroAllocationError().raise()
                         for (i <- Range(pointer.value, pointer.value + size)) {
                             memory.content.update(i, null)
