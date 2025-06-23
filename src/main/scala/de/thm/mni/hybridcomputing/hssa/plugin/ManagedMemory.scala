@@ -33,9 +33,10 @@ object ManagedMemory extends Plugin {
             int_parameter(size => {
                 case memory: MMem => {
                     if size == 0 then Errors.ZeroAllocationError().raise()
-                    val pointer = memory.content.sliding(size).zipWithIndex.find {
+                    // tail to protect null pointer
+                    val pointer = memory.content.tail.sliding(size).zipWithIndex.find {
                         case (w, _) if w.length == size => w.forall(_ == null)
-                    }.map(_._2).getOrElse(Errors.AllocationError().raise())
+                    }.map(_._2).getOrElse(Errors.AllocationError().raise()) + 1
                     
                     for (i <- Range(pointer, pointer + size)) {
                         memory.content.update(i, Basic.Int(0))
@@ -49,6 +50,7 @@ object ManagedMemory extends Plugin {
             int_parameter(size => {
                 case Value.Pair(memory: MMem, pointer: Basic.Int)
                     if memory.content.slice(pointer.value, pointer.value + size).forall(_ == Basic.Int(0)) => {
+                        if pointer.value == 0 then Errors.NullPointerError("deallocate").raise()
                         if size == 0 then Errors.ZeroAllocationError().raise()
                         for (i <- Range(pointer.value, pointer.value + size)) {
                             memory.content.update(i, null)
@@ -60,6 +62,7 @@ object ManagedMemory extends Plugin {
         self_inverse(
             int_parameter(pointer => {
                 case Value.Pair(memory: MMem, in: Value) => {
+                    if pointer == 0 then Errors.NullPointerError("read/write").raise()
                     val read_value = memory.content(pointer)
                     if (read_value == null) {
                         Errors.AccessViolation().raise()
@@ -76,8 +79,9 @@ object ManagedMemory extends Plugin {
     
     object Errors {
         case class AllocationError() extends RuntimeError("Unable to allocate enough space in managed memory!")
-        case class ZeroAllocationError() extends RuntimeError("Must allocate more than 0!")
+        case class ZeroAllocationError() extends RuntimeError("Must allocate more than 0 slots!")
         case class AccessViolation() extends RuntimeError("Trying to access unallocated memory!")
         case class UnallocationError() extends RuntimeError("Trying to unallocate non zero-cleared memory!")
+        case class NullPointerError(op: String) extends RuntimeError(s"Trying to $op nullpointer!")
     }
 }
