@@ -31,8 +31,9 @@
     - [x] Translate control flow statements
     - [x] Implement memory management in a way sensible to roopl++ as well as fitting into hssa
     - [-] Translate object construction/destruction, vtables, calls etc.
-    - [-] Handle reference variables differently than local variables (in a block the variable musn't be persisted into storage, but a class field does). Types of variables:
-        - Class fields: Must be made locally accessible at the beginning of each method and updated at the end. Also before and after each call.
-        - Method arguments: Are pass-by-reference so have to be passed at begin and end of each relation
-        - Block variables: May be used locally but may act as copies of references if initialized with a reference
-        - Copy variables: Must behave as the copied variable does
+    - [x] ~~Handle reference variables differently than local variables (in a block the variable musn't be persisted into storage, but a class field does). Types of variables:~~
+    - [-] Implement variable referencing properly
+        - [-] All variables must be stored and referenced because all variables can be copied
+        - [-] Handle referencing errors (i.e. nil pointers?)
+        - [-] Arrays
+        - [] Optimize local variables/fields that are never borrowed anywhere to be static (having a single pointer in hssa) instead of being references that live on the heap
