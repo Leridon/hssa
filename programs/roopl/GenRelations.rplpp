@@ -2,6 +2,9 @@ class Main
     int x
     int y
     method main()
+        construct Main m
+          skip
+        destruct m
         construct A a
         x += 2
         call a::test(x)
@@ -10,6 +13,22 @@ class Main
 class A
     method test(int x)
         x += 1
+
+
+/*
+
+  a := _A.new := ()
+  _m, _vtable, x, y := mmem.readwrite _this := _m, ()
+  x := add 2 := ()
+  // This should be optimized
+  _m, () := mmem.readwrite _this := _m, _vtable, x, y
+  _m, _vtable, x, y := mmem.readwrite _this := _m, ()
+  x.pass := dup x := ()
+  _m, () := mmem.readwrite _this := _m, _vtable, x, y
+  _m, () := _A.test a := _m, x
+  () := ~_A.new := a
+
+*/
 
 /*
 rel _Main.main _this:
