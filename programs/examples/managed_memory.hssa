@@ -7,7 +7,7 @@ m.2, p.1 := mmem.allocate 5  :=   m.1
    ()    :=      ~dup 3      :=   p.1
 m.3, p.2 := mmem.allocate 1  :=   m.2
    ()    :=      ~dup 8      :=   p.2
-m.4, 0  := mmem.readwrite 0 := m.3, 17
+ m.4, 0  := mmem.readwrite 0 := m.3, 17
 m.5, 17  := mmem.readwrite 0 := m.4, 0
   m.6    := ~mmem.allocate 9 := m.5, 0
    ()    :=    ~mmem.new     :=   m.6
@@ -15,21 +15,21 @@ m.5, 17  := mmem.readwrite 0 := m.4, 0
 
 
 rel mmem2.test:
-           (), 0             :=     begin <-
-             m               :=     mmem.new     :=              ()
-           m.1, p            := mmem.allocate 6  :=              m
-             ()              :=      ~dup 0      :=              p
-          m.2, 0           := mmem.readwrite 0 :=           m.1, 32
-          m.3, 0           := mmem.readwrite 2 :=           m.2, 0
-          m.4, 0            := mmem.readwrite 5 := (m.3, (1, 2, 3, 4, 5, 6, 7))
-          m.5, 0            := mmem.readwrite 3 :=           m.4, 17
-          m.6, 32            := mmem.readwrite 0 :=           m.5, 0
-(m.7, (1, 2, 3, 4, 5, 6, 7)) := mmem.readwrite 5 :=           m.6, 0
-          m.8, 0            := mmem.readwrite 2 :=           m.7, 0
-          m.9, 17            := mmem.readwrite 3 :=           m.8, 0
-            m.10             := ~mmem.allocate 6 :=            m.9, 0
-             ()              :=    ~mmem.new     :=             m.10
-                                     -> end      :=            (), 0
+            (), 0              :=     begin <-
+              m                :=     mmem.new     :=               ()
+            m.1, p             := mmem.allocate 6  :=               m
+              ()               :=      ~dup 0      :=               p
+            m.2, 0             := mmem.readwrite 0 :=            m.1, 32
+            m.3, 0             := mmem.readwrite 2 :=             m.2, 0
+            m.4, 0             := mmem.readwrite 5 := ((m.3, (1, 2, 3, 4, 5, 6, 7)))
+            m.5, 0             := mmem.readwrite 3 :=            m.4, 17
+           m.6, 32             := mmem.readwrite 0 :=             m.5, 0
+((m.7, (1, 2, 3, 4, 5, 6, 7))) := mmem.readwrite 5 :=             m.6, 0
+            m.8, 0             := mmem.readwrite 2 :=             m.7, 0
+           m.9, 17             := mmem.readwrite 3 :=             m.8, 0
+             m.10              := ~mmem.allocate 6 :=             m.9, 0
+              ()               :=    ~mmem.new     :=              m.10
+                                       -> end      :=             (), 0
 
 
 rel allocate2big.test_fails:
@@ -42,18 +42,18 @@ m.1, p := mmem.allocate 10000 :=   m
 
 
 rel deallocatenonempty.test_fails:
- (), 0  :=     begin <-
-   m    :=     mmem.new     :=   ()
-m.1, p  := mmem.allocate 1  :=   m
+(), 0  :=     begin <-
+  m    :=     mmem.new     :=   ()
+m.1, p := mmem.allocate 1  :=   m
 m.2, 0 := mmem.readwrite 0 := m.1, 5
-  m.3   := ~mmem.allocate 1 := m.2, p
-  ()    :=    ~mmem.new     :=  m.3
-                -> end      := (), 0
+ m.3   := ~mmem.allocate 1 := m.2, p
+  ()   :=    ~mmem.new     :=  m.3
+               -> end      := (), 0
 
 
 rel unallocated.test_fails:
- (), 0  :=     begin <-
-   m    :=     mmem.new     :=  ()
+(), 0  :=     begin <-
+  m    :=     mmem.new     :=  ()
 m.1, 0 := mmem.readwrite 0 := m, 5
-  ()    :=    ~mmem.new     :=  m.1
-                -> end      := (), 0
+  ()   :=    ~mmem.new     :=  m.1
+               -> end      := (), 0
