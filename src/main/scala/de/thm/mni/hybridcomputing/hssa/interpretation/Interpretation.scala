@@ -36,8 +36,8 @@ case class Interpretation(language: Language) {
             case Expression.Pair(a, b) => Value.Pair(evaluate(a, context), evaluate(b, context))
             case Expression.Unit() => Basic.Unit
             case Expression.Invert(sub) => evaluate(sub, context) match
-                case UserRelation(fw, bw) => UserRelation(bw, fw)
-                case Value.BuiltinRelation(name, forwards, backwards) => Value.BuiltinRelation(name, backwards, forwards)
+                case rel: UserRelation => rel.flipped
+                case rel: Value.BuiltinRelation => rel.flipped
         }
     }
     
@@ -55,28 +55,27 @@ case class Interpretation(language: Language) {
             case (Expression.Unit(), Basic.Unit) => Map()
             case (Expression.Literal(v), value) if v == value => Map()
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) => assign(pat_1, val_a) ++ assign(pat_2, val_b)
-            case (Expression.Invert(sub), UserRelation(fw, bw)) => assign(sub, UserRelation(bw, fw))
-            case (Expression.Invert(sub), BuiltinRelation(name, forwards, backwards)) => assign(sub, BuiltinRelation(name, backwards, forwards))
+            case (Expression.Invert(sub), rel: Value.Relation) => assign(sub, rel.flipped)
             case _ => Interpretation.Errors.ReversibilityViolation(s"$value does not match $pattern").setPosition(pattern.position).raise()
         }
     }
     
     def evaluateApplication(rel: Value, instance_argument: Value, relation_argument: Value): Value = {
         rel match {
-            case Value.BuiltinRelation(name, forwards, _) =>
+            case rel: Value.BuiltinRelation =>
                 try {
-                    forwards(instance_argument)(relation_argument)
+                    rel.get(instance_argument)(relation_argument)
                 } catch
                     case _: MatchError =>
-                        Interpretation.Errors.ReversibilityViolation(s"$name cannot be applied to $instance_argument and $relation_argument").raise()
-            case UserRelation(rel, _) =>
-                val execution_context = rel._2
+                        Interpretation.Errors.ReversibilityViolation(s"${rel.toString} cannot be applied to $instance_argument and $relation_argument").raise()
+            case rel: UserRelation =>
+                val (relation, execution_context) = rel.get
                 
                 val relation_context = ValueContext(Some(execution_context))
                 
-                relation_context.define(assign(rel._1.parameter, instance_argument))
+                relation_context.define(assign(relation.parameter, instance_argument))
                 
-                val block_index = new BlockIndex(rel._1)
+                val block_index = new BlockIndex(relation)
                 
                 /*
                 @tailrec
@@ -138,8 +137,9 @@ case class Interpretation(language: Language) {
                             val result = Try(evaluateApplication(called_rel, instantiationArg, consumedArg)).recoverWith({
                                 case e: AbortDueToErrors =>
                                     e.errors.foreach(e => {
-                                        if(e.position == null) e.setPosition(asgn.position)
-                                    }); throw e
+                                        if (e.position == null) e.setPosition(asgn.position)
+                                    });
+                                    throw e
                             }).get
                             
                             block_context.define(assign(target, result))
@@ -170,13 +170,14 @@ case class Interpretation(language: Language) {
         
         program.definitions.zip(inverted.definitions).foreach({
             case (original, inverted) =>
-                context.define(Map(original.name.name -> Value.UserRelation((original, context), (inverted, inverse_context))))
-                inverse_context.define(Map(original.name.name -> Value.UserRelation((inverted, inverse_context), (original, context))))
+                val value = Value.UserRelation((original, context), (inverted, inverse_context), Direction.FORWARDS)
+                
+                context.define(Map(original.name.name -> value))
+                inverse_context.define(Map(original.name.name -> value.flipped))
         })
         
-        
         val rel: Value.Relation = (if (direction == Direction.FORWARDS) context else inverse_context).get(relation_name)
-          .getOrElse(new HSSAError(LanguageError.Severity.Error, s"Entrypoint ${relation_name} does not exist").raise())
+          .getOrElse(new HSSAError(LanguageError.Severity.Error, s"Entrypoint $relation_name does not exist").raise())
           .asInstanceOf[Value.Relation]
         
         evaluateApplication(rel, instance_argument, relation_argument)
@@ -201,7 +202,12 @@ object Interpretation {
         case class Nondeterminism(message: String) extends RuntimeError(s"Nondeterminism error: $message")
     }
     
-    case class ValueContext(parent: Option[ValueContext], values: mutable.Map[String, Value] = mutable.Map()) {
+    class ValueContext(parent: Option[ValueContext], values: mutable.Map[String, Value] = mutable.Map()) {
+        def define(name: String, value: Value): this.type = {
+            this.values.addOne(name -> value)
+            
+            this
+        }
         def define(values: Map[String, Value]): this.type = this.define(values.toSeq)
         def define(values: Seq[(String, Value)]): this.type = {
             // TODO: check if all of them are defined

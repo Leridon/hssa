@@ -45,7 +45,7 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
                 builtin.value
             case Expression.Pair(a, b) => Value.Pair(a.staticValue(context), b.staticValue(context))
             case Expression.Invert(a) => a.staticValue(context) match
-                case Value.BuiltinRelation(name, fw, bw) => Value.BuiltinRelation(name, bw, fw)
+                case rel: Value.BuiltinRelation => rel.flipped
             case Expression.Unit() => Basic.Unit
     }
     

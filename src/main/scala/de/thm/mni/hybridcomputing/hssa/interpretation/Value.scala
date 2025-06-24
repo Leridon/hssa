@@ -1,6 +1,7 @@
 package de.thm.mni.hybridcomputing.hssa.interpretation
 
 import de.thm.mni.hybridcomputing.hssa.Syntax
+import de.thm.mni.hybridcomputing.util.reversibility.Direction
 
 trait Value
 
@@ -9,11 +10,38 @@ object Value {
         override def toString: String = s"($a, $b)"
     }
     
-    sealed trait Relation extends Value
-    case class UserRelation(forwards: (Syntax.Relation, Interpretation.ValueContext), backwards: (Syntax.Relation, Interpretation.ValueContext)) extends Relation
-    case class BuiltinRelation(
-                                name: String,
-                                forwards: Value => Value => Value,
-                                backwards: Value => Value => Value,
-                              ) extends Relation
+    sealed trait Relation extends Value {
+        def name: String
+        def flipped: Relation
+    }
+    final class UserRelation(private val original: (Syntax.Relation, Interpretation.ValueContext), private val inverted: (Syntax.Relation, Interpretation.ValueContext), private val direction: Direction) extends Relation {
+        def name: String = original._1.name.name
+        
+        def flipped = UserRelation(original, inverted, direction.inverse)
+        
+        def get: (Syntax.Relation, Interpretation.ValueContext) = direction.choose(original, inverted)
+        
+        override def toString: String = direction.choose(s"<rel ${original._1.name}>", s"<rel ~${original._1.name}>")
+        
+        override def equals(obj: Any): Boolean = obj match {
+            case other: UserRelation => other.direction == this.direction && other.name == this.name
+            case _ => false
+        }
+    }
+    final class BuiltinRelation(
+                                 override val name: String,
+                                 private val forwards: Value => Value => Value,
+                                 private val backwards: Value => Value => Value,
+                                 private val direction: Direction = Direction.FORWARDS
+                               ) extends Relation {
+        def flipped = BuiltinRelation(name, forwards, backwards, direction.inverse)
+        def get: Value => Value => Value = direction.choose(forwards, backwards)
+        
+        override def toString: String = direction.choose(s"<primitive $name>", s"<primitive ~$name>")
+        
+        override def equals(obj: Any): Boolean = obj match {
+            case other: BuiltinRelation => other.direction == this.direction && other.name == this.name
+            case _ => false
+        }
+    }
 }
