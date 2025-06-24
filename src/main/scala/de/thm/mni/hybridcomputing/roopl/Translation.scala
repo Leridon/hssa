@@ -76,8 +76,8 @@ object Translation {
         def nextLabel(): String = builder.label_generator.next("L")
         // Use to end the current block and start a new one
         def nextBlock(exitLabels: Seq[String], exitJump: Expression, entryJump: Expression, entryLabels: Seq[String]): Unit = {
-            val exit = ->(exitLabels) := (("_m", locals.toSeq), exitJump)
-            val entry = (("_m", locals.toSeq), entryJump) :=<- entryLabels
+            val exit = ->(exitLabels) := (((Generator.mmem, Generator.thisRef), locals.toSeq), exitJump)
+            val entry = (((Generator.mmem, Generator.thisRef), locals.toSeq), entryJump) :=<- entryLabels
             blockBuilder.finish(exit)
             blockBuilder = BlockBuilder(builder, entry)
             tempVars.reset()
@@ -100,6 +100,8 @@ object Translation {
         var relation: Relation = null
         val mmem: String = "_m"
         val _this: String ="_this"
+        val thisRef = "_this_ref"
+
 
         def generateMain(program: ScopeTree.Program): hssa.Syntax.Relation = {
             // Setup managed memory, initialize object of main class and call roopl main
@@ -157,7 +159,6 @@ object Translation {
                 x := add ref := 0
                 friend := add ref := 1
              */
-            val thisRef = "_this_ref"
             
             val initFields = method.parent.fields.zipWithIndex.map((field, index) => 
                 field :== ("add", thisRef) := index + 1
@@ -266,8 +267,8 @@ object Translation {
             
             relation.blockBuilder.adds(
                 delocalCompute,
-                "_tmp" :== ("dup", delocalTmp) := (),
-                (mmem, 0) :== (~"mmem.readwrite", block.variable) := (mmem, "_tmp"),
+                (mmem, "_tmp") :== ("mmem.readwrite", block.variable) := (mmem, 0),
+                () :== (~"dup", delocalTmp) := "_tmp",
                 mmem :== (~"mmem.allocate", 1) := (mmem, block.variable),
                 invert(delocalCompute)
             )
