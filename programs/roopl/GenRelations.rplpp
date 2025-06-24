@@ -17,37 +17,55 @@ class A
 
 /*
 
-  a := _A.new := ()
-  _m, _vtable, x, y := mmem.readwrite _this := _m, ()
-  x := add 2 := ()
-  // This should be optimized
-  _m, () := mmem.readwrite _this := _m, _vtable, x, y
-  _m, _vtable, x, y := mmem.readwrite _this := _m, ()
-  x.pass := dup x := ()
-  _m, () := mmem.readwrite _this := _m, _vtable, x, y
-  _m, () := _A.test a := _m, x
-  () := ~_A.new := a
-
-*/
-
-/*
 rel _Main.main _this:
-     _m, 0       :=   begin <-
-      _t.0       :=      id       :=       ()
-       a         :=   dup _t.0    :=       ()
-       ()        :=      ~id      :=      _t.0
-    _vtable      := dup _A.vtable :=       ()
-    a.0, ()      :=      id       :=   _vtable, a
-      _t.1       :=     add 2     :=       0
-      x.0        :=   add _t.1    :=       x
-       0         :=    ~add 2     :=      _t.1
-(a.1, _m.0), x.1 :=    _A.test    := (a.0, _m), x.0
-   _vtable.0     := dup _A.vtable :=       ()
-    a.2, ()      :=      ~id      := _vtable.0, a.1
-      _t.2       :=      id       :=       ()
-       ()        :=   ~dup _t.2   :=      a.2
-       ()        :=      ~id      :=      _t.2
-                       -> end     :=    _m.0, 0
+       _m, 0         :=       begin <-
+  _m.0, _this_ref    :=    mmem.read _this    :=           _m
+         x           :=     add _this_ref     :=           0
+         y           :=     add _this_ref     :=           1
+        _t.0         :=          id           :=           0
+        _tmp         :=       dup _t.0        :=           ()
+      _m.1, m        :=    mmem.allocate 1    :=          _m.0
+      _m.2, 0        :=   mmem.readwrite m    :=       _m.1, _tmp
+         0           :=          ~id          :=          _t.0
+   _m.3, _newRef     :=       _Main.new       :=          _m.2
+      _m.4, 0        :=   mmem.readwrite m    :=     _m.3, _newRef
+  _m.5, _newRef.0    :=   ~mmem.readwrite m   :=        _m.4, 0
+        _m.6         :=      ~_Main.new       :=    _m.5, _newRef.0
+        _t.1         :=          id           :=           0
+       _tmp.0        :=       dup _t.1        :=           ()
+      _m.7, 0        :=   ~mmem.readwrite m   :=      _m.6, _tmp.0
+        _m.8         :=   ~mmem.allocate 1    :=        _m.7, m
+         0           :=          ~id          :=          _t.1
+        _t.2         :=          id           :=           0
+       _tmp.1        :=       dup _t.2        :=           ()
+      _m.9, a        :=    mmem.allocate 1    :=          _m.8
+      _m.10, 0       :=   mmem.readwrite a    :=      _m.9, _tmp.1
+         0           :=          ~id          :=          _t.2
+  _m.11, _newRef.1   :=        _A.new         :=         _m.10
+      _m.12, 0       :=   mmem.readwrite a    :=    _m.11, _newRef.1
+        _t.3         :=         add 2         :=           0
+_m.13, _assignee_val :=   mmem.readwrite x    :=       _m.12, ()
+  _assignee_val.0    :=       add _t.3        :=     _assignee_val
+     _m.14, ()       :=   mmem.readwrite x    := _m.13, _assignee_val.0
+         0           :=        ~add 2         :=          _t.3
+ _m.15, _calleeRef   :=      mmem.read a      :=         _m.14
+_m.16, _calleeVtable := mmem.read _calleeRef  :=         _m.15
+   _calleeMethod     :=    _calleeVtable 0    :=           ()
+       _m.17         :=  _calleeMethod a, x   :=         _m.16
+         ()          :=   ~_calleeVtable 0    :=     _calleeMethod
+       _m.18         := ~mmem.read _calleeRef :=  _m.17, _calleeVtable
+       _m.19         :=     ~mmem.read a      :=   _m.18, _calleeRef
+  _m.20, _newRef.2   :=   ~mmem.readwrite a   :=        _m.19, 0
+       _m.21         :=        ~_A.new        :=    _m.20, _newRef.2
+        _t.4         :=          id           :=           0
+       _tmp.2        :=       dup _t.4        :=           ()
+      _m.22, 0       :=   ~mmem.readwrite a   :=     _m.21, _tmp.2
+       _m.23         :=   ~mmem.allocate 1    :=        _m.22, a
+         0           :=          ~id          :=          _t.4
+         1           :=    ~add _this_ref     :=           y
+         0           :=    ~add _this_ref     :=           x
+       _m.24         :=   ~mmem.read _this    :=    _m.23, _this_ref
+                               -> end         :=        _m.24, 0
 
 
 rel _Main.vtable _method:
@@ -64,12 +82,24 @@ res, i :=     L1 <-
               -> end     := res, 0
 
 
-rel _A.test _this:
-(_m, x), 0 := begin <-
-   _t.0    :=  add 1   :=      0
-   x.0     := add _t.0 :=      x
-    0      :=  ~add 1  :=     _t.0
-               -> end  := (_m, x.0), 0
+rel _Main.new:
+   _m, 0    :=       begin <-
+_m.0, _anon :=   mmem.allocate 3    :=        _m
+  _vtable   :=   dup _Main.vtable   :=        ()
+  _m.1, 0   := mmem.readwrite _anon :=  _m.0, _vtable
+                      -> end        := (_m.1, _anon), 0
+
+
+rel _A.test _this, x:
+       _m, 0        :=     begin <-
+  _m.0, _this_ref   := mmem.read _this  :=          _m
+       _t.0         :=      add 1       :=           0
+_m.1, _assignee_val := mmem.readwrite x :=       _m.0, ()
+  _assignee_val.0   :=     add _t.0     :=     _assignee_val
+     _m.2, ()       := mmem.readwrite x := _m.1, _assignee_val.0
+         0          :=      ~add 1      :=         _t.0
+       _m.3         := ~mmem.read _this :=    _m.2, _this_ref
+                            -> end      :=        _m.3, 0
 
 
 rel _A.vtable _method:
@@ -86,16 +116,33 @@ res, i :=    L1 <-
              -> end    := res, 0
 
 
+rel _A.new:
+   _m, 0    :=       begin <-
+_m.0, _anon :=   mmem.allocate 1    :=        _m
+  _vtable   :=    dup _A.vtable     :=        ()
+  _m.1, 0   := mmem.readwrite _anon :=  _m.0, _vtable
+                      -> end        := (_m.1, _anon), 0
+
+
 rel main:
-        (), 0          :=       begin <-
-       _vtable         :=   dup _Main.vtable    :=          ()
-          m            :=       mmem.new        :=          ()
-      m.0, _main       :=    mmem.allocate 1    :=          m
-       m.1, ()         := mmem.readwrite _main  := m.0, _vtable, (), ()
-         m.2           :=   _Main.main _main    :=         m.1
-m.3, _vtable.0, (), () := ~mmem.readwrite _main :=       m.2, ()
-         m.4           :=   ~mmem.allocate 1    :=      m.3, _main
-          ()           :=       ~mmem.new       :=         m.4
-          ()           :=   ~dup _Main.vtable   :=      _vtable.0
-                                 -> end         :=        (), 0
+     (), 0       :=       begin <-
+       _m        :=       mmem.new        :=        ()
+  _m.0, _main    :=    mmem.allocate 1    :=        _m
+ _m.1, _mainObj  :=       _Main.new       :=       _m.0
+    _m.2, 0      := mmem.readwrite _main  :=  _m.1, _mainObj
+      _m.3       :=   _Main.main _main    :=       _m.2
+_m.4, _mainObj.0 := ~mmem.readwrite _main :=     _m.3, 0
+      _m.5       :=      ~_Main.new       := _m.4, _mainObj.0
+      _m.6       :=   ~mmem.allocate 1    :=   _m.5, _main
+       ()        :=       ~mmem.new       :=       _m.6
+                           -> end         :=      (), 0
+
+
+rel mmem.read _addr:
+     _m, 0       :=       begin <-
+_m.0, _readvalue := mmem.readwrite _addr :=        _m, ()
+   _readcopy     :=    dup _readvalue    :=          ()
+    _m.1, ()     := mmem.readwrite _addr :=   _m.0, _readvalue
+                           -> end        := (_m.1, _readcopy), 0
+
 */

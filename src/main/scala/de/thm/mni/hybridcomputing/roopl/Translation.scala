@@ -47,12 +47,12 @@ object Translation {
 
         // Generate program
         val relations: Seq[hssa.Syntax.Relation] = program.classes.flatMap(clazz => {
-            clazz.methods.map(method => {
-                val relation = Relation(s"_${clazz.name}.${method.name}", method.parameters)
-                Generator.generateRelation(relation, method)
-                relation.builder.compile()
-            }).appended(Generator.generateVtable(clazz)).appended(Generator.generateConstructor(clazz))
-        }).appended(main)
+            clazz.methods.map(method => Generator.generateRelation(clazz.name, method))
+                .appended(Generator.generateVtable(clazz))
+                .appended(Generator.generateConstructor(clazz))
+        })
+            .appended(main)
+            .appended(Generator.generateMemoryRead())
 
         hssa.Syntax.Program(relations, language)
     }
@@ -60,11 +60,15 @@ object Translation {
     class Relation(val name: String, val parameter: Seq[Variable]) {
         // _this refers to the object on which a method is called
         // All methods have a callee except main, for which a special object is created
-        val builder: RelationBuilder = RelationBuilder(name, ("_this"))
+        val parameters: Expression = parameter match
+            case Seq() => Generator._this
+            case p => (Generator._this, p)
+        
+        val builder: RelationBuilder = RelationBuilder(name, parameters)
         val locals: mutable.Stack[Variable] = mutable.Stack[Variable]()
         val tempVars = UniqueNameGenerator(".")
         // Keeps the currently unfinished block, the first block always entries with "begin"
-        var blockBuilder = BlockBuilder(builder, (Generator.blockArguments(parameter), 0) :=<- "begin")
+        var blockBuilder = BlockBuilder(builder, (Generator.mmem, 0) :=<- "begin")
         
         def nextTempVar(): String = tempVars.next("_t")
         def nextAddrVar(): String = tempVars.next("_addr")
@@ -95,6 +99,7 @@ object Translation {
     private object Generator {
         var relation: Relation = null
         val mmem: String = "_m"
+        val _this: String ="_this"
 
         def generateMain(program: ScopeTree.Program): hssa.Syntax.Relation = {
             // Setup managed memory, initialize object of main class and call roopl main
@@ -119,12 +124,53 @@ object Translation {
 
             relation.builder.compile()
         }
+
+        def generateMemoryRead(): hssa.Syntax.Relation = {
+            val addr = "_addr"
+            val relation = RelationBuilder("mmem.read", addr)
+            val block = BlockBuilder(relation, (mmem, 0) :=<- "begin")
+
+            val value = "_readvalue"
+            val res = "_readcopy"
+            block.adds(
+                (mmem, value) :== ("mmem.readwrite", addr) := (mmem, ()),
+                res :== ("dup", value) := (),
+                (mmem, ()) :== ("mmem.readwrite", addr) := (mmem, value)
+            )
+            block.finish(->("end") := ((mmem, res), 0))
+
+            relation.compile()
+        }
         
-        def generateRelation(relation: Relation, method: Method): Unit = {
-            this.relation = relation
-            method.translatableBody.foreach(generateStatement)
+        def generateRelation(className: Syntax.ClassIdentifier, method: Method): hssa.Syntax.Relation = {
+            relation = Relation(s"_$className.${method.name}", method.parameters)
+            // Make all fields accessible
+            /* 
             
-            relation.blockBuilder.finish(->("end") := (blockArguments(relation.parameter), 0))
+                class Cat
+                    int x
+                    Cat friend
+                    method blub()
+                        x + friend
+            
+                m, ref := mmem.read _this := m
+                x := add ref := 0
+                friend := add ref := 1
+             */
+            val thisRef = "_this_ref"
+            
+            val initFields = method.parent.fields.zipWithIndex.map((field, index) => 
+                field :== ("add", thisRef) := index
+            ).prepended((mmem, thisRef) :== ("mmem.read", _this) := mmem)
+
+            relation.blockBuilder.adds(initFields)
+
+            method.translatableBody.foreach(generateStatement)
+
+            relation.blockBuilder.adds(invert(initFields))
+            
+            relation.blockBuilder.finish(->("end") := (mmem, 0))
+            relation.builder.compile()
         }
 
         def generateVtable(clazz: ScopeTree.Class): hssa.Syntax.Relation = {
@@ -161,21 +207,17 @@ object Translation {
             val builder = RelationBuilder(constructor(clazz), ())
             val block = BlockBuilder(builder, (mmem, 0) :=<- "begin")
             val anonObj = "_anon"
+            val table = "_vtable"
 
             // Allocate #fields + 1 slot (vtable) in memory for the new object
             block.adds(
                 (mmem, anonObj) :== ("mmem.allocate", clazz.fields.size + 1) := mmem,
-                (mmem, 0) :== ("mmem.readwrite", anonObj) := (mmem, vtable(clazz))
+                table :== ("dup", vtable(clazz)) := (),
+                (mmem, 0) :== ("mmem.readwrite", anonObj) := (mmem, table)
             )
 
             block.finish(->("end") := ((mmem, anonObj), 0))
             builder.compile()
-        }
-
-        def blockArguments(parameters: Seq[Variable]): Expression = {
-            parameters match
-                case Seq() => mmem
-                case _ => (mmem, parameters)
         }
 
         private def vtable(clazz: ScopeTree.Class): String = {
@@ -197,7 +239,7 @@ object Translation {
                 case Translatable.Copy(typ, from, to) => generateCopy(typ, from, to)
                 case Translatable.Uncopy(typ, from, to) => generateUncopy(typ, from, to)
                 case Translatable.Call(callee, method, args) => generateCall(callee, method, args, false)
-                case Translatable.Uncall(callee, method, args) => generateCall(callee, method, args, false)
+                case Translatable.Uncall(callee, method, args) => generateCall(callee, method, args, true)
                 case block: ScopeTree.Block => generateBlock(block)
                 case Translatable.BadStatement() => ??? // TODO: throw proper exception
         }
@@ -361,23 +403,44 @@ object Translation {
             )
         }
 
-        // TODO: ???????
-        private def generateCall(callee: Option[Translatable.VariableReference], method: Method, args: Seq[Variable], invert: Boolean): Unit = {
-            ???/*
-            val (clazz: ScopeTree.Class, target: String) = callee match
-                case None => (method.parent, "_this")
-                case Some(varRef) => ((varRef.variable.typ match
-                    case Types.Class(typ) => typ
-                    case Types.ClassArray(typ) => typ
-                    // Wellformedness ensures this case never happens
-                    case _ => ???
-                    ), varRef.variable.name.name)
+        private def generateCall(callee: Option[Translatable.VariableReference], method: Method, args: Seq[Variable], inverted: Boolean): Unit = {
+            /* 
+                Animal a
+                new Cat a
+                int i
+                Animal friend
+                new Animal friend
 
-            var call: Expression = s"_${clazz.name}.${method.name}"
-            if invert then call = ~call
-            relation.blockBuilder.add(
-                ((target, "_m"), args) :== (call, ()) := ((target, "_m"), args)
-            )*/
+                a::meow(i, friend)
+
+                <init variables>
+                m, ref := mmem.read a := m
+                m, vtable := mmem.read ref := m
+                // meow is the second method
+                method := vtable 3 := ()
+                m := method (a, i, friend) := m
+
+                (_this)::meow(i, friend)
+                <init variables>
+                m, ref := mmem.read _this := m
+             */
+            val calleeAddr: Expression = callee match
+                case None => _this
+                case Some(varRef) => referenceAddress(varRef)
+            val ref = "_calleeRef"
+            val vtable = "_calleeVtable"
+            val calledMethod = "_calleeMethod"
+            
+            val lookupVtable = Seq(
+                (mmem, ref) :== ("mmem.read", calleeAddr) := mmem,
+                (mmem, vtable) :== ("mmem.read", ref) := mmem,
+                calledMethod :== (vtable, method.parent.methods.indexOf(method)) := ()
+            )
+            relation.blockBuilder.adds(
+                lookupVtable,
+                mmem :== (if inverted then ~calledMethod else calledMethod, (calleeAddr, args)) := mmem,
+                invert(lookupVtable)
+            )
         }
 
         private def generateNew(typ: Types.ArrayType | Types.Class, name: Translatable.VariableReference): Unit = {
@@ -411,11 +474,47 @@ object Translation {
             )
         }
 
-        // TODO:
         private def generateCopy(typ: Types.ArrayType | Types.Class, from: Translatable.VariableReference, to: Translatable.VariableReference): Unit = {
+            relation.blockBuilder.adds(
+                generateCopyCode(from, to)
+            )
         }
 
         private def generateUncopy(typ: Types.ArrayType | Types.Class, from: Translatable.VariableReference, to: Translatable.VariableReference): Unit = {
+            relation.blockBuilder.adds(
+                invert(generateCopyCode(from, to))
+            )
+        }
+
+        private def generateCopyCode(from: Translatable.VariableReference, to: Translatable.VariableReference): Seq[Assignment] = {
+            /* 
+                Cat a -> 1
+                Cat b -> 2
+
+                new Cat a -> 3-5
+                copy Cat a b 
+
+                <new>
+                m, addr_a   := mmem.readwrite a     := m, ()
+                addr_copy := dup addr_a := ()
+                m, () := mmem.readwrite a := m, addr_a
+                m, 0 := mmem.readwrite b := m, addr_copy
+
+                // alt with read
+                m, copy := mmem.read a := m
+                m, 0 := mmem.readwrite b := m, copy
+
+
+            
+            */
+            val fromAddr = referenceAddress(from)
+            val toAddr = referenceAddress(to)
+            val refCopy = "_ref_copy"
+
+            Seq(
+                (mmem, refCopy) :== ("mmem.read", fromAddr) := mmem,
+                (mmem, 0) :== ("mmem.readwrite", toAddr) := (mmem, refCopy)
+            )
         }
 
         private def referenceAddress(ref: Translatable.VariableReference): Expression = {
@@ -472,13 +571,12 @@ object Translation {
                     val assignment = temp :== ("add", value) := 0
                     (assignment, temp)
                 case Translatable.Expression.Reference(ref) =>
-                    ???
-                    // TODO:
-                    //val assignment = temp :== ("dup", ref.name) := ()
-                    //(Seq(), ref.name.name)
-                // How do we represent Nil?
+                    val addr = referenceAddress(ref)
+                    val assignment = (mmem, temp) :== ("mmem.read", addr) := mmem
+                    (assignment, temp)
                 case Translatable.Expression.Nil =>
-                    val assignment = temp :== ("id", ()) := ()
+                    // Nullpointer
+                    val assignment = temp :== ("id", ()) := 0
                     (assignment, temp)
                 case Translatable.Expression.Binary(left, op, right) =>
                     val (computeL, lVar) = generateExpression(left)
@@ -486,11 +584,11 @@ object Translation {
                     
                     val res: Seq[Assignment] = op match
                         case Operator.ADD | Operator.SUB | Operator.XOR =>
-                            val l_temp = relation.nextTempVar()
+                            val lTemp = relation.nextTempVar()
                             
                             Seq(
-                                l_temp :== ("dup", lVar) := (),
-                                temp :== (convert(op), rVar) := l_temp
+                                lTemp :== ("dup", lVar) := (),
+                                temp :== (convert(op), rVar) := lTemp
                             )
                         
                         case _ => temp :== (convert(op), (lVar, rVar)) := ()
