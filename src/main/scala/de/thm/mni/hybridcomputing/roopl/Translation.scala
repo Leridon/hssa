@@ -60,11 +60,7 @@ object Translation {
     class Relation(val name: String, val parameter: Seq[Variable]) {
         // _this refers to the object on which a method is called
         // All methods have a callee except main, for which a special object is created
-        val parameters: Expression = parameter match
-            case Seq() => Generator._this
-            case p => (Generator._this, p)
-        
-        val builder: RelationBuilder = RelationBuilder(name, parameters)
+        val builder: RelationBuilder = RelationBuilder(name, appendVarsIfNotEmpty(Generator._this, parameter))
         val locals: mutable.Stack[Variable] = mutable.Stack[Variable]()
         val tempVars = UniqueNameGenerator(".")
         // Keeps the currently unfinished block, the first block always entries with "begin"
@@ -94,6 +90,12 @@ object Translation {
         def nextBlock(exitLabels: (String, String), exitJump: Expression, entryJump: Expression, entryLabels: (String, String)): Unit = {
             nextBlock(exitLabels.toList, exitJump, entryJump, entryLabels.toList)
         }
+    }
+
+    private def appendVarsIfNotEmpty(expression: Expression, seq: Seq[Variable]): Expression = {
+        seq match
+            case Seq() => expression
+            case s => (expression, s)
     }
     
     private object Generator {
@@ -439,7 +441,7 @@ object Translation {
             )
             relation.blockBuilder.adds(
                 lookupVtable,
-                mmem :== (if inverted then ~calledMethod else calledMethod, (calleeAddr, args)) := mmem,
+                mmem :== (if inverted then ~calledMethod else calledMethod, appendVarsIfNotEmpty(calleeAddr, args)) := mmem,
                 invert(lookupVtable)
             )
         }

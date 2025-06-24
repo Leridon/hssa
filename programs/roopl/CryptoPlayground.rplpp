@@ -2,17 +2,17 @@ class Main
     method main()
         local int value = 5
         local int shift = 13
-        local int modulo = 26
+        local int modulo = 7
 
         if value < modulo then
             local int new_value = (value + shift) % modulo
 
             value <=> new_value
 
-            delocal int new_value = (value + modulo - shift) % modulo
+            delocal int new_value = 5
         else skip
         fi value < modulo
 
-        delocal int modulo = 26
+        delocal int modulo = 7
         delocal int shift = 13
-        delocal int value = 5
+        delocal int value = 4
