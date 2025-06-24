@@ -23,8 +23,18 @@
     - [x] Wellformedness checks
     - [x] Type checking
     - [ ] Possibly add more and cleverer semantic checks in the future
+    - [x] Refactor ScopeTree to be generic so that statements can be swapped with better representations after i.e type-checking is done. This would improve and simplify translation
+    - [ ] Ensure arguments to calls are not expression if they are changed inside the method. Or forbid epxression arguments entirely
+
 - [-] Translation into HSSA
-    - [-] Translate integer expressions
-    - [-] Translate control flow statements
-    - [ ] Implement memory management in a way sensible to roopl++ as well as fitting into hssa
-    - [ ] Translate object construction/destruction, vtables, calls etc.
+    - [x] Translate integer expressions
+    - [x] Translate control flow statements
+    - [x] Implement memory management in a way sensible to roopl++ as well as fitting into hssa
+    - [-] Translate object construction/destruction, vtables, calls etc.
+    - [x] ~~Handle reference variables differently than local variables (in a block the variable musn't be persisted into storage, but a class field does). Types of variables:~~
+    - [-] Implement variable referencing properly
+        - [-] All variables must be stored and referenced because all variables can be copied
+        - [-] Handle referencing errors (i.e. nil pointers?)
+        - [-] Arrays
+        - [] Optimize local variables/fields that are never borrowed anywhere to be static (having a single pointer in hssa) instead of being references that live on the heap
+    - [] Properly catch translation errors

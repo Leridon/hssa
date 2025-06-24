@@ -57,13 +57,13 @@ object LanguageError {
     }
     
     val previousLinesShown = 3
-
+    
     extension (position: SourcePosition) {
         def erroneousSourceCode(): String = {
             val builder = new StringBuilder()
             val (file, from, to) = (position.file, position.from, position.to)
             val lineNumPad = file.numLines.toString().length()
-
+            
             // Underline affected position with '^' to highlight the problematic code
             val underline = "^" * (if to == null || from.line == to.line then
                 // Show affected line and some previous lines to add context
@@ -72,25 +72,25 @@ object LanguageError {
             else
                 showSourceLines(builder, file, (from.line until to.line), lineNumPad)
                 underlineBlock(file, from, to))
-
+            
             builder
-                .addAll(underline.indent(lineNumPad + from.column))
-                .toString()
+              .addAll(underline.indent(lineNumPad + from.column))
+              .toString()
         }
     }
-
+    
     private def showSourceLines(builder: StringBuilder, file: SourceFile, lines: Range, pad: Int): Unit = {
         lines.foreach(i => if (i > 0) {
             val lineNum = i.toString()
             builder
-                .addAll(" " * (pad - lineNum.length()))
-                .addAll(lineNum).addOne(' ')
-                .addAll(file.getLine(i))
+              .addAll(" " * (pad - lineNum.length()))
+              .addAll(lineNum).addOne(' ')
+              .addAll(file.getLine(i))
             if i == file.numLines - 1 then
                 builder.addOne('\n')
         })
     }
-
+    
     private def underlineLine(file: SourceFile, from: Position, to: Position): Int = {
         if to != null then
             to.column - from.column
@@ -98,7 +98,7 @@ object LanguageError {
             // Underline rest of line if to is unset (should only be the case for syntax errors)
             file.getLine(from.line).length() - from.column
     }
-
+    
     private def underlineBlock(file: SourceFile, from: Position, to: Position): Int = {
         // to mustn't be null
         (from.line until to.line).map(file.getLine(_).length()).max - (from.column)
