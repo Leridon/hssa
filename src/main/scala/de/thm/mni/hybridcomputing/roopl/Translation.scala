@@ -166,11 +166,13 @@ object Translation {
                 field :== ("add", thisRef) := index + 1
             ).prepended((mmem, thisRef) :== ("mmem.read", _this) := mmem)
 
+            method.parent.fields.foreach(relation.locals.push)
             relation.blockBuilder.adds(initFields)
 
             method.translatableBody.foreach(generateStatement)
 
             relation.blockBuilder.adds(invert(initFields))
+            method.parent.fields.foreach(_ => relation.locals.pop())
             
             relation.blockBuilder.finish(->("end") := (mmem, 0))
             relation.builder.compile()
