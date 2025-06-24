@@ -160,7 +160,7 @@ object Translation {
             val thisRef = "_this_ref"
             
             val initFields = method.parent.fields.zipWithIndex.map((field, index) => 
-                field :== ("add", thisRef) := index
+                field :== ("add", thisRef) := index + 1
             ).prepended((mmem, thisRef) :== ("mmem.read", _this) := mmem)
 
             relation.blockBuilder.adds(initFields)

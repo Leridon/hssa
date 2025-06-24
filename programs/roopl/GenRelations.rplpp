@@ -9,6 +9,7 @@ class Main
         x += 2
         call a::test(x)
         destruct a
+        x -= 3
 
 class A
     method test(int x)
@@ -20,8 +21,8 @@ class A
 rel _Main.main _this:
        _m, 0         :=       begin <-
   _m.0, _this_ref    :=    mmem.read _this    :=           _m
-         x           :=     add _this_ref     :=           0
-         y           :=     add _this_ref     :=           1
+         x           :=     add _this_ref     :=           1
+         y           :=     add _this_ref     :=           2
         _t.0         :=          id           :=           0
         _tmp         :=       dup _t.0        :=           ()
       _m.1, m        :=    mmem.allocate 1    :=          _m.0
@@ -62,8 +63,8 @@ _m.16, _calleeVtable := mmem.read _calleeRef  :=         _m.15
       _m.22, 0       :=   ~mmem.readwrite a   :=     _m.21, _tmp.2
        _m.23         :=   ~mmem.allocate 1    :=        _m.22, a
          0           :=          ~id          :=          _t.4
-         1           :=    ~add _this_ref     :=           y
-         0           :=    ~add _this_ref     :=           x
+         2           :=    ~add _this_ref     :=           y
+         1           :=    ~add _this_ref     :=           x
        _m.24         :=   ~mmem.read _this    :=    _m.23, _this_ref
                                -> end         :=        _m.24, 0
 
