@@ -69,6 +69,13 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
     type AnyReplacement = Replacement[Syntax.Expression]
     type FlatReplacement = Replacement[Syntax.Expression.Variable]
     
+    def isReifable(v: Value): Boolean = v match {
+        case _: Basic.Int => true
+        case Basic.Unit => true
+        case Value.Pair(a, b) => isReifable(a) && isReifable(b)
+        case _ => false
+    }
+    
     /**
      * Get the optional forwards replacement defined by the given assignment.
      *
@@ -86,6 +93,8 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
             assignment.instance_argument.staticValue(context),
             assignment.source.staticValue(context)
         )).toOption // When evaluation fails (for example due to nondeterminism), we don't do any replacement
+          .filter(isReifable)
+          
         
         // TODO: For violations, we could replace the assignment completely
         
