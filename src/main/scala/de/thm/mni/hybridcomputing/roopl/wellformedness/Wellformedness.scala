@@ -69,10 +69,10 @@ object Wellformedness {
     }
 
     private def check(statement: Conditional, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
-        val test = expectExpressionType(Typing.Integer, statement.assertion, scope, errors)
+        val test = expectExpressionType(Typing.Integer, statement.test, scope, errors)
         val thenStatements = statement.thenStatements.map(check(_, scope, errors))
         val elseStatements = statement.elseStatements.map(check(_, scope, errors))
-        val assertion = expectExpressionType(Typing.Integer, statement.test, scope, errors)
+        val assertion = expectExpressionType(Typing.Integer, statement.assertion, scope, errors)
 
         if test.isDefined && assertion.isDefined then
             Translatable.Conditional(test.get, thenStatements, elseStatements, assertion.get)
@@ -81,10 +81,10 @@ object Wellformedness {
     }
 
     private def check(statement: Loop, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
-        val test = expectExpressionType(Typing.Integer, statement.assertion, scope, errors)
+        val test = expectExpressionType(Typing.Integer, statement.test, scope, errors)
         val doStatements = statement.doStatements.map(check(_, scope, errors))
         val loopStatements = statement.loopStatements.map(check(_, scope, errors))
-        val assertion = expectExpressionType(Typing.Integer, statement.test, scope, errors)
+        val assertion = expectExpressionType(Typing.Integer, statement.assertion, scope, errors)
 
         if test.isDefined && assertion.isDefined then
             Translatable.Loop(test.get, doStatements, loopStatements, assertion.get)
