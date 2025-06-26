@@ -117,14 +117,14 @@ object Translation {
                     // Create _this for main
                     (mmem, "_main") :== ("mmem.allocate", 1) := mmem,
                     (mmem, "_mainObj") :== (constructor(program.mainClass), ()) := mmem,
-                    (mmem, 0) :== ("mmem.readwrite", "_main") := (mmem, "_mainObj")
+                    (mmem, 0) :== ("mmem.readwrite", "_main") := (mmem, "_mainObj"),
             )
 
             relation.blockBuilder.adds(
                 (setup) ++
-                (mmem :== (s"_${program.mainClass.name}.${program.mainMethod.name}", ("_main")) := mmem) ++
-                (invert(setup)))
-            relation.blockBuilder.finish(->("end") := ((), 0))
+                (mmem :== (s"_${program.mainClass.name}.${program.mainMethod.name}", ("_main")) := mmem),
+                () :== (~"dup", 1) := "_main")
+            relation.blockBuilder.finish(->("end") := ((mmem), 0))
 
             relation.builder.compile()
         }
