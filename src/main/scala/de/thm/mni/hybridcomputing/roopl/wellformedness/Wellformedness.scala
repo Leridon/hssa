@@ -339,7 +339,7 @@ object Wellformedness {
             case Some(objectType) => Typing.typeOf(reference, scope) match
                 case None => errors.add(Errors.ImpossibleTyping(position))
                 // TODO: This might be too restrictive
-                case Some(variableType) => if variableType != objectType then errors.add(Errors.BadTyping(objectType, variableType, position))
+                case Some(variableType) => if !objectType.isA(variableType) then errors.add(Errors.BadTyping(objectType, variableType, position))
     }
 
     private def buildExpression(expression: Syntax.Expression, scope: Scope): Expression = {
