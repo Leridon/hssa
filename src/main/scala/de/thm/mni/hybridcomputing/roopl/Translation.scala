@@ -463,19 +463,18 @@ object Translation {
                 case typ: Types.ArrayType =>
                     val (compute, tmpVar) = generateExpression(typ.size)
                     assignments = compute ++
-                        computeAddr ++
                         // Ensure array index is >= 0
                         (1 :== ("greaterequal", (tmpVar, 0)) := ()) ++
                         ((mmem, anon) :== ("mmem.allocate", tmpVar) := mmem) ++
-                        invert(computeAddr) ++
                         invert(compute)
                 case Types.Class(typ) =>
                     assignments = Seq(
                         (mmem, anon) :== (constructor(typ), ()) := mmem
                     )
+            computeAddr ++
             assignments ++ (
                 (mmem, 0) :== ("mmem.readwrite", addr) := (mmem, anon)
-            )
+            ) ++ invert(computeAddr)
         }
 
         private def generateCopy(typ: Types.ArrayType | Types.Class, from: Translatable.VariableReference, to: Translatable.VariableReference): Unit = {
