@@ -354,17 +354,6 @@ object Translation {
         private def generateAssignment(assignment: Translatable.Assignment): Unit = {
             val (compute, tempVar) = generateExpression(assignment.value)
 
-            /*
-                f += 2
-
-                tmp := id := 2
-                m, f_val := mmem.readwrite f := m, ()
-                f_val := add tmp := f_val
-                m, () := mmem.readwrite f := m, f_val
-             */
-
-
-
             val (computeAddress, address) = assignment.assignee.index match
                 case None => (Seq(), assignment.assignee.variable.name.name)
                 case Some(index) => (indexedAddress(assignment.assignee.variable, index))
@@ -545,8 +534,8 @@ object Translation {
             val address = relation.nextAddrVar()
             val (compute, tempVar) = generateExpression(index)
             (compute ++
-                (indexVal :== ("dup", tempVar) := ()) ++
-                (address :== ("add", array.name) := indexVal) ++
+                ((mmem, address) :== ("mmem.read", array.name) := (mmem)) ++
+                (address :== ("add", tempVar) := address) ++
                 invert(compute)
             , address)
         }
