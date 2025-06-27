@@ -25,9 +25,14 @@ class Main
                 arr1[x] += i
             else skip
             fi x < 4
-            arr2[x] += j
+            arr2[x] += arr1[0] + j
             x += 1
         until x = 8
+        if arr1[0] = 1337 & arr2[0] = 1379 then
+            j += 12
+        else
+            j -= 12
+        fi j > 42
         delocal int x = 8
         new A arr3[0]
         new A arr3[1]
