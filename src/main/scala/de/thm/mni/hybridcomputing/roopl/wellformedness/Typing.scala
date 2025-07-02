@@ -14,6 +14,8 @@ object Typing {
                 case (Class(typ), Class(otherTyp)) =>
                     otherTyp == typ || typ.superClasses().contains(otherTyp)
                 case (NilType, _: NonIntType) => true
+                case (IntegerArray(size), IntegerArray(null)) => true
+                case (ClassArray(typ, size), ClassArray(otherTyp, null)) => typ == otherTyp
                 case _ => this == other
         }
     }

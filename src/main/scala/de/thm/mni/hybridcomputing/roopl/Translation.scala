@@ -60,11 +60,7 @@ object Translation {
     class Relation(val name: String, val parameter: Seq[Variable]) {
         // _this refers to the object on which a method is called
         // All methods have a callee except main, for which a special object is created
-        val parameters: Expression = parameter match
-            case Seq() => Generator._this
-            case p => (Generator._this, p)
-        
-        val builder: RelationBuilder = RelationBuilder(name, parameters)
+        val builder: RelationBuilder = RelationBuilder(name, appendVarsIfNotEmpty(Generator._this, parameter))
         val locals: mutable.Stack[Variable] = mutable.Stack[Variable]()
         val tempVars = UniqueNameGenerator(".")
         // Keeps the currently unfinished block, the first block always entries with "begin"
@@ -76,8 +72,8 @@ object Translation {
         def nextLabel(): String = builder.label_generator.next("L")
         // Use to end the current block and start a new one
         def nextBlock(exitLabels: Seq[String], exitJump: Expression, entryJump: Expression, entryLabels: Seq[String]): Unit = {
-            val exit = ->(exitLabels) := (("_m", locals.toSeq), exitJump)
-            val entry = (("_m", locals.toSeq), entryJump) :=<- entryLabels
+            val exit = ->(exitLabels) := (((Generator.mmem, Generator.thisRef), locals.toSeq), exitJump)
+            val entry = (((Generator.mmem, Generator.thisRef), locals.toSeq), entryJump) :=<- entryLabels
             blockBuilder.finish(exit)
             blockBuilder = BlockBuilder(builder, entry)
             tempVars.reset()
@@ -95,11 +91,19 @@ object Translation {
             nextBlock(exitLabels.toList, exitJump, entryJump, entryLabels.toList)
         }
     }
+
+    private def appendVarsIfNotEmpty(expression: Expression, seq: Seq[Variable]): Expression = {
+        seq match
+            case Seq() => expression
+            case s => (expression, s)
+    }
     
     private object Generator {
         var relation: Relation = null
         val mmem: String = "_m"
         val _this: String ="_this"
+        val thisRef = "_this_ref"
+
 
         def generateMain(program: ScopeTree.Program): hssa.Syntax.Relation = {
             // Setup managed memory, initialize object of main class and call roopl main
@@ -113,14 +117,14 @@ object Translation {
                     // Create _this for main
                     (mmem, "_main") :== ("mmem.allocate", 1) := mmem,
                     (mmem, "_mainObj") :== (constructor(program.mainClass), ()) := mmem,
-                    (mmem, 0) :== ("mmem.readwrite", "_main") := (mmem, "_mainObj")
+                    (mmem, 0) :== ("mmem.readwrite", "_main") := (mmem, "_mainObj"),
             )
 
             relation.blockBuilder.adds(
                 (setup) ++
-                (mmem :== (s"_${program.mainClass.name}.${program.mainMethod.name}", ("_main")) := mmem) ++
-                (invert(setup)))
-            relation.blockBuilder.finish(->("end") := ((), 0))
+                (mmem :== (s"_${program.mainClass.name}.${program.mainMethod.name}", ("_main")) := mmem),
+                () :== (~"dup", 1) := "_main")
+            relation.blockBuilder.finish(->("end") := ((mmem), 0))
 
             relation.builder.compile()
         }
@@ -157,17 +161,18 @@ object Translation {
                 x := add ref := 0
                 friend := add ref := 1
              */
-            val thisRef = "_this_ref"
             
             val initFields = method.parent.fields.zipWithIndex.map((field, index) => 
                 field :== ("add", thisRef) := index + 1
             ).prepended((mmem, thisRef) :== ("mmem.read", _this) := mmem)
 
+            method.parent.fields.foreach(relation.locals.push)
             relation.blockBuilder.adds(initFields)
 
             method.translatableBody.foreach(generateStatement)
 
             relation.blockBuilder.adds(invert(initFields))
+            method.parent.fields.foreach(_ => relation.locals.pop())
             
             relation.blockBuilder.finish(->("end") := (mmem, 0))
             relation.builder.compile()
@@ -266,8 +271,8 @@ object Translation {
             
             relation.blockBuilder.adds(
                 delocalCompute,
-                "_tmp" :== ("dup", delocalTmp) := (),
-                (mmem, 0) :== (~"mmem.readwrite", block.variable) := (mmem, "_tmp"),
+                (mmem, "_tmp") :== ("mmem.readwrite", block.variable) := (mmem, 0),
+                () :== (~"dup", delocalTmp) := "_tmp",
                 mmem :== (~"mmem.allocate", 1) := (mmem, block.variable),
                 invert(delocalCompute)
             )
@@ -349,25 +354,18 @@ object Translation {
         private def generateAssignment(assignment: Translatable.Assignment): Unit = {
             val (compute, tempVar) = generateExpression(assignment.value)
 
-            /*
-                f += 2
-
-                tmp := id := 2
-                m, f_val := mmem.readwrite f := m, ()
-                f_val := add tmp := f_val
-                m, () := mmem.readwrite f := m, f_val
-             */
-
-            val address: Expression = assignment.assignee.index match
-                case None => assignment.assignee.variable.name
-                case Some(index) => indexedAddress(assignment.assignee.variable, index)
+            val (computeAddress, address) = assignment.assignee.index match
+                case None => (Seq(), assignment.assignee.variable.name.name)
+                case Some(index) => (indexedAddress(assignment.assignee.variable, index))
             val value = "_assignee_val"
 
             relation.blockBuilder.adds(
                 compute,
+                computeAddress,
                 (mmem, value) :== ("mmem.readwrite", address) := (mmem, ()),
                 value :== (convert(assignment.op), tempVar) := value,
                 (mmem, ()) :== ("mmem.readwrite", address) := (mmem, value),
+                invert(computeAddress),
                 invert(compute)
             )
         }
@@ -391,15 +389,19 @@ object Translation {
                 m, ()       := mmem.readwrite tmp := m, f_val
 
             */
-            val left = referenceAddress(swap.left)
-            val right = referenceAddress(swap.right)
+            val (computeLeft, left) = referenceAddress(swap.left)
+            val (computeRight, right) = referenceAddress(swap.right)
             val leftVal = "_leftVal"
             val rightVal = "_rightVal"
 
             relation.blockBuilder.adds(
+                computeLeft,
+                computeRight,
                 (mmem, leftVal) :== ("mmem.readwrite", left) := (mmem, ()),
                 (mmem, rightVal) :== ("mmem.readwrite", right) := (mmem, leftVal),
-                (mmem, ()) :== ("mmem.readwrite", left) := (mmem, rightVal)
+                (mmem, ()) :== ("mmem.readwrite", left) := (mmem, rightVal),
+                invert(computeRight),
+                invert(computeLeft)
             )
         }
 
@@ -424,8 +426,8 @@ object Translation {
                 <init variables>
                 m, ref := mmem.read _this := m
              */
-            val calleeAddr: Expression = callee match
-                case None => _this
+            val (computeCalleeAddr, calleeAddr) = callee match
+                case None => (Seq(), _this)
                 case Some(varRef) => referenceAddress(varRef)
             val ref = "_calleeRef"
             val vtable = "_calleeVtable"
@@ -438,7 +440,7 @@ object Translation {
             )
             relation.blockBuilder.adds(
                 lookupVtable,
-                mmem :== (if inverted then ~calledMethod else calledMethod, (calleeAddr, args)) := mmem,
+                mmem :== (if inverted then ~calledMethod else calledMethod, appendVarsIfNotEmpty(calleeAddr, args)) := mmem,
                 invert(lookupVtable)
             )
         }
@@ -454,7 +456,7 @@ object Translation {
         private def generateNewCode(typ: Types.ArrayType | Types.Class, name: Translatable.VariableReference): Seq[Assignment] = {
             var assignments: Seq[Assignment] = Seq()
 
-            val addr = referenceAddress(name)
+            val (computeAddr, addr) = referenceAddress(name)
             val anon = "_newRef"
 
             typ match
@@ -469,9 +471,10 @@ object Translation {
                     assignments = Seq(
                         (mmem, anon) :== (constructor(typ), ()) := mmem
                     )
+            computeAddr ++
             assignments ++ (
                 (mmem, 0) :== ("mmem.readwrite", addr) := (mmem, anon)
-            )
+            ) ++ invert(computeAddr)
         }
 
         private def generateCopy(typ: Types.ArrayType | Types.Class, from: Translatable.VariableReference, to: Translatable.VariableReference): Unit = {
@@ -507,33 +510,33 @@ object Translation {
 
             
             */
-            val fromAddr = referenceAddress(from)
-            val toAddr = referenceAddress(to)
+            val (computeFromAddr, fromAddr) = referenceAddress(from)
+            val (computeToAddr, toAddr) = referenceAddress(to)
             val refCopy = "_ref_copy"
 
-            Seq(
-                (mmem, refCopy) :== ("mmem.read", fromAddr) := mmem,
-                (mmem, 0) :== ("mmem.readwrite", toAddr) := (mmem, refCopy)
-            )
+                computeFromAddr ++
+                computeToAddr ++
+                ((mmem, refCopy) :== ("mmem.read", fromAddr) := mmem) ++
+                ((mmem, 0) :== ("mmem.readwrite", toAddr) := (mmem, refCopy)) ++
+                invert(computeToAddr) ++
+                invert(computeFromAddr)
         }
 
-        private def referenceAddress(ref: Translatable.VariableReference): Expression = {
+        private def referenceAddress(ref: Translatable.VariableReference): (Seq[Assignment], String) = {
            ref.index match
-                case None => ref.variable.name
+                case None => (Seq(), ref.variable.name.name)
                 case Some(index) => indexedAddress(ref.variable, index)
         }
 
-        private def indexedAddress(array: TypedVariable, index: Translatable.Expression): String = {
+        private def indexedAddress(array: TypedVariable, index: Translatable.Expression): (Seq[Assignment], String) = {
             val indexVal = "_index"
             val address = relation.nextAddrVar()
             val (compute, tempVar) = generateExpression(index)
-            relation.blockBuilder.adds(
-                compute,
-                indexVal :== ("dup", tempVar) := (),
-                address :== ("add", array.name) := indexVal,
+            (compute ++
+                ((mmem, address) :== ("mmem.read", array.name) := (mmem)) ++
+                (address :== ("add", tempVar) := address) ++
                 invert(compute)
-            )
-            address
+            , address)
         }
 
         private def convert(op: Syntax.AssignmentOperator): Expression = {
@@ -571,9 +574,9 @@ object Translation {
                     val assignment = temp :== ("add", value) := 0
                     (assignment, temp)
                 case Translatable.Expression.Reference(ref) =>
-                    val addr = referenceAddress(ref)
+                    val (computeAddr, addr) = referenceAddress(ref)
                     val assignment = (mmem, temp) :== ("mmem.read", addr) := mmem
-                    (assignment, temp)
+                    (computeAddr ++ assignment ++ invert(computeAddr), temp)
                 case Translatable.Expression.Nil =>
                     // Nullpointer
                     val assignment = temp :== ("id", ()) := 0

@@ -32,9 +32,9 @@
     - [x] Implement memory management in a way sensible to roopl++ as well as fitting into hssa
     - [-] Translate object construction/destruction, vtables, calls etc.
     - [x] ~~Handle reference variables differently than local variables (in a block the variable musn't be persisted into storage, but a class field does). Types of variables:~~
-    - [-] Implement variable referencing properly
-        - [-] All variables must be stored and referenced because all variables can be copied
-        - [-] Handle referencing errors (i.e. nil pointers?)
-        - [-] Arrays
+    - [x] Implement variable referencing properly
+        - [x] All variables must be stored and referenced because all variables can be copied
+        - [x] Handle referencing errors (i.e. nil pointers?)
+        - [x] Arrays
         - [] Optimize local variables/fields that are never borrowed anywhere to be static (having a single pointer in hssa) instead of being references that live on the heap
     - [] Properly catch translation errors

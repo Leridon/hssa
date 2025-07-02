@@ -14,7 +14,15 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.Errors.Runt
 
 object ManagedMemory extends Plugin {
 
-    case class MMem(content: Array[Value]) extends Value
+    case class MMem(content: Array[Value]) extends Value {
+        override def toString(): String = {
+            val allocatedMemory = content.slice(0, content.lastIndexWhere(_ != null) + 1)
+            val indexSize = allocatedMemory.size.toString().length()
+            allocatedMemory.zipWithIndex.map((value, index) =>
+                s"${String.format(s"%${indexSize}s", index)} => $value"
+            ).mkString("\n")
+        }
+    }
 
     object MMemType extends Types.Type
 

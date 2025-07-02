@@ -69,10 +69,10 @@ object Wellformedness {
     }
 
     private def check(statement: Conditional, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
-        val test = expectExpressionType(Typing.Integer, statement.assertion, scope, errors)
+        val test = expectExpressionType(Typing.Integer, statement.test, scope, errors)
         val thenStatements = statement.thenStatements.map(check(_, scope, errors))
         val elseStatements = statement.elseStatements.map(check(_, scope, errors))
-        val assertion = expectExpressionType(Typing.Integer, statement.test, scope, errors)
+        val assertion = expectExpressionType(Typing.Integer, statement.assertion, scope, errors)
 
         if test.isDefined && assertion.isDefined then
             Translatable.Conditional(test.get, thenStatements, elseStatements, assertion.get)
@@ -81,10 +81,10 @@ object Wellformedness {
     }
 
     private def check(statement: Loop, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
-        val test = expectExpressionType(Typing.Integer, statement.assertion, scope, errors)
+        val test = expectExpressionType(Typing.Integer, statement.test, scope, errors)
         val doStatements = statement.doStatements.map(check(_, scope, errors))
         val loopStatements = statement.loopStatements.map(check(_, scope, errors))
-        val assertion = expectExpressionType(Typing.Integer, statement.test, scope, errors)
+        val assertion = expectExpressionType(Typing.Integer, statement.assertion, scope, errors)
 
         if test.isDefined && assertion.isDefined then
             Translatable.Loop(test.get, doStatements, loopStatements, assertion.get)
@@ -219,6 +219,7 @@ object Wellformedness {
 
     private def checkCall(statement: Call | Uncall, scope: MethodScope, method: Method, callee: Option[VariableReference], parameters: Seq[Option[Variable]], errors: LanguageError.Collector): Unit = {
         val isLocalCall = callee.isEmpty
+
         parameters.zip(method.parameters).foreach(argpair => 
             argpair match
                 // Check that all arg variables exist
@@ -228,8 +229,6 @@ object Wellformedness {
                     if !arg.typ.isA(parameter.typ) then errors.add(Errors.BadTyping(parameter.typ, arg.typ, statement))
                     // Check that fields are not passed to local method
                     if isLocalCall && scope.clazz.fields.contains(arg) then errors.add(Errors.FieldLocalCallArg(arg, statement))
-                    // Check that parameters are not passed to non-local methods
-                    if !isLocalCall && scope.method.parameters.contains(arg) then errors.add(Errors.ParameterNonLocalCallArg(arg, statement))
                 // Variables can't be UntypedVariables anymore
                 case _ => ???
         )
@@ -340,7 +339,7 @@ object Wellformedness {
             case Some(objectType) => Typing.typeOf(reference, scope) match
                 case None => errors.add(Errors.ImpossibleTyping(position))
                 // TODO: This might be too restrictive
-                case Some(variableType) => if variableType != objectType then errors.add(Errors.BadTyping(objectType, variableType, position))
+                case Some(variableType) => if !objectType.isA(variableType) then errors.add(Errors.BadTyping(objectType, variableType, position))
     }
 
     private def buildExpression(expression: Syntax.Expression, scope: Scope): Expression = {
@@ -375,6 +374,5 @@ object Wellformedness {
         case class ArgumentDoesntExist(usage: Statement) extends RooplError(Error, s"argument does not exist.", usage.position)
         case class NonUniqueArgs(usage: Statement) extends RooplError(Error, s"arguments passed to method must be unique.", usage.position)
         case class FieldLocalCallArg(variable: Variable, usage: Statement) extends RooplError(Error, s"variable ${variable.name} passed to local method is a field of this class. This violates reversibility.", usage.position)
-        case class ParameterNonLocalCallArg(variable: Variable, usage: Statement) extends RooplError(Error, s"variable ${variable.name} passed to non-local method is an argument to this method. This violates reversibility.", usage.position)
     }
 }

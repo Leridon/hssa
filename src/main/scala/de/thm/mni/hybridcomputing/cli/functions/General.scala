@@ -6,11 +6,14 @@ import de.thm.mni.hybridcomputing.cli.Evaluation.Arguments
 import de.thm.mni.hybridcomputing.hssa.Formatting
 import de.thm.mni.hybridcomputing.roopl
 import java.nio.file.Path
+import java.nio.file.Files
+import java.nio.charset.StandardCharsets
 
 object General {
     
     def all: Seq[Evaluation.Function] = Seq(
         Load,
+        Save,
         Tap,
         Foreach,
         Dump,
@@ -26,6 +29,24 @@ object General {
             val p = Path.of(path)
             
             _ => CliChain.Value.File.fromPath(p)
+        }
+    }
+
+    object Save extends Function("save") {
+        override def instantiate(args: Arguments): CliChain.Function = {
+            val path = args.expectPositionedString()
+
+            val p = Path.of(path)
+            input =>
+                val output: String = input match
+                    case Value.HSSA(program) =>
+                        Formatting.format(program)
+                    case Value.Roopl(program) =>
+                        roopl.Formatting.format(program)
+                    case _ => input.toString()
+
+                Files.write(p, output.getBytes(StandardCharsets.UTF_8))
+                CliChain.Value.Unit
         }
     }
     
