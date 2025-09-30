@@ -4,6 +4,7 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Value
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
 import scala.collection.mutable
+import scala.compiletime.uninitialized
 
 object Types {
     
@@ -25,7 +26,7 @@ object Types {
     case class Pair(a: Type, b: Type) extends Type
     case class ParameterizedRelation(parameter: Type, in: Type, out: Type) extends Type
     class MetaVariable extends Type {
-        var instance: Type = _
+        var instance: Type = uninitialized
         
         def resolve: Type = {
             this.instance match

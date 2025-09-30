@@ -88,7 +88,7 @@ object Parsing {
         
         import TokenTypes.*
         
-        lazy val whitespace: Parser[Any] = """[ \t\r]*""".r
+        override lazy val whitespace: Parser[Any] = """[ \t\r]*""".r
         
         def eof: Position => Token[TokenTypes] = symbol(EOF)
         

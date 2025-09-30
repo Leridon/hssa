@@ -59,11 +59,9 @@ trait ParserUtilities[TokenClass] extends Parsers {
 
 object ParserUtilities {
     def collect[T](begin: TokenReader[T], end: TokenReader[T]): Seq[Token[T]] = {
-        val r = LazyList.iterate(begin)(_.rest)
+       LazyList.iterate(begin)(_.rest)
           .takeWhile(i => (i ne end) && !i.atEnd)
           .map(_.first)
           .toList
-        
-        r
     }
 }
