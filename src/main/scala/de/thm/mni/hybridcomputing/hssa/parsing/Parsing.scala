@@ -43,7 +43,7 @@ object Parsing {
         
         private type P[T] = this.Parser[T]
         
-        override def skipTokens: Set[Lexing.Tokens.TokenClass] = Set(WHITESPACE, BLOCKCOMMENT, LINECOMMENT)
+        override def skipTokens: Set[Lexing.Tokens.TokenClass] = Set(WHITESPACE, BLOCKCOMMENT, LINECOMMENT, LINEBREAK)
         
         protected def ident: P[Syntax.Identifier] = posi {
             valueToken(IDENT)(classOf[String]) ^^ Syntax.Identifier.apply

@@ -20,8 +20,10 @@ object Lexing {
             case EOF
             case IMPORT
             case LINECOMMENT
+            case LINEBREAK
             case WHITESPACE
-            case BLOCKCOMMENT
+            case BLOCKCOMMENT;
+            
             
             override def toString: String = this match
                 case IDENT => "IDENT"
@@ -39,6 +41,7 @@ object Lexing {
                 case LINECOMMENT => "LINECOMMENT"
                 case BLOCKCOMMENT => "BLOCKCOMMENT"
                 case WHITESPACE => "WHITESPACE"
+                case LINEBREAK => "LINEBREAK"
                 case EOF => "<eof>"
                 case _ => super.toString
         }
@@ -47,7 +50,7 @@ object Lexing {
     object LexicalGrammar extends LexicalGrammarUtilities[Tokens.TokenClass] {
         
         import Tokens.TokenClass.*
-                
+        
         def eof: Position => Token[Tokens.TokenClass] = symbol(EOF)
         
         def token: Parser[Symbol] = (in: Input) =>
@@ -57,7 +60,8 @@ object Lexing {
                   case "import" => symbol(Tokens.TokenClass.IMPORT)
                   case l => symbol(IDENT, l)
               } |
-                "\\s".r ^^^ symbol(WHITESPACE) |
+                "\\s*\\n".r ^^^ symbol(LINEBREAK) |
+                "\\s+".r ^^^ symbol(WHITESPACE) |
                 """//.*""".r ^^^ symbol(LINECOMMENT) |
                 """/\*[^*]*\*+(?:[^/*][^*]*\*+)*/""".r ^^^ symbol(BLOCKCOMMENT) |
                 "->" ^^^ symbol(RARROW) |

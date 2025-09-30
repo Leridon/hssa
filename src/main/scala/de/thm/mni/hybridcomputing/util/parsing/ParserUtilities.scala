@@ -1,6 +1,7 @@
 package de.thm.mni.hybridcomputing.util.parsing
 
 import scala.language.implicitConversions
+import scala.util.chaining.scalaUtilChainingOps
 import scala.util.parsing.combinator.Parsers
 
 trait ParserUtilities[TokenClass] extends Parsers {
@@ -16,11 +17,18 @@ trait ParserUtilities[TokenClass] extends Parsers {
     
     def posi[T <: Positioned](p: this.Parser[T]): Parser[T] = {
         case in: TokenReader[TokenClass] =>
-            val res = p(in)
+            val prefix_whitespace = this.skip(in)
+            
+            val res = p(prefix_whitespace.next)
             
             val end = res.next.asInstanceOf[TokenReader[TokenClass]]
             
-            res.map(r => r.setPosition(SourcePosition(in.file, in.position, end.position)))
+            res.map(r => {
+                r.setPosition(SourcePosition(in.file, in.position, end.position))
+                r._tokens = ParserUtilities.collect(in, end).asInstanceOf[Seq[Token[Any]]]
+                
+                r
+            })
         
         case in => p(in)
     }
@@ -46,5 +54,16 @@ trait ParserUtilities[TokenClass] extends Parsers {
         def ~~(other: IgnoredParser): Parser[T] = self <~ other
         def ~~[U](other: => Parser[U]): Parser[T ~ U] = self ~ other
         def ~~![U](other: => Parser[U]): Parser[T ~ U] = self ~! other
+    }
+}
+
+object ParserUtilities {
+    def collect[T](begin: TokenReader[T], end: TokenReader[T]): Seq[Token[T]] = {
+        val r = LazyList.iterate(begin)(_.rest)
+          .takeWhile(i => (i ne end) && !i.atEnd)
+          .map(_.first)
+          .toList
+        
+        r
     }
 }
