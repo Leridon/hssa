@@ -10,7 +10,7 @@ import scala.collection.concurrent.TrieMap
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 
 class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends TextDocumentService {
-  private val docs : TrieMap[String, ROOPLDocumentModel] = TrieMap[String, ROOPLDocumentModel]()
+  private val openFiles : TrieMap[String, LspROOPLFile] = TrieMap[String, LspROOPLFile]()
   
   override def completion(position: CompletionParams)
   : CompletableFuture[Either[util.List[CompletionItem], CompletionList]] = {
@@ -32,20 +32,21 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
   : CompletableFuture[Either[util.List[? <: Location], util.List[? <: LocationLink]]] = super.definition(params)
 
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
-    val model : ROOPLDocumentModel = ROOPLDocumentModel(params.getTextDocument.getText)
-    docs.put(params.getTextDocument.getUri, model)
+    val content : LspROOPLFile = LspROOPLFile(params.getTextDocument.getText)
+    openFiles.put(params.getTextDocument.getUri, content)
   }
 
   override def didChange(params: DidChangeTextDocumentParams): Unit = {
-    val model : ROOPLDocumentModel = ROOPLDocumentModel(params.getContentChanges.get(0).getText)
-    docs.put(params.getTextDocument.getUri, model)
+    val content : LspROOPLFile = LspROOPLFile(params.getContentChanges.get(0).getText)
+    openFiles.put(params.getTextDocument.getUri, content)
   }
 
   override def didClose(didCloseTextDocumentParams: DidCloseTextDocumentParams): Unit = {
-    docs.remove(didCloseTextDocumentParams.getTextDocument.getUri)
+    openFiles.remove(didCloseTextDocumentParams.getTextDocument.getUri)
   }
 
   override def didSave(params: DidSaveTextDocumentParams): Unit = {
+    
   }
 }
 
@@ -83,10 +84,6 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
     @Override
     public CompletableFuture<WorkspaceEdit> rename(RenameParams params) {
         return null;
-    }
-    
-    @Override
-    public void didSave(DidSaveTextDocumentParams params) {
     }
 }
 } */

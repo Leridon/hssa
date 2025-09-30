@@ -4,7 +4,7 @@ import java.io.{BufferedReader, StringReader}
 import scala.util.Using
 import scala.collection.mutable
 
-class ROOPLDocumentModel(text: String) {
+class LspROOPLFile(text: String) {
   private val lines = mutable.Map[Int, String]()
   
   Using(new BufferedReader(StringReader(text))) { reader =>
