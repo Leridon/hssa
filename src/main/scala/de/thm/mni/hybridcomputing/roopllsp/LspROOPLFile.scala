@@ -4,6 +4,8 @@ import java.io.{BufferedReader, StringReader}
 import scala.util.Using
 import scala.collection.mutable
 
+//TODO: Delete?
+
 class LspROOPLFile(text: String) {
   private val lines = mutable.Map[Int, String]()
   

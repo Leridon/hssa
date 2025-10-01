@@ -1,5 +1,12 @@
 package de.thm.mni.hybridcomputing.roopllsp
 
+import de.thm.mni.hybridcomputing.roopl.Syntax.Program
+import de.thm.mni.hybridcomputing.roopl.parsing.Lexing.Tokens.TokenClass
+import de.thm.mni.hybridcomputing.roopl.parsing.Lexing.lex
+import de.thm.mni.hybridcomputing.roopl.parsing.Parsing
+import de.thm.mni.hybridcomputing.roopl.wellformedness.{ClassGraph, ScopeTree, Wellformedness}
+import de.thm.mni.hybridcomputing.util.errors.LanguageError
+import de.thm.mni.hybridcomputing.util.parsing.{SourceFile, TokenReader}
 import org.eclipse.lsp4j.jsonrpc.messages
 import org.eclipse.lsp4j.{CompletionItem, CompletionList, CompletionParams, DefinitionParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, Location, LocationLink}
 import org.eclipse.lsp4j.services.TextDocumentService
@@ -9,8 +16,10 @@ import java.util.concurrent.CompletableFuture
 import scala.collection.concurrent.TrieMap
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 
+import java.nio.file.NoSuchFileException
+
 class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends TextDocumentService {
-  private val openFiles : TrieMap[String, LspROOPLFile] = TrieMap[String, LspROOPLFile]()
+  private val openFiles : TrieMap[String, String] = TrieMap[String, String]()
   
   override def completion(position: CompletionParams)
   : CompletableFuture[Either[util.List[CompletionItem], CompletionList]] = {
@@ -32,12 +41,12 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
   : CompletableFuture[Either[util.List[? <: Location], util.List[? <: LocationLink]]] = super.definition(params)
 
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
-    val content : LspROOPLFile = LspROOPLFile(params.getTextDocument.getText)
+    val content : String = params.getTextDocument.getText
     openFiles.put(params.getTextDocument.getUri, content)
   }
 
   override def didChange(params: DidChangeTextDocumentParams): Unit = {
-    val content : LspROOPLFile = LspROOPLFile(params.getContentChanges.get(0).getText)
+    val content : String = params.getContentChanges.get(0).getText
     openFiles.put(params.getTextDocument.getUri, content)
   }
 
@@ -46,7 +55,30 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
   }
 
   override def didSave(params: DidSaveTextDocumentParams): Unit = {
-    
+    val text = openFiles.get(params.getTextDocument.getUri)
+    if (text.isDefined) {
+      try {
+        println("LS: parsing")
+        println("LS: Check syntax...")
+
+        val tokenStream: TokenReader[TokenClass] = lex(SourceFile.fromString(text.get))
+        tokenStream.readAll().foreach(token => println(s"$token @ ${token.position.toString}"))
+        val syntax: Program = Parsing.parse(tokenStream)
+        println("LS: Syntax OK")
+
+        println("LS: Check semantics...")
+        val graph: ClassGraph.Program = ClassGraph.check(syntax)
+        val scopes: ScopeTree.Program = Wellformedness.check(graph)
+        println("LS: Semantics OK")
+      } catch {
+        case e: LanguageError.AbortDueToErrors =>
+          e.errors.foreach(println)
+        case e: java.lang.reflect.InvocationTargetException =>
+          e.printStackTrace()
+        case e: NullPointerException =>
+          e.printStackTrace()
+      }
+    }
   }
 }
 
