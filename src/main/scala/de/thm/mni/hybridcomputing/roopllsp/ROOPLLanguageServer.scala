@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.roopllsp
 
-import org.eclipse.lsp4j.{CompletionOptions, InitializeParams, InitializeResult, ServerCapabilities, TextDocumentSyncKind}
+import org.eclipse.lsp4j.{CompletionOptions, DiagnosticRegistrationOptions, InitializeParams, InitializeResult, ServerCapabilities, TextDocumentSyncKind}
 import org.eclipse.lsp4j.services.{LanguageClient, LanguageServer, TextDocumentService, WorkspaceService}
 
 import java.util.concurrent.CompletableFuture
@@ -15,6 +15,7 @@ class ROOPLLanguageServer extends LanguageServer  {
     val result = InitializeResult(ServerCapabilities())
     result.getCapabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
     result.getCapabilities.setCompletionProvider(CompletionOptions())
+    result.getCapabilities.setDiagnosticProvider(DiagnosticRegistrationOptions())
     //      res.getCapabilities().setCodeActionProvider(Boolean.TRUE);
     //      res.getCapabilities().setHoverProvider(Boolean.TRUE);
     //      res.getCapabilities().setReferencesProvider(Boolean.TRUE);

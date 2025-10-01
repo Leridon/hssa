@@ -7,7 +7,7 @@ libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.19"
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % "test"
 libraryDependencies += "commons-io" % "commons-io" % "2.18.0"
 libraryDependencies += "com.google.code.gson" % "gson" % "2.9.0"
-libraryDependencies += "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.9.0"
+libraryDependencies += "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "0.24.0"
 
 lazy val root = (project in file("."))
   .settings(
