@@ -10,18 +10,27 @@ import java.util.concurrent.CompletableFuture
 import scala.collection.concurrent.TrieMap
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 
+
 class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends TextDocumentService {
   private val openFiles : TrieMap[String, String] = TrieMap[String, String]()
+  val idents : scala.collection.mutable.Set[String] = scala.collection.mutable.Set()
   
   override def completion(position: CompletionParams)
   : CompletableFuture[Either[java.util.List[CompletionItem], CompletionList]] = {
     CompletableFuture.supplyAsync(() => {
-      val imageCompletion: CompletionItem = CompletionItem()
-      imageCompletion.setLabel("image::")
-      val includeCompletion: CompletionItem = CompletionItem()
-      includeCompletion.setLabel("include::")
-      val completionItems: List[CompletionItem] = List(imageCompletion, includeCompletion)
-      Either.forLeft(completionItems.asInstanceOf[java.util.List[CompletionItem]])
+      val completionItems: java.util.List[CompletionItem] = new java.util.ArrayList[CompletionItem]()
+
+      val keywords = List("class", "inherits", "method", "int", "if", "then", "else", "fi", "from", "do", "loop", 
+        "until", "construct", "destruct", "local", "delocal", "new", "delete", "copy", "uncopy", "call", "uncall", 
+        "skip", "nil")
+      
+      for (word <- keywords) {
+        completionItems.add(CompletionItem(word))
+      }
+      for (ident <- idents) {
+        completionItems.add(CompletionItem(ident))
+      }
+      Either.forLeft(completionItems)
     })
   }
 
@@ -52,7 +61,7 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
   }
 
   override def diagnostic(params: DocumentDiagnosticParams): CompletableFuture[DocumentDiagnosticReport] = {
-    CompletableFuture.supplyAsync(() => {DiagnosticsProvider().run(params.getTextDocument.getUri, this)})
+    CompletableFuture.supplyAsync(() => {DiagnosticsProvider().run(params.getTextDocument.getUri, this, idents)})
   }
   
   def getOpenFiles : Map[String, String] = openFiles.toMap

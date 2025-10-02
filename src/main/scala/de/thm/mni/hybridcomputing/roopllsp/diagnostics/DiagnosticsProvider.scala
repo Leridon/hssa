@@ -15,14 +15,16 @@ class DiagnosticsProvider {
   
   var diagnostics : java.util.List[Diagnostic] = new java.util.ArrayList[Diagnostic]()
   
-  def run(uri : String, documentService: ROOPLTextDocumentService) : DocumentDiagnosticReport = {
+  def run(uri : String, documentService: ROOPLTextDocumentService, idents : scala.collection.mutable.Set[String]) 
+  : DocumentDiagnosticReport = {
       diagnostics = new java.util.ArrayList[Diagnostic]()
       val text = documentService.getOpenFiles.get(uri)
       if (text.isDefined) {
         val sourceFile = SourceFile.fromString(text.get)
         try {
           val tokenStream: TokenReader[TokenClass] = Lexing.lex(sourceFile)
-          //tokenStream.readAll().foreach(token => println(s"$token @ ${token.position.toString}"))
+          tokenStream.readAll().filter(t => t.typ == TokenClass.IDENT)
+            .foreach(t => if (t.value.isDefined) idents.add(t.value.get.toString))
           val syntax: Program = Parsing.parse(tokenStream)
           val graph: ClassGraph.Program = ClassGraph.check(syntax)
           val scopes: ScopeTree.Program = Wellformedness.check(graph)
