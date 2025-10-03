@@ -90,9 +90,9 @@ object Parsing {
         
         override lazy val whitespace: Parser[Any] = """[ \t\r]*""".r
         
-        def eof: Position => Token[TokenTypes] = symbol(EOF)
+        def eof: Token[TokenTypes] = symbol(EOF)
         
-        override def token: Parser[Token[TokenTypes]] = (in: Input) =>
+        override def token: Parser[Token[TokenTypes]] =
             (
               "\".*\"".r ^^ (s => symbol(STRING, s.tail.init)) |
                 "[^\\s{};=]+".r ^^ (s => symbol(STRING, s)) |
@@ -103,7 +103,7 @@ object Parsing {
                 ";" ^^^ symbol(SEMIC) |
                 "=" ^^^ symbol(EQUAL) |
                 "\n" ^^^ symbol(LINEBREAK)
-              )(in).map(_(in.pos))
+              )
     }
     
     object Grammar extends ParserUtilities[TokenTypes] with ImplicitConversions {

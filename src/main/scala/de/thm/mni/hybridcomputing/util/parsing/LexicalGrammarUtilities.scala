@@ -9,7 +9,7 @@ import scala.util.parsing.input.{Position, Reader}
 
 trait LexicalGrammarUtilities[T] extends RegexParsers {
     // Disable built-in whitespace skip
-    override def skipWhitespace: Boolean = false
+    final override def skipWhitespace: Boolean = false
     final override val whiteSpace: Regex = "".r
     
     type Symbol = Token[T]
@@ -17,10 +17,10 @@ trait LexicalGrammarUtilities[T] extends RegexParsers {
     def token: Parser[Token[T]]
     def whitespace: Parser[Any] = success(())
     
-    def symbol(typ: T): Position => Token[T] = Token(typ, None)
-    def symbol(typ: T, value: Any): Position => Token[T] = Token(typ, Some(value))
+    def symbol(typ: T): Token[T] = Token(typ, None)
+    def symbol(typ: T, value: Any): Token[T] = Token(typ, Some(value))
     
-    lazy val next_token: Parser[Option[Symbol]] =
+    private lazy val next_token: Parser[Option[Symbol]] =
         whitespace ~> // Skip all whitespace
           (token ^^ Some.apply | phrase(success(None))) // Expect token or end of input
     
@@ -37,11 +37,5 @@ trait LexicalGrammarUtilities[T] extends RegexParsers {
         case NoSuccess(msg, pos) => LanguageError.LexicalError(s"$msg at ${pos.pos}").raise()
     }
     
-    def eof: Position => Token[T]
+    def eof: Token[T]
 }
-
-object LexicalGrammarUtilities {
-    case class Comment(lexem: String) extends Positioned
-}
-
-

@@ -45,51 +45,36 @@ object Parsing {
         
         override def skipTokens: Set[Lexing.Tokens.TokenClass] = Set(WHITESPACE, BLOCKCOMMENT, LINECOMMENT, LINEBREAK)
         
-        protected def ident: P[Syntax.Identifier] = posi {
-            valueToken(IDENT)(classOf[String]) ^^ Syntax.Identifier.apply
-        }
+        protected def ident: P[Syntax.Identifier] = valueToken(IDENT)(classOf[String]) ^ Syntax.Identifier.apply
         
-        def simple_expresion: P[Syntax.Expression] = posi {
+        def simple_expresion: P[Syntax.Expression] =
             language.plugins.map(_.literal_parser(this)).foldLeft(failure(""))((a, b) => a | b).map(Expression.Literal(_))
-              | ident ^^ Syntax.Expression.Variable.apply
+              | ident ^ Syntax.Expression.Variable.apply
               | LPAREN ~~ expression ~~ RPAREN
-              | TILDE ~~ simple_expresion ^^ Syntax.Expression.Invert.apply
+              | TILDE ~~ simple_expresion ^ Syntax.Expression.Invert.apply
               | (in => {
                 Failure(s"Expected simple expression but got ${in.first} at ${in.pos}", in)
             })
-        }
         
-        def expression: P[Syntax.Expression] = posi {
-            repsep(simple_expresion, COMMA) ^^ (exps => {
+        def expression: P[Syntax.Expression] =
+            repsep(simple_expresion, COMMA) ^ (exps => {
                 if (exps.isEmpty) Expression.Unit()
                 else exps.init.foldRight(exps.last)((a, b) => Expression.Pair(a, b))
             })
               | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
-        }
         
-        def entry: Parser[Syntax.Entry] = posi {
-            expression ~~ ASGN ~~ rep1sep(ident, COMMA) ~~ LARROW ^^ Syntax.Entry.apply
-        }
+        def entry: Parser[Syntax.Entry] =
+            expression ~~ ASGN ~~ rep1sep(ident, COMMA) ~~ LARROW ^ Syntax.Entry.apply
         
-        def exit: Parser[Syntax.Exit] = posi {
-            RARROW ~~ rep1sep(ident, COMMA) ~~ ASGN ~~ expression ^^ Syntax.Exit.apply
-        }
+        def exit: Parser[Syntax.Exit] = RARROW ~~ rep1sep(ident, COMMA) ~~ ASGN ~~ expression ^ Syntax.Exit.apply
         
-        def assignment: Parser[Syntax.Assignment] = posi {
-            expression ~~ ASGN ~~ expression ~~ expression ~~ ASGN ~~ expression ^^ Syntax.Assignment.apply
-        }
+        def assignment: Parser[Syntax.Assignment] = expression ~~ ASGN ~~ expression ~~ expression ~~ ASGN ~~ expression ^ Syntax.Assignment.apply
         
-        def block: P[Syntax.Block] = posi {
-            entry ~~ rep(assignment) ~~ exit ^^ Syntax.Block.apply
-        }
+        def block: P[Syntax.Block] = entry ~~ rep(assignment) ~~ exit ^ Syntax.Block.apply
         
-        def procedure: P[Syntax.Relation] = posi {
-            RELATION ~~ ident ~~ expression ~~ COLON ~~ rep(block) ^^ Syntax.Relation.apply
-        }
+        def procedure: P[Syntax.Relation] = RELATION ~~ ident ~~ expression ~~ COLON ~~ rep(block) ^ Syntax.Relation.apply
         
-        def program: P[Syntax.Program] = posi {
-            phrase(rep(procedure) ^^ (procedures => Syntax.Program(procedures, language)))
-        }
+        def program: P[Syntax.Program] = phrase(rep(procedure) ^ (procedures => Syntax.Program(procedures, language)))
     }
 }
 

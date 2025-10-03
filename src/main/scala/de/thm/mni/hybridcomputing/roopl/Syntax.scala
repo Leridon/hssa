@@ -36,11 +36,13 @@ in a Reversible Object-Oriented Programming Language
 
 package de.thm.mni.hybridcomputing.roopl
 
-import de.thm.mni.hybridcomputing.util.parsing.Positioned
+import de.thm.mni.hybridcomputing.roopl.parsing.Lexing.Tokens.TokenClass
+import de.thm.mni.hybridcomputing.util.parsing.{HasTokens, Positioned}
+
 import javax.xml.crypto.Data
 
 object Syntax {
-    sealed trait Node extends Positioned
+    sealed trait Node extends Positioned with HasTokens[TokenClass]
 
     sealed abstract class Identifier(name: String) extends Node {
         override def toString: String = name
@@ -84,13 +86,13 @@ object Syntax {
 
     // Types passed to methods and used for variables
     object DataType {
-        case object Integer extends DataType {
+        case class Integer() extends DataType {
             override def toString(): String = "int"
         }
         case class Class(name: ClassIdentifier) extends DataType {
             override def toString(): String = name.toString
         }
-        case object IntegerArray extends DataType {
+        case class IntegerArray() extends DataType {
             override def toString(): String = "int[]"
         }
         case class ClassArray(name: ClassIdentifier) extends DataType {
@@ -127,7 +129,7 @@ object Syntax {
         case class UncallLocal(method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class Call(callee: VariableReference, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
         case class Uncall(callee: VariableReference, method: MethodIdentifier, args: Seq[VariableIdentifier]) extends Statement
-        case object Skip extends Statement
+        case class Skip() extends Statement
         // Since statements are always executed one by one there is no reason to store them binarily (Also makes parsing easier by removing recursion)
         case class Block(list: Seq[Statement]) extends Statement
     }
@@ -150,7 +152,7 @@ object Syntax {
     object Expression {
         case class Literal(value: Int) extends Expression
         case class Reference(ref: VariableReference) extends Expression
-        case object Nil extends Expression
+        case class Nil() extends Expression
         case class Binary(left: Expression, op: Operator, right: Expression) extends Expression
     }
 

@@ -60,8 +60,8 @@ object Parsing {
         }
 
         def dataType: P[Syntax.DataType] = posi {
-            INTEGER ~~ LBRACK ~~ RBRACK ^^^ Syntax.DataType.IntegerArray
-            | INTEGER ^^^ Syntax.DataType.Integer
+            INTEGER ~~ LBRACK ~~ RBRACK ^ Syntax.DataType.IntegerArray
+            | INTEGER ^ Syntax.DataType.Integer
             | classIdent ~~ LBRACK ~~ RBRACK ^^ Syntax.DataType.ClassArray.apply
             | classIdent ^^ Syntax.DataType.Class.apply
         }
@@ -99,7 +99,7 @@ object Parsing {
             | UNCALL ~~ methodIdent ~~ LPAR ~~! repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.UncallLocal.apply
             | CALL ~~ variableLiteral ~~ DBLCOLON ~~! methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Call.apply
             | UNCALL ~~ variableLiteral ~~ DBLCOLON ~~! methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Uncall.apply
-            | SKIP ^^^ Syntax.Statement.Skip
+            | SKIP ^ Syntax.Statement.Skip
             | (in => Failure(s"Expected statement but got ${in.first}", in))
         }
 
@@ -198,19 +198,18 @@ object Parsing {
             chainl1(simple_expression, expression_op8)
         }
 
-        def expression_op8: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] = {
+        def expression_op8: P[(Syntax.Expression, Syntax.Expression) => Syntax.Expression] =
             MUL ^^^ gen_bin_exp(Syntax.Operator.MUL)
             | DIV ^^^ gen_bin_exp(Syntax.Operator.DIV)
             | MOD ^^^ gen_bin_exp(Syntax.Operator.MOD)
             | (in => Failure(s"Expected binary operators but got ${in.first}", in))
-        }
+        
 
-        def simple_expression: P[Syntax.Expression] = posi {
-            valueToken(INTLIT)(classOf[Integer]) ^^ (i => Syntax.Expression.Literal.apply(i.intValue()))
-            | variableLiteral ^^ Syntax.Expression.Reference.apply
-            | NIL ^^^ Syntax.Expression.Nil
+        def simple_expression: P[Syntax.Expression] =
+            valueToken(INTLIT)(classOf[Integer]) ^ (i => Syntax.Expression.Literal.apply(i.intValue()))
+            | variableLiteral ^ Syntax.Expression.Reference.apply
+            | NIL ^ Syntax.Expression.Nil
             | LPAR ~~ expression ~~ RPAR
             | (in => Failure(s"Expected simple expression but got ${in.first} at ${in.pos}", in))
-        }
     }
 }
