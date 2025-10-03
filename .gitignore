@@ -122,3 +122,5 @@ hs_err_pid*
 project/metals.sbt
 project/project
 project/.bloop
+
+programs_dump/**

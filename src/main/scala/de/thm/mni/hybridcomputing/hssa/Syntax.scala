@@ -3,15 +3,13 @@ package de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression.Variable
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value
-import de.thm.mni.hybridcomputing.util.parsing.Positioned
+import de.thm.mni.hybridcomputing.hssa.parsing.Lexing
+import de.thm.mni.hybridcomputing.util.parsing.{HasTokens, Positioned}
 
 import scala.language.implicitConversions
 
 object Syntax {
-    sealed trait Node extends Positioned
-    sealed trait Parenthesised {
-        var paren_count: Int = 0
-    }
+    sealed trait Node extends Positioned with HasTokens[Lexing.Tokens.TokenClass]
     
     case class Identifier(name: String) extends Node {
         override def toString: String = name
@@ -25,7 +23,7 @@ object Syntax {
         }
     }
     
-    sealed abstract class Expression extends Node with Parenthesised {
+    sealed abstract class Expression extends Node {
         override def toString: String = Formatting.format(this, true)
     }
     

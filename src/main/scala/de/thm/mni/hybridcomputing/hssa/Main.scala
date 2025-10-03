@@ -15,7 +15,7 @@ object Main {
     
     def main(args: Array[String]): Unit = {
         try {
-            val file = "programs/fibpair.hssa"
+            val file = "programs/examples/fibpair.hssa"
             
             val language = Language(Seq(Basic, Arithmetic, Information), Language.Semantics(true))
             

@@ -8,8 +8,8 @@ object Inversion {
     
     object Local extends Transformer.BlockTransformer {
         def invert(label: Identifier): Identifier = label match
-            case Identifier(Language.EndLabel) => Identifier(Language.BeginLabel).setPosition(label.position)
-            case Identifier(Language.BeginLabel) => Identifier(Language.EndLabel).setPosition(label.position)
+            case Identifier(Language.EndLabel) => Identifier(Language.BeginLabel)
+            case Identifier(Language.BeginLabel) => Identifier(Language.EndLabel)
             case l => l
         
         

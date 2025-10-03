@@ -21,28 +21,28 @@ class Formatting(options: Formatting.Options = Formatting.Options()) {
 
     val spaces = (" " * options.indentBy)
     val tab = spaces * (_: Int)
-
+    
     def format(prog: Program): String = {
         prog.definitions.map(format).mkString("\n\n")
     }
-
+    
     def format(classDefinition: ClassDefinition): String = {
         val inherits = classDefinition.inherits.map(inherit => s"inherits ${inherit}").getOrElse("")
         s"class ${classDefinition.name} ${inherits}\n" +
-        classDefinition.variableDefinitions.map(tab(1) + format(_)).mkString("\n") +
-        "\n\n" +
-        classDefinition.methodDefinitions.map(format).mkString("\n\n")
+          classDefinition.variableDefinitions.map(tab(1) + format(_)).mkString("\n") +
+          "\n\n" +
+          classDefinition.methodDefinitions.map(format).mkString("\n\n")
     }
-
+    
     def format(variableDefinition: VariableDefinition): String = {
         s"${variableDefinition.typ} ${variableDefinition.name}"
     }
-
+    
     def format(methodDefinition: MethodDefinition): String = {
         tab(1) + s"method ${methodDefinition.name}(${methodDefinition.parameters.map(format).mkString(", ")})\n" +
-        format(methodDefinition.body, 2)
+          format(methodDefinition.body, 2)
     }
-
+    
     def format(statement: Statement, indent: Int): String = {
         (if !statement.isInstanceOf[Block] then tab(indent) else "") + (statement match
             case Assignment(assignee, op, value) => s"${format(assignee)} ${format(op)} ${format(value)}"
@@ -63,26 +63,26 @@ class Formatting(options: Formatting.Options = Formatting.Options()) {
             case Skip => "skip"
             // Could tell statements in the list whether they're the first in the block and, if not, have conditionals, loops etc. print newlines before and after themselves
             case Block(list) => list.map(format(_, indent)).mkString("\n")
-        )
+          )
     }
-
+    
     def format(objectType: ObjectType): String = {
         objectType match
             case ObjectType.Class(name) => name.toString
             case ObjectType.IntegerArray(size) => s"int[${format(size)}]"
             case ObjectType.ClassArray(name, size) => s"$name${format(size)}"
     }
-
+    
     def format(variableReference: VariableReference): String = {
         variableReference match
             case VariableReference.Variable(name) => name.toString
             case VariableReference.Array(name, index) => s"${name}[${format(index)}]"
     }
-
+    
     private def parenthesize(string: String): String = {
         s"(${string})"
     }
-
+    
     def format(expression: Expression, parenthesizeExpressions: Boolean = false): String = {
         expression match
             case Literal(value) => value.toString()
@@ -100,7 +100,7 @@ class Formatting(options: Formatting.Options = Formatting.Options()) {
                 else expressionString
             }
     }
-
+    
     private def precedence(operator: Operator): Int = {
         operator match
             case LOGOR => 1
@@ -120,7 +120,7 @@ class Formatting(options: Formatting.Options = Formatting.Options()) {
             case DIV => 10
             case MOD => 10
     }
-
+    
     def format(operator: Operator): String = {
         operator match
             case ADD => "+"
@@ -140,7 +140,7 @@ class Formatting(options: Formatting.Options = Formatting.Options()) {
             case LESSEQUAL => "<="
             case GREATEREQUAL => ">="
     }
-
+    
     def format(operator: AssignmentOperator): String = {
         operator match
             case AssignmentOperator.ADD => "+="

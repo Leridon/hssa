@@ -1,22 +1,26 @@
 package de.thm.mni.hybridcomputing.util.parsing
 
+import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.LexicalGrammar.success
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
+
+import scala.util.matching.Regex
 import scala.util.parsing.combinator.RegexParsers
 import scala.util.parsing.input.{Position, Reader}
 
 trait LexicalGrammarUtilities[T] extends RegexParsers {
     // Disable built-in whitespace skip
-    override def skipWhitespace: Boolean = false
+    final override def skipWhitespace: Boolean = false
+    final override val whiteSpace: Regex = "".r
     
     type Symbol = Token[T]
     
     def token: Parser[Token[T]]
-    def whitespace: Parser[Any]
+    def whitespace: Parser[Any] = success(())
     
-    def symbol(typ: T): Position => Token[T] = Token(typ, None)
-    def symbol(typ: T, value: Any): Position => Token[T] = Token(typ, Some(value))
+    def symbol(typ: T): Token[T] = Token(typ, None)
+    def symbol(typ: T, value: Any): Token[T] = Token(typ, Some(value))
     
-    lazy val next_token: Parser[Option[Symbol]] =
+    private lazy val next_token: Parser[Option[Symbol]] =
         whitespace ~> // Skip all whitespace
           (token ^^ Some.apply | phrase(success(None))) // Expect token or end of input
     
@@ -30,14 +34,8 @@ trait LexicalGrammarUtilities[T] extends RegexParsers {
     
     def apply(input: Reader[Char]): (Option[Symbol], Input) = parseNext(input) match {
         case Success(token, rest) => (token, rest) // There is a token or it's EOF
-        case NoSuccess(msg, pos) => LanguageError.LexicalError(s"$msg at ${pos.pos}").raise() // Scan Error, invalid token
+        case NoSuccess(msg, pos) => LanguageError.LexicalError(s"$msg at ${pos.pos}").raise()
     }
     
-    def eof: Position => Token[T]
+    def eof: Token[T]
 }
-
-object LexicalGrammarUtilities {
-    case class Comment(lexem: String) extends Positioned
-}
-
-

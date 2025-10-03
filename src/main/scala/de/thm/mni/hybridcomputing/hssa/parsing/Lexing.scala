@@ -19,6 +19,11 @@ object Lexing {
             case TILDE
             case EOF
             case IMPORT
+            case LINECOMMENT
+            case LINEBREAK
+            case WHITESPACE
+            case BLOCKCOMMENT;
+            
             
             override def toString: String = this match
                 case IDENT => "IDENT"
@@ -33,7 +38,12 @@ object Lexing {
                 case TILDE => "TILDE"
                 case COLON => "COLON"
                 case IMPORT => "IMPORT"
+                case LINECOMMENT => "LINECOMMENT"
+                case BLOCKCOMMENT => "BLOCKCOMMENT"
+                case WHITESPACE => "WHITESPACE"
+                case LINEBREAK => "LINEBREAK"
                 case EOF => "<eof>"
+                case _ => super.toString
         }
     }
     
@@ -41,28 +51,28 @@ object Lexing {
         
         import Tokens.TokenClass.*
         
-        lazy val whitespace: Parser[Any] = """(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))*""".r
+        def eof: Token[Tokens.TokenClass] = symbol(EOF)
         
-        def eof: Position => Token[Tokens.TokenClass] = symbol(EOF)
-        
-        def token: Parser[Symbol] = (in: Input) =>
-            (
-              "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ {
-                  case "rel" => symbol(Tokens.TokenClass.RELATION)
-                  case "import" => symbol(Tokens.TokenClass.IMPORT)
-                  case l => symbol(IDENT, l)
-              } |
-                "->" ^^^ symbol(RARROW) |
-                "<-" ^^^ symbol(LARROW) |
-                "(" ^^^ symbol(LPAREN) |
-                ")" ^^^ symbol(RPAREN) |
-                ":=" ^^^ symbol(ASGN) |
-                "," ^^^ symbol(COMMA) |
-                "~" ^^^ symbol(TILDE) |
-                ":" ^^^ symbol(COLON) |
-                "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
-                "'.'".r ^^ (l => symbol(INTLIT, l.charAt(1).toInt))
-              )(in).map(_(in.pos))
+        def token: Parser[Symbol] =
+            "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ {
+                case "rel" => symbol(Tokens.TokenClass.RELATION)
+                case "import" => symbol(Tokens.TokenClass.IMPORT)
+                case l => symbol(IDENT, l)
+            } |
+              "\\n".r ^^^ symbol(LINEBREAK) |
+              "\\s+".r ^^^ symbol(WHITESPACE) |
+              """//.*""".r ^^^ symbol(LINECOMMENT) |
+              """/\*[^*]*\*+(?:[^/*][^*]*\*+)*/""".r ^^^ symbol(BLOCKCOMMENT) |
+              "->" ^^^ symbol(RARROW) |
+              "<-" ^^^ symbol(LARROW) |
+              "(" ^^^ symbol(LPAREN) |
+              ")" ^^^ symbol(RPAREN) |
+              ":=" ^^^ symbol(ASGN) |
+              "," ^^^ symbol(COMMA) |
+              "~" ^^^ symbol(TILDE) |
+              ":" ^^^ symbol(COLON) |
+              "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
+              "'.'".r ^^ (l => symbol(INTLIT, l.charAt(1).toInt))
     }
     
     def lex(file: SourceFile): TokenReader[Tokens.TokenClass] = TokenReader(file, file.reader, LexicalGrammar)
