@@ -19,12 +19,14 @@ trait ParserUtilities[TokenClass] extends Parsers {
         case in: TokenReader[TokenClass] =>
             val prefix_whitespace = this.skip(in)
             
-            val res = p(prefix_whitespace.next)
+            val after_whitespace = prefix_whitespace.next.asInstanceOf[TokenReader[TokenClass]]
+            
+            val res = p(after_whitespace)
             
             val end = res.next.asInstanceOf[TokenReader[TokenClass]]
             
             res.map(r => {
-                r.setPosition(SourcePosition(in.file, in.position, end.position))
+                r.setPosition(SourcePosition(in.file, after_whitespace.position, end.position))
                 r._tokens = ParserUtilities.collect(in, end).asInstanceOf[Seq[Token[Any]]]
                 
                 r
