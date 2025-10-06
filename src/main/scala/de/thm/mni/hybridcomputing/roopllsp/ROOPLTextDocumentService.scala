@@ -11,6 +11,8 @@ import java.util.concurrent.CompletableFuture
 import scala.collection.concurrent.TrieMap
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 
+import java.util
+
 
 class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends TextDocumentService {
   private val openFiles : TrieMap[String, String] = TrieMap[String, String]()
@@ -41,8 +43,11 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
   }
 
   override def definition(params: DefinitionParams)
-  : CompletableFuture[Either[java.util.List[? <: Location], java.util.List[? <: LocationLink]]] 
-  = super.definition(params)
+  : CompletableFuture[Either[java.util.List[? <: Location], java.util.List[? <: LocationLink]]] = {
+    CompletableFuture.supplyAsync(() => {
+      Either.forLeft(new util.ArrayList[Location]())
+    })
+  } 
 
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
     val content : String = params.getTextDocument.getText
