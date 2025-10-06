@@ -98,7 +98,7 @@ object ScopeTree {
         body match
             case Syntax.Statement.Block(list) =>
                 list.flatMap(statement => buildStatementNodes(statement, scope))
-            case Syntax.Statement.Skip => Seq()
+            case Syntax.Statement.Skip() => Seq()
             case statement: Syntax.Statement => Seq(buildStatementNode(statement, scope))
     }
 
@@ -162,7 +162,7 @@ object ScopeTree {
         val result = expression match
             case Syntax.Expression.Literal(value) => Expression.Literal(value)
             case Syntax.Expression.Reference(ref) => Expression.Reference(deriveRef(ref, scope))
-            case Syntax.Expression.Nil => Expression.Nil
+            case Syntax.Expression.Nil() => Expression.Nil
             case Syntax.Expression.Binary(left, op, right) => Expression.Binary(buildExpression(left, scope), op, buildExpression(right, scope))
         result.setPosition(expression.position)
         result

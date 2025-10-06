@@ -10,5 +10,7 @@ trait Positioned {
         this
     }
     
+    def hasPosition: Boolean = this._position != null
+    
     def position: SourcePosition = this._position
 }
