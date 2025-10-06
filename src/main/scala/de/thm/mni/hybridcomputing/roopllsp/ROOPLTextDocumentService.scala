@@ -1,6 +1,7 @@
 package de.thm.mni.hybridcomputing.roopllsp
 
 
+import de.thm.mni.hybridcomputing.roopllsp.compiler.CompilerHandler
 import de.thm.mni.hybridcomputing.roopllsp.diagnostics.DiagnosticsProvider
 import org.eclipse.lsp4j.jsonrpc.messages
 import org.eclipse.lsp4j.{CompletionItem, CompletionList, CompletionParams, DefinitionParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport, Location, LocationLink}
@@ -13,7 +14,8 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 
 class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends TextDocumentService {
   private val openFiles : TrieMap[String, String] = TrieMap[String, String]()
-  val idents : scala.collection.mutable.Set[String] = scala.collection.mutable.Set()
+  private val idents : scala.collection.mutable.Set[String] = scala.collection.mutable.Set()
+  val compilerHandler: CompilerHandler = CompilerHandler()
   
   override def completion(position: CompletionParams)
   : CompletableFuture[Either[java.util.List[CompletionItem], CompletionList]] = {
@@ -27,7 +29,7 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
       for (word <- keywords) {
         completionItems.add(CompletionItem(word))
       }
-      for (ident <- idents) {
+      for (ident <- compilerHandler.getIdentifiers(position.getTextDocument.getUri)) {
         completionItems.add(CompletionItem(ident))
       }
       Either.forLeft(completionItems)
@@ -44,12 +46,16 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
 
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
     val content : String = params.getTextDocument.getText
-    openFiles.put(params.getTextDocument.getUri, content)
+    val uri : String = params.getTextDocument.getUri
+    openFiles.put(uri, content)
+    compilerHandler.run(uri, this)
   }
 
   override def didChange(params: DidChangeTextDocumentParams): Unit = {
     val content : String = params.getContentChanges.get(0).getText
-    openFiles.put(params.getTextDocument.getUri, content)
+    val uri : String = params.getTextDocument.getUri
+    openFiles.put(uri, content)
+    compilerHandler.run(uri, this)
   }
 
   override def didClose(didCloseTextDocumentParams: DidCloseTextDocumentParams): Unit = {
@@ -61,7 +67,7 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
   }
 
   override def diagnostic(params: DocumentDiagnosticParams): CompletableFuture[DocumentDiagnosticReport] = {
-    CompletableFuture.supplyAsync(() => {DiagnosticsProvider().run(params.getTextDocument.getUri, this, idents)})
+    CompletableFuture.supplyAsync(() => {DiagnosticsProvider().run(params.getTextDocument.getUri, this)})
   }
   
   def getOpenFiles : Map[String, String] = openFiles.toMap
