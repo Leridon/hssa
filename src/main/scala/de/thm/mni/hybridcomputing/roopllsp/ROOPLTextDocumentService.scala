@@ -1,8 +1,10 @@
 package de.thm.mni.hybridcomputing.roopllsp
 
 
+import de.thm.mni.hybridcomputing.roopl.Syntax
 import de.thm.mni.hybridcomputing.roopllsp.compiler.CompilerHandler
 import de.thm.mni.hybridcomputing.roopllsp.diagnostics.DiagnosticsProvider
+import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 import org.eclipse.lsp4j.jsonrpc.messages
 import org.eclipse.lsp4j.{CompletionItem, CompletionList, CompletionParams, DefinitionParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport, Location, LocationLink}
 import org.eclipse.lsp4j.services.TextDocumentService
@@ -44,8 +46,30 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
 
   override def definition(params: DefinitionParams)
   : CompletableFuture[Either[java.util.List[? <: Location], java.util.List[? <: LocationLink]]] = {
+    
+    //TODO: Instead build a map of source positions and the corresponding syntax things
+    //TODO: Or something like that I guess, because this is impossible to deal with
+    
     CompletableFuture.supplyAsync(() => {
-      Either.forLeft(new util.ArrayList[Location]())
+      val locations = new util.ArrayList[Location]()
+      val uri = params.getTextDocument.getUri
+      //compilerHandler.run(params.getTextDocument.getUri, this)
+      val pos = params.getPosition
+      val text = openFiles.get(uri)
+      if (text.isDefined) {
+        val sourceFile = SourceFile.fromString(text.get)
+        val word = Helper.getWordAt(sourceFile, pos)
+        if (compilerHandler.getDefinitions(uri).contains(Syntax.VariableIdentifier(word))) {
+          locations.add(Location(uri, compilerHandler.getDefinitions(uri)(Syntax.VariableIdentifier(word))))
+        }
+        if (compilerHandler.getDefinitions(uri).contains(Syntax.ClassIdentifier(word))) {
+          locations.add(Location(uri, compilerHandler.getDefinitions(uri)(Syntax.ClassIdentifier(word))))
+        }
+        if (compilerHandler.getDefinitions(uri).contains(Syntax.MethodIdentifier(word))) {
+          locations.add(Location(uri, compilerHandler.getDefinitions(uri)(Syntax.MethodIdentifier(word))))
+        }
+      }
+      Either.forLeft(locations)
     })
   } 
 
