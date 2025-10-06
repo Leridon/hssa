@@ -97,8 +97,8 @@ object Typing {
             case t: Translatable.TypedVariable => t
             case ut: ScopeTree.UntypedVariable =>
                 val resultType: Option[Type] = ut.typ match
-                    case Syntax.DataType.Integer => Some(Integer)
-                    case Syntax.DataType.IntegerArray => Some(IntegerArray(null))
+                    case Syntax.DataType.Integer() => Some(Integer)
+                    case Syntax.DataType.IntegerArray() => Some(IntegerArray(null))
                     case Syntax.DataType.Class(name) => classFromName(name, program).map(Class(_)) match
                         case Some(typ) => Some(typ)
                         case None =>
