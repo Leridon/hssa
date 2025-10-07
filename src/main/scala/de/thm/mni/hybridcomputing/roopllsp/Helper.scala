@@ -5,7 +5,7 @@ import org.eclipse.lsp4j.{Position, Range}
 
 object Helper {
   def posToRange(pos : SourcePosition) : Range = {
-    Range(Position(pos.from.line, pos.from.column), Position(pos.to.line, pos.to.column))
+    Range(Position(pos.from.line - 1, pos.from.column), Position(pos.to.line - 1, pos.to.column))
   }
   
   def getWordAt(source : SourceFile, position: Position) : String = {
