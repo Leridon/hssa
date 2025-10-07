@@ -1,100 +1,86 @@
 package de.thm.mni.hybridcomputing.roopllsp.compiler
 
 import de.thm.mni.hybridcomputing.roopl.Syntax
+import de.thm.mni.hybridcomputing.roopl.Syntax.VariableIdentifier
+import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.{Class, Program, Variable}
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree
 
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
 object SyntaxTable {
+  private var scopeMap: mutable.Map[ScopeTree.Scope, Map[Syntax.Identifier, SyntaxTableEntry]]
+  = TrieMap[ScopeTree.Scope, Map[Syntax.Identifier, SyntaxTableEntry]]()
 
-  private var syntaxMap: mutable.Map[Syntax.Node, SyntaxTableEntry] = TrieMap[Syntax.Node, SyntaxTableEntry]()
-
-  def buildDefinitionMap(scopes: ScopeTree.Program): Map[Syntax.Node, SyntaxTableEntry] = {
-    syntaxMap = TrieMap[Syntax.Node, SyntaxTableEntry]()
-    for (classDefinition <- scopes.classProgram.syntax.definitions) {
-      syntaxMap.put(classDefinition, SyntaxTableEntry(classDefinition.name, classDefinition.position, scopes.classProgram.syntax, true))
-
-      for (variable <- classDefinition.variableDefinitions) {
-        syntaxMap.put(variable, SyntaxTableEntry(variable.name, variable.position, classDefinition, true))
-      }
-
-      for (method <- classDefinition.methodDefinitions) {
-        syntaxMap.put(method, SyntaxTableEntry(method.name, method.position, classDefinition, true))
-        for (param <- method.parameters) {
-          syntaxMap.put(param, SyntaxTableEntry(method.name, param.position, method))
-        }
-        handleStatement(method.body, method)
-      }
-    }
-
-    println(syntaxMap)
-    syntaxMap.toMap
+  private class ProgramScope(val programDef: Program) extends ScopeTree.Scope {
+    override def program: Program = programDef
+    override def clazz: Class = null
+    override def lookupVariable(name: VariableIdentifier): Option[Variable] = None
   }
-
-  private def handleStatement(statement: Syntax.Statement, scope: Syntax.Node): Unit = {
-    //TODO: Check all these statements
+  
+  def buildDefinitionMap(program: ScopeTree.Program): Map[ScopeTree.Scope, Map[Syntax.Identifier, SyntaxTableEntry]] = {
+    scopeMap = TrieMap[ScopeTree.Scope, Map[Syntax.Identifier, SyntaxTableEntry]]()
+    val programScope = ProgramScope(program)
+    val programSyntaxMap = TrieMap[Syntax.Identifier, SyntaxTableEntry]()
+    
+    for (c <- program.classes) {
+      val classSyntaxMap = TrieMap[Syntax.Identifier, SyntaxTableEntry]()
+      programSyntaxMap.put(c.graphClass.name, SyntaxTableEntry(c.graphClass.syntax.position, programScope))
+      for (variable <- c.graphClass.syntax.variableDefinitions) {
+        classSyntaxMap.put(variable.name, SyntaxTableEntry(variable.position, c))
+      }
+      for (method <- c.methods) {
+        val methodSyntaxMap = TrieMap[Syntax.Identifier, SyntaxTableEntry]()
+        classSyntaxMap.put(method.name, SyntaxTableEntry(method.graphMethod.syntax.position, c))
+        for (param <- method.parameters) {
+          methodSyntaxMap.put(param.name, SyntaxTableEntry(param.definition, method))
+        }
+        handleStatement(method.graphMethod.syntax.body, method, methodSyntaxMap)
+        scopeMap.put(method, methodSyntaxMap.toMap)
+      }
+      scopeMap.put(c, classSyntaxMap.toMap)
+    }
+    scopeMap.put(programScope, programSyntaxMap.toMap)
+    scopeMap.toMap
+  }
+  
+  private def handleStatement(statement : Syntax.Statement, scope : ScopeTree.Scope, 
+                              syntaxMap : mutable.Map[Syntax.Identifier, SyntaxTableEntry]) : Unit = {
+    
     statement match
       case assign: Syntax.Statement.Assignment =>
-        syntaxMap.put(assign.assignee, SyntaxTableEntry(assign.assignee.name, assign.assignee.position, scope))
-        handleExpression(assign.value, scope)
-
+        
       case swap: Syntax.Statement.Swap =>
-        syntaxMap.put(swap.right, SyntaxTableEntry(swap.right.name, swap.right.position, scope))
-        syntaxMap.put(swap.left, SyntaxTableEntry(swap.left.name, swap.left.position, scope))
-
+        
       case cond: Syntax.Statement.Conditional =>
-        handleStatement(cond.thenStatement, scope)
-        handleStatement(cond.elseStatement, scope)
-        handleExpression(cond.test, scope)
-        handleExpression(cond.assertion, scope)
-
+        handleStatement(cond.thenStatement, scope, syntaxMap)
+        handleStatement(cond.elseStatement, scope, syntaxMap)
+        
       case loop: Syntax.Statement.Loop =>
-        handleStatement(loop.doStatement, scope)
-        handleStatement(loop.loopStatement, scope)
-        handleExpression(loop.test, scope)
-        handleExpression(loop.assertion, scope)
+        handleStatement(loop.doStatement, scope, syntaxMap)
+        handleStatement(loop.loopStatement, scope, syntaxMap)
 
       case objBlock: Syntax.Statement.ObjectBlock =>
-        //syntaxMap.put(objBlock, ScopeTableEntry(objBlock.typ, objBlock.typ.position, scope))
-        syntaxMap.put(objBlock, SyntaxTableEntry(objBlock.name, objBlock.name.position, scope, true))
-        handleStatement(objBlock.statement, scope)
+        syntaxMap.put(objBlock.name, SyntaxTableEntry(objBlock.name.position, scope))
+        handleStatement(objBlock.statement, scope, syntaxMap)
 
       case localBlock: Syntax.Statement.LocalBlock =>
-        handleType(localBlock.typ, scope)
-        syntaxMap.put(localBlock, SyntaxTableEntry(localBlock.name, localBlock.name.position, scope, true))
-        handleStatement(localBlock.statement, scope)
-        handleExpression(localBlock.compute, scope)
-        handleExpression(localBlock.uncompute, scope)
-
+        syntaxMap.put(localBlock.name, SyntaxTableEntry(localBlock.name.position, scope))
+        handleStatement(localBlock.statement, scope, syntaxMap)
+        
       case newS: Syntax.Statement.New =>
-        handleType(newS.typ, scope)
-        syntaxMap.put(newS, SyntaxTableEntry(newS.name.name, newS.name.name.position, scope, true))
+        syntaxMap.put(newS.name.name, SyntaxTableEntry(newS.name.name.position, scope))
 
       case del: Syntax.Statement.Delete =>
-        handleType(del.typ, scope)
-        syntaxMap.put(del, SyntaxTableEntry(del.name.name, del.name.name.position, scope, true))
+        syntaxMap.put(del.name.name, SyntaxTableEntry(del.name.name.position, scope))
 
-      case copy: Syntax.Statement.Copy => 
+      case copy: Syntax.Statement.Copy =>
       case uncopy: Syntax.Statement.Uncopy =>
       case callLocal: Syntax.Statement.CallLocal =>
       case uncallLocal: Syntax.Statement.UncallLocal =>
       case call: Syntax.Statement.Call =>
       case uncall: Syntax.Statement.Uncall =>
       case skip: Syntax.Statement.Skip =>
-      case block: Syntax.Statement.Block => for (s <- block.list) handleStatement(s, scope)
+      case block: Syntax.Statement.Block => for (s <- block.list) handleStatement(s, scope, syntaxMap)
   }
-
-  private def handleExpression(expression: Syntax.Expression, scope: Syntax.Node): Unit = {
-    //TODO: Fill out or delete
-  }
-
-  private def handleType(typ: Syntax.DataType, scope: Syntax.Node): Unit = {
-    //TODO: Fill out or delete
-  }
-
-  private def handleType(typ: Syntax.ObjectType, scope: Syntax.Node): Unit = {
-    //TODO: Fill out or delete
-  }
-
 }

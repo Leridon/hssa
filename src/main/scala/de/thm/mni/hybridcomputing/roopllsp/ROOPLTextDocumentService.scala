@@ -55,18 +55,21 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
       //compilerHandler.run(params.getTextDocument.getUri, this)
       val pos = params.getPosition
       val text = openFiles.get(uri)
+      
       if (text.isDefined) {
         val word = Helper.getWordAt(SourceFile.fromString(text.get), pos)
         val syntaxTable = compilerHandler.getSyntaxTable(uri)
-        for (k <- syntaxTable.keys) {
-          if ((syntaxTable(k).name == Syntax.ClassIdentifier(word) 
-            || syntaxTable(k).name == Syntax.VariableIdentifier(word) 
-            || syntaxTable(k).name == Syntax.MethodIdentifier(word) 
-            ) && syntaxTable(k).isDefinition) {
-            locations.add(Location(uri, Helper.posToRange(syntaxTable(k).pos)))
+        for (scope <- syntaxTable.keys) {
+          for (ident <- syntaxTable(scope).keys) {
+            if ident == Syntax.ClassIdentifier(word) 
+              || ident == Syntax.VariableIdentifier(word) 
+              || ident == Syntax.MethodIdentifier(word) 
+            then
+              println("SERVER: found " + ident + " in " + scope.clazz.name.name)
+              locations.add(Location(uri, Helper.posToRange(syntaxTable(scope)(ident).pos)))
           }
         }
-      }
+      } 
       Either.forLeft(locations)
     })
   } 
