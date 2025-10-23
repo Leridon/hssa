@@ -26,11 +26,9 @@ object LspMain {
     val languageServer: ROOPLLanguageServer = ROOPLLanguageServer()
     
     val wrapper : Function[MessageConsumer, MessageConsumer] = (consumer : MessageConsumer) => {
-      val result : MessageConsumer = new MessageConsumer {
-        override def consume(message: Message): Unit = {
-          println(message)
-          consumer.consume(message)
-        }
+      val result : MessageConsumer = (message: Message) => {
+        println(message)
+        consumer.consume(message)
       }
       result
     }

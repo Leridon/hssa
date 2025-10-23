@@ -17,12 +17,8 @@ object Helper {
   
   def getWordAt(source : SourceFile, position: Position) : String = {
     val line = source.getLine(position.getLine + 1)
-    //println("SERVER: Line is " + line.replaceAll(" ", "\\\\s").replaceAll("\t", "\\\\t"))
     var word = seekWord(line, position.getCharacter)
     if word == "" then word = seekWord(line, position.getCharacter - 1)
-   
-    //println("SERVER: Lookup at " + position + " (" + position.getCharacter + ")" + " found " + word)
-    //println("SERVER: but char is " + line.charAt(position.getCharacter))
     word
   }
   
