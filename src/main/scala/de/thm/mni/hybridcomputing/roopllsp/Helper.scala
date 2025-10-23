@@ -16,14 +16,22 @@ object Helper {
   }
   
   def getWordAt(source : SourceFile, position: Position) : String = {
-    val charPos = position.getCharacter
     val line = source.getLine(position.getLine + 1)
-    
-    var index = charPos
+    //println("SERVER: Line is " + line.replaceAll(" ", "\\\\s").replaceAll("\t", "\\\\t"))
+    var word = seekWord(line, position.getCharacter)
+    if word == "" then word = seekWord(line, position.getCharacter - 1)
+   
+    //println("SERVER: Lookup at " + position + " (" + position.getCharacter + ")" + " found " + word)
+    //println("SERVER: but char is " + line.charAt(position.getCharacter))
+    word
+  }
+  
+  private def seekWord(line : String, column : Int) : String = {
+    var index = column
     var word = ""
     var found = true
-    
-    while (found) {
+
+    while (found && index > 0) {
       found = false
       val char = line.charAt(index)
       if (char.isLetter || char.isDigit) {
@@ -32,20 +40,22 @@ object Helper {
         found = true
       }
     }
-    
-    index = charPos+1
-    found = true
-    
-    while (found) {
-      found = false
-      val char = line.charAt(index)
-      if (char.isLetter || char.isDigit) {
-        word = word + char
-        index = index + 1
-        found = true
+
+    index = column
+
+    if (line.charAt(index).isLetter || line.charAt(index).isDigit) {
+      index = index + 1
+      found = true
+      while (found && index < line.length) {
+        found = false
+        val char = line.charAt(index)
+        if (char.isLetter || char.isDigit) {
+          word = word + char
+          index = index + 1
+          found = true
+        }
       }
     }
-    println("SERVER: Lookup at " + position + " found " + word)
     word
   }
 
