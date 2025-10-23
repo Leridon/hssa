@@ -9,8 +9,7 @@ import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
 object SyntaxTable {
-  private var scopeMap: mutable.Map[ScopeTree.Scope, Map[Syntax.Identifier, SyntaxTableEntry]]
-  = TrieMap[ScopeTree.Scope, Map[Syntax.Identifier, SyntaxTableEntry]]()
+  private var scopeMap: mutable.Map[ScopeTree.Scope, ScopeMapEntry] = TrieMap[ScopeTree.Scope, ScopeMapEntry]()
 
   private class ProgramScope(val programDef: Program) extends ScopeTree.Scope {
     override def program: Program = programDef
@@ -18,8 +17,8 @@ object SyntaxTable {
     override def lookupVariable(name: VariableIdentifier): Option[Variable] = None
   }
   
-  def buildDefinitionMap(program: ScopeTree.Program): Map[ScopeTree.Scope, Map[Syntax.Identifier, SyntaxTableEntry]] = {
-    scopeMap = TrieMap[ScopeTree.Scope, Map[Syntax.Identifier, SyntaxTableEntry]]()
+  def buildDefinitionMap(program: ScopeTree.Program): Map[ScopeTree.Scope, ScopeMapEntry] = {
+    scopeMap = TrieMap[ScopeTree.Scope, ScopeMapEntry]()
     val programScope = ProgramScope(program)
     val programSyntaxMap = TrieMap[Syntax.Identifier, SyntaxTableEntry]()
     
@@ -36,11 +35,11 @@ object SyntaxTable {
           methodSyntaxMap.put(param.name, SyntaxTableEntry(param.definition, method))
         }
         handleStatement(method.graphMethod.syntax.body, method, methodSyntaxMap)
-        scopeMap.put(method, methodSyntaxMap.toMap)
+        scopeMap.put(method, ScopeMapEntry(method.graphMethod.syntax.position, methodSyntaxMap.toMap))
       }
-      scopeMap.put(c, classSyntaxMap.toMap)
+      scopeMap.put(c, ScopeMapEntry(c.graphClass.syntax.position, classSyntaxMap.toMap))
     }
-    scopeMap.put(programScope, programSyntaxMap.toMap)
+    scopeMap.put(programScope, ScopeMapEntry(programScope.programDef.classProgram.syntax.position, programSyntaxMap.toMap))
     scopeMap.toMap
   }
   

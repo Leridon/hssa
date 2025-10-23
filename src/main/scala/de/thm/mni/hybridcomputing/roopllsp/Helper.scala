@@ -5,7 +5,14 @@ import org.eclipse.lsp4j.{Position, Range}
 
 object Helper {
   def posToRange(pos : SourcePosition) : Range = {
-    Range(Position(pos.from.line - 1, pos.from.column), Position(pos.to.line - 1, pos.to.column))
+    Range(Position(pos.from.line - 1, pos.from.column), Position(pos.to.line - 1, pos.to.column - 1))
+  }
+
+  def withinRange(position: Position, range: SourcePosition) : Boolean = {
+    val start = range.from
+    val end = range.to
+    if (position.getLine >= start.line && position.getLine <= end.line) true
+    else false
   }
   
   def getWordAt(source : SourceFile, position: Position) : String = {
@@ -38,7 +45,7 @@ object Helper {
         found = true
       }
     }
-    println("SERVER: " + word)
+    println("SERVER: Lookup at " + position + " found " + word)
     word
   }
 

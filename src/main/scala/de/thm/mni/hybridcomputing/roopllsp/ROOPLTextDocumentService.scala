@@ -15,7 +15,6 @@ import org.eclipse.lsp4j.jsonrpc.messages.Either
 
 import java.util
 
-
 class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends TextDocumentService {
   private val openFiles : TrieMap[String, String] = TrieMap[String, String]()
   private val idents : scala.collection.mutable.Set[String] = scala.collection.mutable.Set()
@@ -46,13 +45,9 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
 
   override def definition(params: DefinitionParams)
   : CompletableFuture[Either[java.util.List[? <: Location], java.util.List[? <: LocationLink]]] = {
-    
-    //TODO: Hmmmm
-    
     CompletableFuture.supplyAsync(() => {
       val locations = new util.ArrayList[Location]()
       val uri = params.getTextDocument.getUri
-      //compilerHandler.run(params.getTextDocument.getUri, this)
       val pos = params.getPosition
       val text = openFiles.get(uri)
       
@@ -60,13 +55,17 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
         val word = Helper.getWordAt(SourceFile.fromString(text.get), pos)
         val syntaxTable = compilerHandler.getSyntaxTable(uri)
         for (scope <- syntaxTable.keys) {
-          for (ident <- syntaxTable(scope).keys) {
-            if ident == Syntax.ClassIdentifier(word) 
-              || ident == Syntax.VariableIdentifier(word) 
-              || ident == Syntax.MethodIdentifier(word) 
-            then
-              println("SERVER: found " + ident + " in " + scope.clazz.name.name)
-              locations.add(Location(uri, Helper.posToRange(syntaxTable(scope)(ident).pos)))
+          //val withinScopes = ListBuffer[ScopeTree.Scope]()
+          if (Helper.withinRange(pos, syntaxTable(scope).pos)) {
+            for (ident <- syntaxTable(scope).syntaxMap.keys) {
+              if ident == Syntax.ClassIdentifier(word)
+                || ident == Syntax.VariableIdentifier(word)
+                || ident == Syntax.MethodIdentifier(word)
+              then
+                //if (scope)
+                println("SERVER: found " + ident + " in " + scope)
+                locations.add(Location(uri, Helper.posToRange(syntaxTable(scope).syntaxMap(ident).pos)))
+            }
           }
         }
       } 

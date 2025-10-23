@@ -17,8 +17,8 @@ class CompilerHandler {
   
   private val errors: mutable.Map[String, List[LanguageError]] = TrieMap[String, List[LanguageError]]()
   private val identifiers: mutable.Map[String, Set[String]] = TrieMap[String, Set[String]]()
-  private val syntaxTable : mutable.Map[String, Map[ScopeTree.Scope, Map[Syntax.Identifier, SyntaxTableEntry]]] 
-  = TrieMap[String, Map[ScopeTree.Scope, Map[Syntax.Identifier, SyntaxTableEntry]]]()
+  private val syntaxTable : mutable.Map[String, Map[ScopeTree.Scope, ScopeMapEntry]]
+  = TrieMap[String, Map[ScopeTree.Scope, ScopeMapEntry]]()
   
   def run(uri : String, documentService: ROOPLTextDocumentService) : Unit = {
     val text = documentService.getOpenFiles.get(uri)
@@ -49,5 +49,5 @@ class CompilerHandler {
   
   def getErrors: Map[String, List[LanguageError]] = errors.toMap
   def getIdentifiers: Map[String, Set[String]] = identifiers.toMap
-  def getSyntaxTable: Map[String, Map[ScopeTree.Scope, Map[Syntax.Identifier, SyntaxTableEntry]]] = syntaxTable.toMap
+  def getSyntaxTable: Map[String, Map[ScopeTree.Scope, ScopeMapEntry]] = syntaxTable.toMap
 }
