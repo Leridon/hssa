@@ -1,7 +1,5 @@
 package de.thm.mni.hybridcomputing.roopllsp
 
-
-import de.thm.mni.hybridcomputing.roopl.Syntax
 import de.thm.mni.hybridcomputing.roopllsp.compiler.CompilerHandler
 import de.thm.mni.hybridcomputing.roopllsp.diagnostics.DiagnosticsProvider
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
@@ -53,19 +51,8 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
       
       if (text.isDefined) {
         val word = Helper.getWordAt(SourceFile.fromString(text.get), pos)
-        val syntaxTable = compilerHandler.getSyntaxTable(uri)
-        for (scope <- syntaxTable.keys) {
-          if (Helper.withinRange(pos, syntaxTable(scope).pos)) {
-            for (ident <- syntaxTable(scope).syntaxMap.keys) {
-              if ident == Syntax.ClassIdentifier(word)
-                || ident == Syntax.VariableIdentifier(word)
-                || ident == Syntax.MethodIdentifier(word)
-              then
-                println("SERVER: found " + ident + " in " + scope)
-                locations.add(Location(uri, Helper.posToRange(syntaxTable(scope).syntaxMap(ident).pos)))
-            }
-          }
-        }
+        val scopeTree = compilerHandler.getScopeTree(uri)
+        DefinitionHandler.lookup(scopeTree, uri, word, pos, locations)
       } 
       Either.forLeft(locations)
     })

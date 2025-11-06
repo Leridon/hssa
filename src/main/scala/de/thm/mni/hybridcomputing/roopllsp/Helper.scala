@@ -54,5 +54,4 @@ object Helper {
     }
     word
   }
-
 }

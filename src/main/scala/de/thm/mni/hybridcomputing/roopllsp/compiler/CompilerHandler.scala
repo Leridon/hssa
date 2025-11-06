@@ -17,8 +17,7 @@ class CompilerHandler {
   
   private val errors: mutable.Map[String, List[LanguageError]] = TrieMap[String, List[LanguageError]]()
   private val identifiers: mutable.Map[String, Set[String]] = TrieMap[String, Set[String]]()
-  private val syntaxTable : mutable.Map[String, Map[ScopeTree.Scope, ScopeMapEntry]]
-  = TrieMap[String, Map[ScopeTree.Scope, ScopeMapEntry]]()
+  private val scopeTree: mutable.Map[String, ScopeTree.Program] = TrieMap[String, ScopeTree.Program]()
   
   def run(uri : String, documentService: ROOPLTextDocumentService) : Unit = {
     val text = documentService.getOpenFiles.get(uri)
@@ -34,7 +33,7 @@ class CompilerHandler {
         val syntax: Program = Parsing.parse(tokenStream)
         val graph: ClassGraph.Program = ClassGraph.check(syntax)
         val scopes: ScopeTree.Program = Wellformedness.check(graph)
-        syntaxTable.put(uri, SyntaxTable.buildDefinitionMap(scopes))
+        scopeTree.put(uri, scopes)
       }
       catch {
         case e: LanguageError.AbortDueToErrors =>
@@ -49,5 +48,5 @@ class CompilerHandler {
   
   def getErrors: Map[String, List[LanguageError]] = errors.toMap
   def getIdentifiers: Map[String, Set[String]] = identifiers.toMap
-  def getSyntaxTable: Map[String, Map[ScopeTree.Scope, ScopeMapEntry]] = syntaxTable.toMap
+  def getScopeTree: Map[String, ScopeTree.Program] = scopeTree.toMap
 }
