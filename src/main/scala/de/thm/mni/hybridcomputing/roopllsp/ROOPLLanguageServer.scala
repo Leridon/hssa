@@ -16,18 +16,18 @@ class ROOPLLanguageServer extends LanguageServer  {
     result.getCapabilities.setTextDocumentSync(TextDocumentSyncKind.Full)
     result.getCapabilities.setCompletionProvider(CompletionOptions())
     result.getCapabilities.setDiagnosticProvider(DiagnosticRegistrationOptions())
-    result.getCapabilities.setDefinitionProvider(Boolean.box(true))
-
-    //      res.getCapabilities().setCodeActionProvider(Boolean.TRUE);
-    //      res.getCapabilities().setHoverProvider(Boolean.TRUE);
-    //      res.getCapabilities().setReferencesProvider(Boolean.TRUE);
-    //      res.getCapabilities().setDocumentSymbolProvider(Boolean.TRUE);
+    result.getCapabilities.setDefinitionProvider(true)
+    result.getCapabilities.setReferencesProvider(true)
+    
+    //      result.getCapabilities().setCodeActionProvider(true);
+    //      result.getCapabilities().setHoverProvider(true);
+    //      result.getCapabilities().setDocumentSymbolProvider(true);
 
     CompletableFuture.supplyAsync(() => result)
   }
 
   override def shutdown: CompletableFuture[Object] = CompletableFuture.supplyAsync(() => {
-      CompletableFuture.supplyAsync(() => Boolean.box(false))
+      CompletableFuture.supplyAsync(() => false)
   })
   
   def exit(): Unit = {

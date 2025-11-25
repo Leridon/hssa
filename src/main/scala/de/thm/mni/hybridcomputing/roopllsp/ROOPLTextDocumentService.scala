@@ -2,9 +2,10 @@ package de.thm.mni.hybridcomputing.roopllsp
 
 import de.thm.mni.hybridcomputing.roopllsp.compiler.CompilerHandler
 import de.thm.mni.hybridcomputing.roopllsp.diagnostics.DiagnosticsProvider
+import de.thm.mni.hybridcomputing.roopllsp.symbols.{DefinitionHandler, ReferencesHandler}
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 import org.eclipse.lsp4j.jsonrpc.messages
-import org.eclipse.lsp4j.{CompletionItem, CompletionList, CompletionParams, DefinitionParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport, Location, LocationLink}
+import org.eclipse.lsp4j.{CompletionItem, CompletionList, CompletionParams, DefinitionParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport, Location, LocationLink, ReferenceParams}
 import org.eclipse.lsp4j.services.TextDocumentService
 
 import java.util.concurrent.CompletableFuture
@@ -56,7 +57,24 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
       } 
       Either.forLeft(locations)
     })
-  } 
+  }
+
+  override def references(params: ReferenceParams): CompletableFuture[util.List[? <: Location]] = {
+    CompletableFuture.supplyAsync(() => {
+      val locations = new util.ArrayList[Location]()
+      val includeDeclarations = params.getContext.isIncludeDeclaration
+      val uri = params.getTextDocument.getUri
+      val pos = params.getPosition
+      val text = openFiles.get(uri)
+  
+      if (text.isDefined) {
+        val word = Helper.getWordAt(SourceFile.fromString(text.get), pos)
+        val scopeTree = compilerHandler.getScopeTree(uri)
+        ReferencesHandler.lookup(scopeTree, uri, word, pos, locations, includeDeclarations)
+      }
+      locations
+    })
+  }
 
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
     val content : String = params.getTextDocument.getText

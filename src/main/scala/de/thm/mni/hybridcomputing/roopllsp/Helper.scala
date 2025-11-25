@@ -5,13 +5,18 @@ import org.eclipse.lsp4j.{Position, Range}
 
 object Helper {
   def posToRange(pos : SourcePosition) : Range = {
-    Range(Position(pos.from.line - 1, pos.from.column), Position(pos.to.line - 1, pos.to.column - 1))
+    Range(Position(pos.from.line - 1, pos.from.column - 1), Position(pos.to.line - 1, pos.to.column - 1))
   }
 
   def withinRange(position: Position, range: SourcePosition) : Boolean = {
     val start = range.from
     val end = range.to
-    if (position.getLine >= start.line && position.getLine <= end.line) true
+    if (position.getLine + 1 <= end.line) {
+      if (position.getLine + 1 == end.line && position.getCharacter + 1 >= end.column) false
+      else if (position.getLine + 1 > start.line) true
+      else if (position.getLine + 1 == start.line && position.getCharacter + 1 >= start.column) true
+      else false
+    }
     else false
   }
   

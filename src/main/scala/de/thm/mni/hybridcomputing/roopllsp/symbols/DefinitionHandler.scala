@@ -1,9 +1,10 @@
-package de.thm.mni.hybridcomputing.roopllsp
+package de.thm.mni.hybridcomputing.roopllsp.symbols
 
 import de.thm.mni.hybridcomputing.roopl.Syntax
 import de.thm.mni.hybridcomputing.roopl.Syntax.VariableIdentifier
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.{Block, ScopeTreeStatement, StatementNode}
+import de.thm.mni.hybridcomputing.roopllsp.Helper
 import org.eclipse.lsp4j.{Location, Position}
 
 import java.util
