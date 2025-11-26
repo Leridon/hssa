@@ -18,10 +18,11 @@ class ROOPLLanguageServer extends LanguageServer  {
     result.getCapabilities.setDiagnosticProvider(DiagnosticRegistrationOptions())
     result.getCapabilities.setDefinitionProvider(true)
     result.getCapabilities.setReferencesProvider(true)
+    result.getCapabilities.setDocumentSymbolProvider(true)
+    result.getCapabilities.setCodeActionProvider(true)
     
-    //      result.getCapabilities().setCodeActionProvider(true);
-    //      result.getCapabilities().setHoverProvider(true);
-    //      result.getCapabilities().setDocumentSymbolProvider(true);
+    //      result.getCapabilities.setHoverProvider(true)
+    
 
     CompletableFuture.supplyAsync(() => result)
   }

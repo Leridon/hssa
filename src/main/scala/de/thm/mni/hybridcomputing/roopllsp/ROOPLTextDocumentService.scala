@@ -2,10 +2,10 @@ package de.thm.mni.hybridcomputing.roopllsp
 
 import de.thm.mni.hybridcomputing.roopllsp.compiler.CompilerHandler
 import de.thm.mni.hybridcomputing.roopllsp.diagnostics.DiagnosticsProvider
-import de.thm.mni.hybridcomputing.roopllsp.symbols.{DefinitionHandler, ReferencesHandler}
+import de.thm.mni.hybridcomputing.roopllsp.symbols.{DefinitionHandler, ReferencesHandler, SymbolsHandler}
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 import org.eclipse.lsp4j.jsonrpc.messages
-import org.eclipse.lsp4j.{CompletionItem, CompletionList, CompletionParams, DefinitionParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport, Location, LocationLink, ReferenceParams}
+import org.eclipse.lsp4j.{CodeAction, CodeActionParams, Command, CompletionItem, CompletionList, CompletionParams, DefinitionParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentSymbol, DocumentSymbolParams, Location, LocationLink, ReferenceParams, SymbolInformation}
 import org.eclipse.lsp4j.services.TextDocumentService
 
 import java.util.concurrent.CompletableFuture
@@ -76,6 +76,14 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
     })
   }
 
+  override def documentSymbol(params: DocumentSymbolParams)
+  : CompletableFuture[util.List[Either[SymbolInformation, DocumentSymbol]]] = {
+    CompletableFuture.supplyAsync(() => {
+      SymbolsHandler.getSymbols(params.getTextDocument.getUri).stream()
+        .map(s => Either.forRight[SymbolInformation, DocumentSymbol](s)).toList
+    })
+  }
+
   override def didOpen(params: DidOpenTextDocumentParams): Unit = {
     val content : String = params.getTextDocument.getText
     val uri : String = params.getTextDocument.getUri
@@ -101,6 +109,12 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
   override def diagnostic(params: DocumentDiagnosticParams): CompletableFuture[DocumentDiagnosticReport] = {
     CompletableFuture.supplyAsync(() => {DiagnosticsProvider().run(params.getTextDocument.getUri, this)})
   }
+
+  //TODO: Once fully implemented, return populated list completely. Until then, live with a one-time warning.
+  override def codeAction(params: CodeActionParams): CompletableFuture[util.List[Either[Command, CodeAction]]] 
+  = CompletableFuture.supplyAsync(() => {
+    new util.ArrayList[Either[Command, CodeAction]]()
+  })
   
   def getOpenFiles : Map[String, String] = openFiles.toMap
 }

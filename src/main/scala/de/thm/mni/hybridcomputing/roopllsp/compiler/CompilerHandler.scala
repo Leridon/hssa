@@ -6,6 +6,7 @@ import de.thm.mni.hybridcomputing.roopl.parsing.{Lexing, Parsing}
 import de.thm.mni.hybridcomputing.roopl.parsing.Lexing.Tokens.TokenClass
 import de.thm.mni.hybridcomputing.roopl.wellformedness.{ClassGraph, ScopeTree, Wellformedness}
 import de.thm.mni.hybridcomputing.roopllsp.ROOPLTextDocumentService
+import de.thm.mni.hybridcomputing.roopllsp.symbols.SymbolsHandler
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing.{SourceFile, TokenReader}
 
@@ -34,6 +35,7 @@ class CompilerHandler {
         val graph: ClassGraph.Program = ClassGraph.check(syntax)
         val scopes: ScopeTree.Program = Wellformedness.check(graph)
         scopeTree.put(uri, scopes)
+        SymbolsHandler.run(scopes, uri)
       }
       catch {
         case e: LanguageError.AbortDueToErrors =>
