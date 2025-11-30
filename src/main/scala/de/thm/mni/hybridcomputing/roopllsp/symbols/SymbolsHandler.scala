@@ -1,6 +1,7 @@
 package de.thm.mni.hybridcomputing.roopllsp.symbols
 
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree
+import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.{Block, StatementNode}
 import de.thm.mni.hybridcomputing.roopllsp.Helper
 import org.eclipse.lsp4j.{DocumentSymbol, SymbolKind}
 
@@ -13,24 +14,6 @@ object SymbolsHandler {
   private val symbolsMap : mutable.Map[String, util.List[DocumentSymbol]] = TrieMap[String,  util.List[DocumentSymbol]]()
   
   def run(program : ScopeTree.Program, uri : String) : Unit = {
-    //TODO: Basically, go through the entire project and determine symbol dependencies
-    // By which I mean definitions and references. So practically, once this has run for a given program,
-    // I want to be able to get something which on the most basic levels tells me "all these symbols belong together"
-    // Question is if saving those as Locations already is a good thing or if there are better use cases
-    // Return Type: to be done (possibly unit and instead fill multiple maps [else maybe a Tuple?])
-    // What I also would need to know (to uphold includeDeflaration flag) is if something counts as a Declaration
-    
-    //TODO: Conceptually, this needs to be divided somehow
-    // because I don't wan to write "search in class" for every thing from method to class to variable
-    // but I feel like that's necessary because methods can be used in other places than classes
-    // and also, I need to figure out which kinds of symbols there even are. We got classes, fields, methods, 
-    // and also variables (which are either local or object blocks), and I think that's it
-    // I wonder if instead of looking for specific symbols, I should just go through all symbols and pool them gradually
-    // The biggest problem will probably be finding out if two things with the same name belong together. In fact I think
-    // that's going to be practically impossible without doing this for every symbol.
-    // Although I swear, doesn't the compiler do something like this internally anyway
-    // Like isn't that the whole point of lookup?? I guess you can't lookup class names (can you?) [No]
-    
     val classes : util.List[DocumentSymbol] = new util.ArrayList[DocumentSymbol]()
     
     for (cl <- program.classes) {
@@ -40,8 +23,17 @@ object SymbolsHandler {
           Helper.posToRange(field.name.position)))
       }
       for (meth <- cl.methods) {
-        classMembers.add(DocumentSymbol(meth.name.name, SymbolKind.Method, 
-          Helper.posToRange(meth.graphMethod.syntax.position), Helper.posToRange(meth.name.position)))
+        val methodSymbol = DocumentSymbol(meth.name.name, SymbolKind.Method,
+          Helper.posToRange(meth.graphMethod.syntax.position), Helper.posToRange(meth.name.position))
+        methodSymbol.setChildren(new util.ArrayList[DocumentSymbol]())
+        for (param <- meth.parameters) {
+          methodSymbol.getChildren.add(DocumentSymbol(param.name.name, SymbolKind.Variable, 
+            Helper.posToRange(param.definition), Helper.posToRange(param.name.position)))
+        }
+        for (statement <- meth.initialBody) {
+          handleStatement(statement, methodSymbol)
+        }
+        classMembers.add(methodSymbol)
       }
 
       val classSymbol = DocumentSymbol(cl.name.name, SymbolKind.Class, Helper.posToRange(cl.graphClass.syntax.position),
@@ -50,8 +42,34 @@ object SymbolsHandler {
       classes.add(classSymbol)
     }
     symbolsMap.put(uri, classes)
-    println(symbolsMap.toMap)
   }
+  
+  private def handleStatement(statement : StatementNode, parent: DocumentSymbol): Unit = {
+    statement match
+      case block: Block =>
+        val blockSymbol = DocumentSymbol(block.varName.name, SymbolKind.Variable, 
+        Helper.posToRange(block.variable.definition), Helper.posToRange(block.varName.position))
+        blockSymbol.setChildren(new util.ArrayList[DocumentSymbol]())
+        for (body <- block.initialBody) {
+          handleStatement(body, blockSymbol)
+        }
+        parent.getChildren.add(blockSymbol)
+        
+      case loop: ScopeTree.Loop => 
+        for (body <- loop.doStatements) handleStatement(body, parent)
+        for (body <- loop.loopStatements) handleStatement(body, parent)
+      case conditional: ScopeTree.Conditional =>
+        for (body <- conditional.thenStatements) handleStatement(body, parent)
+        for (body <- conditional.elseStatements) handleStatement(body, parent)
+      case asgn: ScopeTree.Assignment => 
+      case swap: ScopeTree.Swap => 
+      case news: ScopeTree.New =>  
+      case del: ScopeTree.Delete =>   
+      case copy: ScopeTree.Copy =>  
+      case uncopy: ScopeTree.Uncopy =>   
+      case call: ScopeTree.Call => 
+      case uncall: ScopeTree.Uncall =>
+  } 
   
   def getSymbols : Map[String, util.List[DocumentSymbol]] = symbolsMap.toMap
 }

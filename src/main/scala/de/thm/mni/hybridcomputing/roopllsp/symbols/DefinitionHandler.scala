@@ -14,31 +14,49 @@ object DefinitionHandler {
               uri : String, 
               word: String,
               pos: Position,
-              locations : util.ArrayList[Location]
-             ): Unit = {
-    if (!(scopeTree == null)) {
-      for (cl <- scopeTree.classes) {
-        if (cl.name == Syntax.ClassIdentifier(word)) {
-          locations.add(Location(uri, Helper.posToRange(cl.graphClass.syntax.position)))
+             ): util.ArrayList[Location] = {
+    val locations : util.ArrayList[Location] = util.ArrayList[Location]() 
+    if (!(scopeTree == null)) 
+      for (cl <- scopeTree.classes) 
+        handleClass(cl, uri, word, pos, locations)
+    locations
+  }
+  
+  private def handleClass(classScope : ScopeTree.Class,
+                          uri: String, 
+                          word: String, 
+                          pos : Position, 
+                          locations: util.ArrayList[Location]) : Unit = {
+    if (classScope.name == Syntax.ClassIdentifier(word)) 
+      locations.add(Location(uri, Helper.posToRange(classScope.graphClass.syntax.position))) 
+    else
+      for (meth <- classScope.methods) handleMethod(meth, uri, word, pos, locations)
+  }
+  
+  private def handleMethod(method : ScopeTree.Method,
+                           uri: String,
+                           word: String,
+                           pos: Position,
+                           locations: util.ArrayList[Location]): Unit = {
+
+/*
+    if (Helper.withinRange(pos, cl.graphClass.syntax.position)) {
+      for (meth <- cl.methods) {
+        if (meth.name == Syntax.MethodIdentifier(word)) {
+          locations.add(Location(uri, Helper.posToRange(meth.graphMethod.syntax.position)))
         }
-        if (Helper.withinRange(pos, cl.graphClass.syntax.position)) {
-          for (meth <- cl.methods) {
-            if (meth.name == Syntax.MethodIdentifier(word)) {
-              locations.add(Location(uri, Helper.posToRange(meth.graphMethod.syntax.position)))
-            }
-            if (Helper.withinRange(pos, meth.graphMethod.syntax.position)) {
-              for (body <- meth.initialBody) {
-                handleStatement(body, uri, word, pos, locations)
-              }
-              val lookup = meth.lookupVariable(VariableIdentifier(word))
-              if (lookup.isDefined) {
-                locations.add(Location(uri, Helper.posToRange(lookup.get.definition)))
-              }
-            }
+        if (Helper.withinRange(pos, meth.graphMethod.syntax.position)) {
+          for (body <- meth.initialBody) {
+            handleStatement(body, uri, word, pos, locations)
+          }
+          val lookup = meth.lookupVariable(VariableIdentifier(word))
+          if (lookup.isDefined) {
+            locations.add(Location(uri, Helper.posToRange(lookup.get.definition)))
           }
         }
       }
-    }
+    } */
+    
   }
   
   private def handleStatement(statement: StatementNode,
@@ -57,6 +75,6 @@ object DefinitionHandler {
         for (body <- block.initialBody) {
           handleStatement(body, uri, word, pos, locations)
         }
-      case s: ScopeTreeStatement =>
+      case s: ScopeTreeStatement => //TODO: Missing
   }
 }

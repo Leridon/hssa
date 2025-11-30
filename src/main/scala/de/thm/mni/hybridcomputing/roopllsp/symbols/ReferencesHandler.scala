@@ -3,6 +3,7 @@ package de.thm.mni.hybridcomputing.roopllsp.symbols
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.StatementNode
 import de.thm.mni.hybridcomputing.roopllsp.Helper
+import de.thm.mni.hybridcomputing.roopllsp.codeactions.CodeActionHandler
 import org.eclipse.lsp4j.{Location, Position}
 
 import java.util
@@ -16,9 +17,25 @@ object ReferencesHandler {
              locations : util.ArrayList[Location],
              includeDeclaration : Boolean
             ) : Unit = {
-    val definitions =  util.ArrayList[Location]()
+    
+    ScopeCrawler.run(scopeTree)
+    val x = ScopeCrawler.getMap
+    for (rng <- x.keys) 
+      if (Helper.withinRange(pos, rng))
+        println("REFERENCE FROM: " + x(rng))
+    
+    for (cl <- scopeTree.classes) {
+      if (Helper.withinRange(pos, cl.name.position)) println("SERVER: CLASS " + cl.name.name)
+      else if (Helper.withinRange(pos, cl.graphClass.syntax.position)) {
+        for (meth <- cl.methods) {
+          if (Helper.withinRange(pos, meth.name.position)) println("SERVER: METHOD " + meth.name.name)
+        }
+      }
+    }
+    
+    //val definitions =  util.ArrayList[Location]()
     val validScopes = util.ArrayList[ScopeTree.Scope]()
-    DefinitionHandler.lookup(scopeTree, uri, word, pos, definitions)
+    val definitions = DefinitionHandler.lookup(scopeTree, uri, word, pos)
     for (loc <- asScala(definitions)) {
       validScopes.add(ScopeHandler.findScope(scopeTree,loc.getRange.getStart))
     }

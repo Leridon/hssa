@@ -45,7 +45,7 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
   override def definition(params: DefinitionParams)
   : CompletableFuture[Either[java.util.List[? <: Location], java.util.List[? <: LocationLink]]] = {
     CompletableFuture.supplyAsync(() => {
-      val locations = new util.ArrayList[Location]()
+      var locations = util.ArrayList[Location]()
       val uri = params.getTextDocument.getUri
       val pos = params.getPosition
       val text = openFiles.get(uri)
@@ -53,7 +53,7 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
       if (text.isDefined) {
         val word = Helper.getWordAt(SourceFile.fromString(text.get), pos)
         val scopeTree = compilerHandler.getScopeTree(uri)
-        DefinitionHandler.lookup(scopeTree, uri, word, pos, locations)
+        locations = DefinitionHandler.lookup(scopeTree, uri, word, pos)
       } 
       Either.forLeft(locations)
     })
@@ -79,8 +79,18 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
   override def documentSymbol(params: DocumentSymbolParams)
   : CompletableFuture[util.List[Either[SymbolInformation, DocumentSymbol]]] = {
     CompletableFuture.supplyAsync(() => {
-      SymbolsHandler.getSymbols(params.getTextDocument.getUri).stream()
-        .map(s => Either.forRight[SymbolInformation, DocumentSymbol](s)).toList
+      val uri: String = params.getTextDocument.getUri
+      if (SymbolsHandler.getSymbols.contains(uri)) {
+        SymbolsHandler.getSymbols(uri).stream()
+          .map(s => Either.forRight[SymbolInformation, DocumentSymbol](s)).toList
+      }
+      else {
+        compilerHandler.run(uri, this)
+        if (SymbolsHandler.getSymbols.contains(uri))
+          SymbolsHandler.getSymbols(uri).stream()
+          .map(s => Either.forRight[SymbolInformation, DocumentSymbol](s)).toList
+        else null
+      }
     })
   }
 
