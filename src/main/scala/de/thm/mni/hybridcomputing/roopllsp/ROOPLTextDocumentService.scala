@@ -110,7 +110,8 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
     CompletableFuture.supplyAsync(() => {DiagnosticsProvider().run(params.getTextDocument.getUri, this)})
   }
 
-  //TODO: Once fully implemented, return populated list completely. Until then, live with a one-time warning.
+  //TODO: Once fully implemented, return populated list completely and add cancelRequest.
+  // Until then, live with a one-time warning.
   override def codeAction(params: CodeActionParams): CompletableFuture[util.List[Either[Command, CodeAction]]] 
   = CompletableFuture.supplyAsync(() => {
     new util.ArrayList[Either[Command, CodeAction]]()
