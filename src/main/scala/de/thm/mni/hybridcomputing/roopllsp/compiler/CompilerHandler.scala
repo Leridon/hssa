@@ -31,9 +31,13 @@ class CompilerHandler {
         val tokenStream: TokenReader[TokenClass] = Lexing.lex(sourceFile)
         tokenStream.readAll().filter(t => t.typ == TokenClass.IDENT)
           .foreach(t => if (t.value.isDefined) documentIdentifiers.append(t.value.get.toString))
+        println("SERVER: Lexing finished")
         val syntax: Program = Parsing.parse(tokenStream)
+        println("SERVER: Parsing finished")
         val graph: ClassGraph.Program = ClassGraph.check(syntax)
+        println("SERVER: Graph finished")
         val scopes: ScopeTree.Program = Wellformedness.check(graph)
+        println("SERVER: ScopeTree finished")
         scopeTree.put(uri, scopes)
         SymbolsHandler.run(scopes, uri)
       }
