@@ -19,7 +19,6 @@ object DefinitionHandler {
     val identMap : Map[SourcePosition, SymbolReference] = ScopeCrawler.handleProgram(scopeTree)
     for (range <- identMap.keys)
       if (Helper.withinRange(pos, range))
-        println("SEARCH DEFINITION FROM: " + range)
         for (sourcePosition <- identMap.keys)
           if (sourcePosition == identMap(range).definitionPosition)
             locations.add(Location(uri, Helper.posToRange(sourcePosition)))

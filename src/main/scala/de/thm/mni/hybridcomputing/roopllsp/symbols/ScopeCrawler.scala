@@ -1,8 +1,10 @@
 package de.thm.mni.hybridcomputing.roopllsp.symbols
 
 import de.thm.mni.hybridcomputing.roopl.Syntax
-import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree
+import de.thm.mni.hybridcomputing.roopl.wellformedness.{ScopeTree, Translatable, Typing}
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.{Block, Expression, MethodScope, StatementNode}
+import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing.{NilType, NonIntType}
+import de.thm.mni.hybridcomputing.roopllsp.Helper
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition.Position
 
@@ -10,6 +12,9 @@ import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
 object ScopeCrawler {
+  
+  private var scopeTree : Option[ScopeTree.Program] = None
+  
   //Range end must be +1 to work when the cursor is right behind the literal; this works because two identifiers 
   //must always have a gap of at least 1 column between them else they are the same identifier. This needs to be
   //done both on the key and value side else equality breaks.
@@ -32,26 +37,25 @@ object ScopeCrawler {
   }
 
   def handleProgram (program : ScopeTree.Program) : Map[SourcePosition, SymbolReference] = {
+    scopeTree = Some(program)
     val identifiers = IdentMapWrapper()
     for (classDef <- program.classes) {
       handleClass(classDef, identifiers)
     }
-    println(identifiers.unwrap)
     identifiers.unwrap
   }
   
   private def handleClass(classDef : ScopeTree.Class, identifiers : IdentMapWrapper): Unit = {
     identifiers.add(classDef.name.position, SymbolReference(classDef.name.position, true))
     for (field <- classDef.fields) {
+      checkVariable(field, identifiers)
       identifiers.add(field.name.position, SymbolReference(field.name.position, true))
     }
     
     for (method <- classDef.methods) {
       identifiers.add(method.name.position, SymbolReference(method.name.position, true))
       for (param <- method.parameters)
-        param match
-          case variable: ScopeTree.UntypedVariable => variable.typ
-          case _ =>
+        checkVariable(param, identifiers)
         identifiers.add(param.name.position, SymbolReference(param.name.position, true))
       for (statement <- method.initialBody) {
         handleStatement(statement, identifiers)
@@ -62,13 +66,11 @@ object ScopeCrawler {
   private var parent: Option[MethodScope] = None
 
   private def handleStatement(statement : StatementNode, identifiers : IdentMapWrapper): Unit = {
-    println("SERVERSTATEMENT: " + statement)
     statement match
       case block: Block =>
         parent = Some(block)
         handleDataType(block.varType, identifiers)
         identifiers.add(block.varName.position, SymbolReference(block.varName.position, true))
-        println("BLOCKDEF: " + block.variable.name.name + " || " + block.variable.name.position)
         //Skip the hidden new and delete statements in construct blocks as they have already been handled
         if (block.varCompute == Expression.Nil && block.varUncompute == Expression.Nil) {
           for (body <- block.initialBody.drop(1).dropRight(1)) {
@@ -122,23 +124,20 @@ object ScopeCrawler {
         handleObjectType(uncopy.syntaxType, identifiers)
         
       case call: ScopeTree.Call =>
-        var className = ""
+        var callIdentPos = call.position
         if (call.callee.isDefined) {
-          className = call.callee.get.name.name
+          handleVariableReference(call.callee.get, identifiers)
+          callIdentPos = Helper.sliceSubSourcePosR(call.position, call.callee.get.name.position)
         }
-        identifiers.add(call.position, SymbolReference(call.method.get.name.position, false))
-        if (call.callee.isDefined) handleVariableReference(call.callee.get, identifiers)
-          //println("VARIABLEDEF: " + call.callee.get.variable.get.name.name + " || " + call.callee.get.variable.get.name.position)
-          if (parent.isDefined && call.callee.isDefined) println("PARENTDEF: " + parent.get.lookupVariable(call.callee.get.name))
-        //for (arg <- call.args)
-          //if (arg.isDefined) 
-            //identifiers.add(arg.get.name.position, SourceHunter(arg.get.name., false))
-          
+        identifiers.add(callIdentPos, SymbolReference(call.method.get.name.position, false))
+
       case uncall: ScopeTree.Uncall =>
-        if (uncall.callee.isDefined) handleVariableReference(uncall.callee.get, identifiers)
-        //for (arg <- uncall.args)
-          //if (arg.isDefined) 
-            //identifiers.add(arg.get.name.position, VariableExtension(arg.get.name.name, false))
+        var callIdentPos = uncall.position
+        if (uncall.callee.isDefined) {
+          handleVariableReference(uncall.callee.get, identifiers)
+          callIdentPos = Helper.sliceSubSourcePosR(uncall.position, uncall.callee.get.name.position)
+        }
+        identifiers.add(callIdentPos, SymbolReference(uncall.method.get.name.position, false))
   }
   
   private def handleVariableReference(ref : ScopeTree.VariableReference, identifiers : IdentMapWrapper) : Unit = {
@@ -149,18 +148,18 @@ object ScopeCrawler {
   private def handleObjectType(objectType : Syntax.ObjectType, identifiers : IdentMapWrapper): Unit = {
     objectType match
       case classArray: Syntax.ObjectType.ClassArray =>
-        identifiers.add(classArray.name.position, SymbolReference(classArray.name.position, false))
+        identifiers.add(classArray.name.position, SymbolReference(lookupType(classArray.name), false))
       case cl: Syntax.ObjectType.Class =>
-        identifiers.add(cl.name.position, SymbolReference(cl.name.position, false))
+        identifiers.add(cl.name.position, SymbolReference(lookupType(cl.name), false))
       case intArray: Syntax.ObjectType.IntegerArray =>
   }
   
   private def handleDataType(dataType : Syntax.DataType, identifiers : IdentMapWrapper) : Unit = {
     dataType match
       case cl : Syntax.DataType.Class =>
-        identifiers.add(cl.name.position, SymbolReference(cl.name.position, false))
+        identifiers.add(cl.name.position, SymbolReference(lookupType(cl.name), false))
       case classArray: Syntax.DataType.ClassArray =>
-        identifiers.add(classArray.name.position, SymbolReference(classArray.name.position, false))
+        identifiers.add(classArray.name.position, SymbolReference(lookupType(classArray.name), false))
       case int: Syntax.DataType.Integer => 
       case intArray: Syntax.DataType.IntegerArray =>
   }
@@ -174,5 +173,33 @@ object ScopeCrawler {
       case ref : Expression.Reference => 
         handleVariableReference(ref.ref, identifiers)
       case Expression.Nil =>
+  }
+  
+  private def checkVariable(variable : ScopeTree.Variable, identifiers : IdentMapWrapper): Unit = {
+     variable match
+      case untypedVar: ScopeTree.UntypedVariable => handleDataType(untypedVar.typ, identifiers)
+      case typedVar: Translatable.TypedVariable =>
+        typedVar.typ match
+          case nonInt : NonIntType =>
+            nonInt match
+              case NilType => 
+              case intArray : Typing.IntegerArray => 
+              case classArray : Typing.ClassArray => 
+                identifiers.add(Helper.sliceSubSourcePosL(variable.definition, variable.name.position),
+                  SymbolReference(classArray.typ.name.position, false))
+              case cl : Typing.Class => 
+                identifiers.add(Helper.sliceSubSourcePosL(variable.definition, variable.name.position), 
+                  SymbolReference(cl.typ.name.position, false))
+          case Typing.Integer =>
+      case _ => 
+  }
+  
+  private def lookupType(dataType: Syntax.ClassIdentifier): SourcePosition = {
+    var result = dataType.position
+    if (scopeTree.isDefined)
+      for (cl <- scopeTree.get.classes) 
+        if (cl.name == dataType) result = cl.name.position
+    //else throw new RuntimeException("ScopeTree is undefined")
+    result
   }
 }

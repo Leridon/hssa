@@ -20,7 +20,6 @@ object ReferencesHandler {
     val identMap : Map[SourcePosition, SymbolReference] = ScopeCrawler.handleProgram(scopeTree)
     for (range <- identMap.keys) 
       if (Helper.withinRange(pos, range))
-        println("SEARCH REFERENCE FROM: " + range)
         for (sourcePosition <- identMap.keys)
           if (identMap(sourcePosition).definitionPosition == range)
             if (!includeDeclaration && !identMap(sourcePosition).isDefinition || includeDeclaration)

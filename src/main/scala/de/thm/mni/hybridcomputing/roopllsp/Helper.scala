@@ -7,6 +7,14 @@ object Helper {
   def posToRange(pos : SourcePosition) : Range = {
     Range(Position(pos.from.line - 1, pos.from.column - 1), Position(pos.to.line - 1, pos.to.column - 1))
   }
+  
+  def sliceSubSourcePosL(outer: SourcePosition, inner: SourcePosition): SourcePosition = {
+    SourcePosition(outer.file, outer.from, SourcePosition.Position(inner.from.line, inner.from.column - 1))
+  }
+
+  def sliceSubSourcePosR(outer: SourcePosition, inner: SourcePosition): SourcePosition = {
+    SourcePosition(outer.file, SourcePosition.Position(inner.to.line, inner.to.column + 1), outer.to)
+  }
 
   def withinRange(position: Position, range: SourcePosition) : Boolean = {
     val start = range.from
