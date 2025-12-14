@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.roopllsp
 
-import org.eclipse.lsp4j.{CompletionOptions, DiagnosticRegistrationOptions, InitializeParams, InitializeResult, ServerCapabilities, TextDocumentSyncKind}
+import org.eclipse.lsp4j.{CompletionOptions, DiagnosticRegistrationOptions, ExecuteCommandOptions, InitializeParams, InitializeResult, ServerCapabilities, TextDocumentSyncKind}
 import org.eclipse.lsp4j.services.{LanguageClient, LanguageServer, TextDocumentService, WorkspaceService}
 
 import java.util.concurrent.CompletableFuture
@@ -20,10 +20,8 @@ class ROOPLLanguageServer extends LanguageServer  {
     result.getCapabilities.setReferencesProvider(true)
     result.getCapabilities.setDocumentSymbolProvider(true)
     result.getCapabilities.setCodeActionProvider(true)
+    //result.getCapabilities.setExecuteCommandProvider(ExecuteCommandOptions(java.util.List.of("extractMethod")))
     
-    //      result.getCapabilities.setHoverProvider(true)
-    
-
     CompletableFuture.supplyAsync(() => result)
   }
 
@@ -42,7 +40,4 @@ class ROOPLLanguageServer extends LanguageServer  {
   def setRemoteProxy(remoteProxy: LanguageClient): Unit = {
       this.client = remoteProxy
   }
-  
-  
-
 }

@@ -2,7 +2,7 @@ package de.thm.mni.hybridcomputing.roopllsp.symbols
 
 import de.thm.mni.hybridcomputing.roopl.Syntax
 import de.thm.mni.hybridcomputing.roopl.wellformedness.{ScopeTree, Translatable, Typing}
-import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.{Block, Expression, MethodScope, StatementNode}
+import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.{Block, Expression, StatementNode}
 import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing.{NilType, NonIntType}
 import de.thm.mni.hybridcomputing.roopllsp.Helper
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
@@ -11,7 +11,7 @@ import de.thm.mni.hybridcomputing.util.parsing.SourcePosition.Position
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
-object ScopeCrawler {
+object ScopeTreeCrawler {
   
   private var scopeTree : Option[ScopeTree.Program] = None
   
@@ -62,13 +62,10 @@ object ScopeCrawler {
       }
     }
   }
-
-  private var parent: Option[MethodScope] = None
-
+  
   private def handleStatement(statement : StatementNode, identifiers : IdentMapWrapper): Unit = {
     statement match
       case block: Block =>
-        parent = Some(block)
         handleDataType(block.varType, identifiers)
         identifiers.add(block.varName.position, SymbolReference(block.varName.position, true))
         //Skip the hidden new and delete statements in construct blocks as they have already been handled

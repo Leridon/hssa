@@ -9,7 +9,7 @@ import java.util
 import scala.collection.concurrent.TrieMap
 import scala.collection.mutable
 
-object SymbolsHandler {
+object DocumentSymbolsProvider {
   
   private val symbolsMap : mutable.Map[String, util.List[DocumentSymbol]] = TrieMap[String,  util.List[DocumentSymbol]]()
   

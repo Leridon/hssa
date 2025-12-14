@@ -1,23 +1,23 @@
-package de.thm.mni.hybridcomputing.roopllsp.symbols
+package de.thm.mni.hybridcomputing.roopllsp.symbols.lookup
 
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree
 import de.thm.mni.hybridcomputing.roopllsp.Helper
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 import org.eclipse.lsp4j.{Location, Position}
-import de.thm.mni.hybridcomputing.roopllsp.symbols.ScopeCrawler.SymbolReference
+import de.thm.mni.hybridcomputing.roopllsp.symbols.ScopeTreeCrawler
+import de.thm.mni.hybridcomputing.roopllsp.symbols.ScopeTreeCrawler.SymbolReference
 
 import java.util
 
-object ReferencesHandler {
+object ReferencesProvider {
   def lookup(scopeTree : ScopeTree.Program,
              uri : String,
-             word: String,
              pos: Position,
              locations : util.ArrayList[Location],
              includeDeclaration : Boolean
             ) : Unit = {
     
-    val identMap : Map[SourcePosition, SymbolReference] = ScopeCrawler.handleProgram(scopeTree)
+    val identMap : Map[SourcePosition, SymbolReference] = ScopeTreeCrawler.handleProgram(scopeTree)
     for (range <- identMap.keys) 
       if (Helper.withinRange(pos, range))
         for (sourcePosition <- identMap.keys)

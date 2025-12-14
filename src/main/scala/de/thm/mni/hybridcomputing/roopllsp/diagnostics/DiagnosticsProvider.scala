@@ -7,9 +7,11 @@ import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity.Warning
 import de.thm.mni.hybridcomputing.util.parsing.{SourceFile, SourcePosition}
 import org.eclipse.lsp4j.*
 
-class DiagnosticsHandler {
+class DiagnosticsProvider {
   
   var diagnostics : java.util.List[Diagnostic] = new java.util.ArrayList[Diagnostic]()
+  
+  private val errorSource = "ROOPL LSP"
   
   def run(uri : String, documentService: ROOPLTextDocumentService): DocumentDiagnosticReport = {
     documentService.compilerHandler.run(uri, documentService)
@@ -21,6 +23,19 @@ class DiagnosticsHandler {
         for (err <- err.get) {
           buildDiagnostic(err, sourceFile)
         }
+      }
+      
+      val duplicateChecker = DuplicateChecker()
+      duplicateChecker.run(text.get)
+      for (duplicate <- duplicateChecker.getDuplicates) {
+        diagnostics.add(Diagnostic(org.eclipse.lsp4j.Range(
+          Position(duplicate._1 - 1, 0),
+          Position(duplicate._1 + duplicate._3 - 1, sourceFile.getLine(duplicate._1 + duplicate._3).length)
+        ), "Duplicated Code: " + duplicate, DiagnosticSeverity.Warning, errorSource))
+        diagnostics.add(Diagnostic(org.eclipse.lsp4j.Range(
+          Position(duplicate._2 - 1, 0),
+          Position(duplicate._2 + duplicate._3 - 1, sourceFile.getLine(duplicate._2 + duplicate._3).length)
+        ), "Duplicated Code: " + duplicate, DiagnosticSeverity.Warning, errorSource))
       }
     }
     val related: RelatedFullDocumentDiagnosticReport = RelatedFullDocumentDiagnosticReport(diagnostics)
@@ -35,8 +50,8 @@ class DiagnosticsHandler {
       case Severity.Error => DiagnosticSeverity.Error
       case Severity.Warning => DiagnosticSeverity.Warning
     }
-    val source = "ROOPL LSP"
-    diagnostics.add(Diagnostic(range, message, severity, source))
+    
+    diagnostics.add(Diagnostic(range, message, severity, errorSource))
   }
   
   private def adjustErrorRange(error: LanguageError, sourceFile: SourceFile): (Position, Position) = {
@@ -57,7 +72,6 @@ class DiagnosticsHandler {
         toLine = fromLine
         toColumn = fromColumn
       }
-    else println("SERVER: Error " + error.msg + " has no position")
     
     val lineCount = sourceFile.getSlice(SourcePosition.Position(fromLine, fromColumn), 
       SourcePosition.Position(toLine, toColumn)).trim.lines().count().toInt
@@ -66,6 +80,9 @@ class DiagnosticsHandler {
       toColumn = sourceFile.getLine(fromLine).length
     }
     else toLine = fromLine + lineCount
-    (Position(fromLine - 1, fromColumn - 1), Position(toLine - 1, toColumn - 1))
+    (
+      Position(Math.max(0, fromLine - 1), Math.max(0, fromColumn - 1)),
+      Position(Math.max(0, toLine - 1), Math.max(0, toColumn - 1))
+    )
   }
 }

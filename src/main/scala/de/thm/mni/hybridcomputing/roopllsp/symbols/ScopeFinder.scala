@@ -5,7 +5,7 @@ import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.{Block, ScopeTr
 import de.thm.mni.hybridcomputing.roopllsp.Helper
 import org.eclipse.lsp4j.Position
 
-object ScopeHandler {
+object ScopeFinder {
   def findScope(scopeTree: ScopeTree.Program, pos: Position): ScopeTree.Scope = {
     var scope: ScopeTree.Scope = null
     if (!(scopeTree == null))

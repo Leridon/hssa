@@ -27,7 +27,19 @@ object Helper {
     }
     else false
   }
-  
+
+  def calculateIndent(line: String): String = {
+    var char = line.charAt(0)
+    var indent = ""
+    var counter = 0
+    while (char.isSpaceChar) {
+      indent += char
+      counter += 1
+      char = line.charAt(counter)
+    }
+    indent
+  }
+
   def getWordAt(source : SourceFile, position: Position) : String = {
     val line = source.getLine(position.getLine + 1)
     var word = seekWord(line, position.getCharacter)

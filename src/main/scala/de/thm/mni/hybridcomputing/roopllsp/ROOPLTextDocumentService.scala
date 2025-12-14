@@ -1,8 +1,10 @@
 package de.thm.mni.hybridcomputing.roopllsp
 
+import de.thm.mni.hybridcomputing.roopllsp.codeactions.CodeActionProvider
 import de.thm.mni.hybridcomputing.roopllsp.compiler.CompilerHandler
 import de.thm.mni.hybridcomputing.roopllsp.diagnostics.DiagnosticsProvider
-import de.thm.mni.hybridcomputing.roopllsp.symbols.{DefinitionHandler, ReferencesHandler, SymbolsHandler}
+import de.thm.mni.hybridcomputing.roopllsp.symbols.lookup.{DefinitionProvider, ReferencesProvider}
+import de.thm.mni.hybridcomputing.roopllsp.symbols.DocumentSymbolsProvider
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 import org.eclipse.lsp4j.jsonrpc.messages
 import org.eclipse.lsp4j.{CodeAction, CodeActionParams, Command, CompletionItem, CompletionList, CompletionParams, DefinitionParams, DidChangeTextDocumentParams, DidCloseTextDocumentParams, DidOpenTextDocumentParams, DidSaveTextDocumentParams, DocumentDiagnosticParams, DocumentDiagnosticReport, DocumentSymbol, DocumentSymbolParams, Location, LocationLink, ReferenceParams, SymbolInformation}
@@ -53,7 +55,7 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
       if (text.isDefined) {
         val word = Helper.getWordAt(SourceFile.fromString(text.get), pos)
         val scopeTree = compilerHandler.getScopeTree(uri)
-        locations = DefinitionHandler.lookup(scopeTree, uri, word, pos)
+        locations = DefinitionProvider.lookup(scopeTree, uri, pos)
       } 
       Either.forLeft(locations)
     })
@@ -70,7 +72,7 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
       if (text.isDefined) {
         val word = Helper.getWordAt(SourceFile.fromString(text.get), pos)
         val scopeTree = compilerHandler.getScopeTree(uri)
-        ReferencesHandler.lookup(scopeTree, uri, word, pos, locations, includeDeclarations)
+        ReferencesProvider.lookup(scopeTree, uri, pos, locations, includeDeclarations)
       }
       locations
     })
@@ -80,14 +82,14 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
   : CompletableFuture[util.List[Either[SymbolInformation, DocumentSymbol]]] = {
     CompletableFuture.supplyAsync(() => {
       val uri: String = params.getTextDocument.getUri
-      if (SymbolsHandler.getSymbols.contains(uri)) {
-        SymbolsHandler.getSymbols(uri).stream()
+      if (DocumentSymbolsProvider.getSymbols.contains(uri)) {
+        DocumentSymbolsProvider.getSymbols(uri).stream()
           .map(s => Either.forRight[SymbolInformation, DocumentSymbol](s)).toList
       }
       else {
         compilerHandler.run(uri, this)
-        if (SymbolsHandler.getSymbols.contains(uri))
-          SymbolsHandler.getSymbols(uri).stream()
+        if (DocumentSymbolsProvider.getSymbols.contains(uri))
+          DocumentSymbolsProvider.getSymbols(uri).stream()
           .map(s => Either.forRight[SymbolInformation, DocumentSymbol](s)).toList
         else null
       }
@@ -119,22 +121,17 @@ class ROOPLTextDocumentService (languageServer: ROOPLLanguageServer) extends Tex
   override def diagnostic(params: DocumentDiagnosticParams): CompletableFuture[DocumentDiagnosticReport] = {
     CompletableFuture.supplyAsync(() => {DiagnosticsProvider().run(params.getTextDocument.getUri, this)})
   }
-
-  //TODO: Once fully implemented, return populated list completely and add cancelRequest.
-  // Until then, live with a one-time warning.
+  
   override def codeAction(params: CodeActionParams): CompletableFuture[util.List[Either[Command, CodeAction]]] 
   = CompletableFuture.supplyAsync(() => {
-    new util.ArrayList[Either[Command, CodeAction]]()
+    val uri = params.getTextDocument.getUri
+    CodeActionProvider.run(uri, this, params.getRange)
   })
   
   def getOpenFiles : Map[String, String] = openFiles.toMap
 }
 
 /*
-    @Override
-    public CompletableFuture<List<Either<Command, CodeAction>>> codeAction(CodeActionParams params) {
-        return CompletableFuture.completedFuture(Collections.emptyList());
-    }
 
     @Override
     public CompletableFuture<List<? extends CodeLens>> codeLens(CodeLensParams params) {
