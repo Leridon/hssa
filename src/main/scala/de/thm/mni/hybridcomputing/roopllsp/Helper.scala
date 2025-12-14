@@ -32,7 +32,7 @@ object Helper {
     var word = ""
     var found = true
 
-    while (found && index > 0) {
+    while (found && index > 0 && index < line.length) {
       found = false
       val char = line.charAt(index)
       if (char.isLetter || char.isDigit) {
@@ -44,7 +44,7 @@ object Helper {
 
     index = column
 
-    if (line.charAt(index).isLetter || line.charAt(index).isDigit) {
+    if (index >= 0 && index < line.length && (line.charAt(index).isLetter || line.charAt(index).isDigit)) {
       index = index + 1
       found = true
       while (found && index < line.length) {

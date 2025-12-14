@@ -3,8 +3,8 @@ package de.thm.mni.hybridcomputing.roopllsp.symbols
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.StatementNode
 import de.thm.mni.hybridcomputing.roopllsp.Helper
-import de.thm.mni.hybridcomputing.roopllsp.codeactions.CodeActionHandler
-import org.eclipse.lsp4j.{Location, Position}
+import de.thm.mni.hybridcomputing.roopllsp.symbols.ScopeCrawler.IdentExtension
+import org.eclipse.lsp4j.{Location, Position, Range}
 
 import java.util
 import scala.jdk.javaapi.CollectionConverters.asScala
@@ -18,12 +18,24 @@ object ReferencesHandler {
              includeDeclaration : Boolean
             ) : Unit = {
     
-    ScopeCrawler.run(scopeTree)
-    val x = ScopeCrawler.getMap
-    for (rng <- x.keys) 
-      if (Helper.withinRange(pos, rng))
-        println("REFERENCE FROM: " + x(rng))
+    ScopeCrawler.handleProgram(scopeTree, uri)
+    val identMap = ScopeCrawler.getIdentMap(uri)
+    var orig: IdentExtension = null
+    for (range <- identMap.keys) 
+      if (Helper.withinRange(pos, range))
+        orig = identMap(range)
+        println("REFERENCE FROM: " + identMap(range))
+        
+    if (orig != null) {
+      for (sourcePosition <- identMap.keys) {
+        val current = identMap(sourcePosition)
+        if (current.getClass == orig.getClass && current.identifier == orig.identifier) 
+          locations.add(Location(uri, Helper.posToRange(sourcePosition))) 
+      }
+      
+    }
     
+    /*
     for (cl <- scopeTree.classes) {
       if (Helper.withinRange(pos, cl.name.position)) println("SERVER: CLASS " + cl.name.name)
       else if (Helper.withinRange(pos, cl.graphClass.syntax.position)) {
@@ -44,6 +56,8 @@ object ReferencesHandler {
       println("SERVER: found scope " + scope)
       seek(scope, uri, word, locations)
     }
+    
+    */
   }
   
   private def seek(scope : ScopeTree.Scope, uri : String, word : String, locations: util.ArrayList[Location]) : Unit = {
