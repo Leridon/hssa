@@ -12,11 +12,10 @@ object ScopeHandler {
       for (cl <- scopeTree.classes)
         if (Helper.withinRange(pos, cl.graphClass.syntax.position))
           scope = cl
-          for (meth <- cl.methods)
-            if (Helper.withinRange(pos, meth.graphMethod.syntax.position))
-              println ("SERVER: pos = " + pos + "\nMethod position = " + meth.graphMethod.syntax.position)
-              scope = meth
-              for (body <- meth.initialBody)
+          for (method <- cl.methods)
+            if (Helper.withinRange(pos, method.graphMethod.syntax.position))
+              scope = method
+              for (body <- method.initialBody)
                 scope = handleStatement(body, pos, scope)
     scope
   }

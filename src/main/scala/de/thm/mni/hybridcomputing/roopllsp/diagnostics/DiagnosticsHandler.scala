@@ -7,7 +7,7 @@ import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity.Warning
 import de.thm.mni.hybridcomputing.util.parsing.{SourceFile, SourcePosition}
 import org.eclipse.lsp4j.*
 
-class DiagnosticsProvider {
+class DiagnosticsHandler {
   
   var diagnostics : java.util.List[Diagnostic] = new java.util.ArrayList[Diagnostic]()
   

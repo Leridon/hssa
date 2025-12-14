@@ -1,10 +1,9 @@
 package de.thm.mni.hybridcomputing.roopllsp.symbols
 
-import de.thm.mni.hybridcomputing.roopl.Syntax
-import de.thm.mni.hybridcomputing.roopl.Syntax.VariableIdentifier
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree
-import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.{Block, ScopeTreeStatement, StatementNode}
 import de.thm.mni.hybridcomputing.roopllsp.Helper
+import de.thm.mni.hybridcomputing.roopllsp.symbols.ScopeCrawler.SymbolReference
+import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 import org.eclipse.lsp4j.{Location, Position}
 
 import java.util
@@ -15,66 +14,16 @@ object DefinitionHandler {
               word: String,
               pos: Position,
              ): util.ArrayList[Location] = {
-    val locations : util.ArrayList[Location] = util.ArrayList[Location]() 
-    if (!(scopeTree == null)) 
-      for (cl <- scopeTree.classes) 
-        handleClass(cl, uri, word, pos, locations)
-    locations
-  }
-  
-  private def handleClass(classScope : ScopeTree.Class,
-                          uri: String, 
-                          word: String, 
-                          pos : Position, 
-                          locations: util.ArrayList[Location]) : Unit = {
-    if (classScope.name == Syntax.ClassIdentifier(word)) 
-      locations.add(Location(uri, Helper.posToRange(classScope.graphClass.syntax.position))) 
-    else
-      for (meth <- classScope.methods) handleMethod(meth, uri, word, pos, locations)
-  }
-  
-  private def handleMethod(method : ScopeTree.Method,
-                           uri: String,
-                           word: String,
-                           pos: Position,
-                           locations: util.ArrayList[Location]): Unit = {
 
-/*
-    if (Helper.withinRange(pos, cl.graphClass.syntax.position)) {
-      for (meth <- cl.methods) {
-        if (meth.name == Syntax.MethodIdentifier(word)) {
-          locations.add(Location(uri, Helper.posToRange(meth.graphMethod.syntax.position)))
-        }
-        if (Helper.withinRange(pos, meth.graphMethod.syntax.position)) {
-          for (body <- meth.initialBody) {
-            handleStatement(body, uri, word, pos, locations)
-          }
-          val lookup = meth.lookupVariable(VariableIdentifier(word))
-          if (lookup.isDefined) {
-            locations.add(Location(uri, Helper.posToRange(lookup.get.definition)))
-          }
-        }
-      }
-    } */
+    val locations = util.ArrayList[Location]()
+    val identMap : Map[SourcePosition, SymbolReference] = ScopeCrawler.handleProgram(scopeTree)
+    for (range <- identMap.keys)
+      if (Helper.withinRange(pos, range))
+        println("SEARCH DEFINITION FROM: " + range)
+        for (sourcePosition <- identMap.keys)
+          if (sourcePosition == identMap(range).definitionPosition)
+            locations.add(Location(uri, Helper.posToRange(sourcePosition)))
     
-  }
-  
-  private def handleStatement(statement: StatementNode,
-                              uri: String,
-                              word : String,
-                              pos : Position,
-                              locations : util.ArrayList[Location]
-                     ): Unit = {
-    statement match
-      case block: Block =>
-        if (Helper.withinRange(pos, block.statement.position) && block.varName == Syntax.VariableIdentifier(word)) {
-          locations.add(Location(uri, Helper.posToRange(block.variable.definition)))
-          if (block.varUncompute != ScopeTree.Expression.Nil) 
-            locations.add(Location(uri, Helper.posToRange(block.varUncompute.position)))
-        }
-        for (body <- block.initialBody) {
-          handleStatement(body, uri, word, pos, locations)
-        }
-      case s: ScopeTreeStatement => //TODO: Missing
+    locations
   }
 }
