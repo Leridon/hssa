@@ -226,11 +226,11 @@ object Translation {
         }
 
         private def vtable(clazz: ScopeTree.Class): String = {
-            s"_${clazz.name}.vtable"
+            s"_${clazz.name}._vtable"
         }
 
         private def constructor(clazz: ScopeTree.Class): String = {
-            s"_${clazz.name}.new"
+            s"_${clazz.name}._new"
         }
         
         private def generateStatement(statement: Translatable.StatementNode): Unit = {
