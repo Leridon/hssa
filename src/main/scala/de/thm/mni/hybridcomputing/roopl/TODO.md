@@ -30,7 +30,7 @@
     - [x] Translate integer expressions
     - [x] Translate control flow statements
     - [x] Implement memory management in a way sensible to roopl++ as well as fitting into hssa
-    - [-] Translate object construction/destruction, vtables, calls etc.
+    - [x] Translate object construction/destruction, vtables, calls etc.
     - [x] ~~Handle reference variables differently than local variables (in a block the variable musn't be persisted into storage, but a class field does). Types of variables:~~
     - [x] Implement variable referencing properly
         - [x] All variables must be stored and referenced because all variables can be copied

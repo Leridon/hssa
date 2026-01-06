@@ -1,0 +1,27 @@
+class Animal
+    int c1
+    Animal cat
+
+    method a()
+        c1 += 42
+    method b()
+        c1 += 7
+    method main()
+        new Animal cat
+        call cat::a()
+        call cat::b()
+        call a()
+        skip
+
+class Cat inherits Animal
+    int h
+    int y
+    method c()
+        c1 += 1
+    method a()
+        c1 += 17
+
+class Kitty inherits Cat
+    int k
+    method d()
+        skip

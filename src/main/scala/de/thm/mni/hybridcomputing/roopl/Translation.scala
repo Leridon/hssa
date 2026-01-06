@@ -429,10 +429,13 @@ object Translation {
                 case Some(varRef) => referenceAddress(varRef)
             val ref = "_calleeRef"
             val vtable = "_calleeVtable"
-            val calledMethod = "_calleeMethod"
+            var calledMethod = "_calleeMethod"
             
-            // TODO: This is wrong, when the call is local (no callee). Method calls should be statically dispatched without looking up the vtable.
-            val lookupVtable = Seq(
+            val lookupVtable = callee match
+                case None => 
+                    calledMethod = s"_${method.parent.name}.${method.name}"
+                    Seq()
+                case Some(_) => Seq(
                 (mmem, ref) :== ("mmem.read", calleeAddr) := mmem,
                 (mmem, vtable) :== ("mmem.read", ref) := mmem,
                 calledMethod :== (vtable, method.parent.allMethods.indexOf(method)) := ()
