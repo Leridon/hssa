@@ -35,12 +35,44 @@ object ScopeTree {
 
         var fields: Seq[Variable] = graphClass.fields.valueSet().toSeq.map(f => UntypedVariable(f.name, f.position, this, f.typ))
         val methods: Seq[Method] = graphClass.methods.valueSet().toSeq.map(m => new Method(this, m))
+        var fieldsMerged = false
+        var allMethods: Seq[Method] = Seq()
+
+        def inheritMethods(): Unit = {
+            if superClasses().isEmpty then
+                allMethods = methods
+                return
+
+            val sc = superClasses().head
+            // Ensure superclass is setup properly
+            if sc.allMethods.isEmpty then sc.inheritMethods()
+
+            allMethods = sc.allMethods
+
+            methods.foreach(m =>
+                sc.allMethods.indexWhere(_.name == m.name) match
+                    case -1 => allMethods = allMethods :+ m
+                    case i => allMethods = allMethods.updated(i, m))
+        }
+
+        def methodOrSuperMethod(name: Syntax.MethodIdentifier): Option[Method] = {
+            allMethods.find(_.name == name)
+        }
 
         def superClasses(): Seq[Class] = {
             val superClass: Option[Class] = graphClass.superClass().flatMap(_._2).flatMap(c => parent.classes.find(cl => cl.name == c.name))
             superClass match
                 case None => Seq()
                 case Some(clazz) => clazz +: clazz.superClasses()
+        }
+
+        // To be called after wellformedness check. This makes inherited fields available during translation
+        def inheritFields(): Unit = {
+            if superClasses().isEmpty || fieldsMerged then
+                return
+            fieldsMerged = true
+            superClasses().head.inheritFields()
+            fields = superClasses().head.fields ++ fields
         }
 
         override def program: Program = parent
@@ -134,19 +166,19 @@ object ScopeTree {
             case Syntax.Statement.Uncopy(typ, from, to) =>
                 Uncopy(typ, deriveRef(from, scope), deriveRef(to, scope))
             case Syntax.Statement.CallLocal(method, args) =>
-                Call(None, scope.clazz.methods.find(_.name == method), args.map(arg => scope.lookupVariable(arg)))
+                Call(None, scope.clazz.methodOrSuperMethod(method), args.map(arg => scope.lookupVariable(arg)))
             case Syntax.Statement.UncallLocal(method, args) =>
-                Uncall(None, scope.clazz.methods.find(_.name == method), args.map(arg => scope.lookupVariable(arg)))
+                Uncall(None, scope.clazz.methodOrSuperMethod(method), args.map(arg => scope.lookupVariable(arg)))
             case Syntax.Statement.Call(callee, method, args) =>
                 val calleeVar = deriveRef(callee, scope)
                 val calleeMethod = Typing.typeOf(calleeVar, scope) match
-                    case Some(Typing.Class(clazz)) => clazz.methods.find(_.name == method)
+                    case Some(Typing.Class(clazz)) => clazz.methodOrSuperMethod(method)
                     case _ => None
                 Call(Some(calleeVar), calleeMethod, args.map(arg => scope.lookupVariable(arg)))
             case Syntax.Statement.Uncall(callee, method, args) =>
                 val calleeVar = deriveRef(callee, scope)
                 val calleeMethod = Typing.typeOf(calleeVar, scope) match
-                    case Some(Typing.Class(clazz)) => clazz.methods.find(_.name == method)
+                    case Some(Typing.Class(clazz)) => clazz.methodOrSuperMethod(method)
                     case _ => None
                 Uncall(Some(calleeVar), calleeMethod, args.map(arg => scope.lookupVariable(arg)))
             // Programming error if this case is reached

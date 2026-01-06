@@ -15,12 +15,16 @@ object Wellformedness {
         val scopes = Program(program)
         val collector = LanguageError.Collector()
 
+        scopes.classes.foreach(_.inheritMethods())
+
         Typing.determineVariableTypes(scopes, collector)
         collector.raiseIfNonEmpty()
         // Now all variables must be typed variables
 
         scopes.classes.foreach(c => Wellformedness.check(c, collector))
         collector.raiseIfNonEmpty()
+
+        scopes.classes.foreach(_.inheritFields())
 
         scopes
     }

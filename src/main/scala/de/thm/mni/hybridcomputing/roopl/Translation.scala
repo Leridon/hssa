@@ -185,8 +185,8 @@ object Translation {
                 "i" :== ("dup", "_method") := ()
             )
 
-            val methods: Seq[(String, Assignment, String)] = clazz.methods.map[(String, Assignment, String)](method => {
-                (relation.nextLabel(), "res" :== ("dup", s"_${clazz.name}.${method.name}") := (), relation.nextLabel())
+            val methods: Seq[(String, Assignment, String)] = clazz.allMethods.map[(String, Assignment, String)](method => {
+                (relation.nextLabel(), "res" :== ("dup", s"_${method.parent.name}.${method.name}") := (), relation.nextLabel())
             })
 
             block.finish(
@@ -354,9 +354,7 @@ object Translation {
         private def generateAssignment(assignment: Translatable.Assignment): Unit = {
             val (compute, tempVar) = generateExpression(assignment.value)
 
-            val (computeAddress, address) = assignment.assignee.index match
-                case None => (Seq(), assignment.assignee.variable.name.name)
-                case Some(index) => (indexedAddress(assignment.assignee.variable, index))
+            val (computeAddress, address) = referenceAddress(assignment.assignee)
             val value = "_assignee_val"
 
             relation.blockBuilder.adds(
@@ -433,11 +431,13 @@ object Translation {
             val vtable = "_calleeVtable"
             val calledMethod = "_calleeMethod"
             
+            // TODO: This is wrong, when the call is local (no callee). Method calls should be statically dispatched without looking up the vtable.
             val lookupVtable = Seq(
                 (mmem, ref) :== ("mmem.read", calleeAddr) := mmem,
                 (mmem, vtable) :== ("mmem.read", ref) := mmem,
-                calledMethod :== (vtable, method.parent.methods.indexOf(method)) := ()
+                calledMethod :== (vtable, method.parent.allMethods.indexOf(method)) := ()
             )
+
             relation.blockBuilder.adds(
                 lookupVtable,
                 mmem :== (if inverted then ~calledMethod else calledMethod, appendVarsIfNotEmpty(calleeAddr, args)) := mmem,
