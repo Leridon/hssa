@@ -579,7 +579,7 @@ object Translation {
                 case Translatable.Expression.Reference(ref) =>
                     val (computeAddr, addr) = referenceAddress(ref)
                     val assignment = (mmem, temp) :== ("mmem.read", addr) := mmem
-                    (computeAddr ++ assignment ++ invert(computeAddr), temp)
+                    (computeAddr ++ assignment, temp)
                 case Translatable.Expression.Nil =>
                     // Nullpointer
                     val assignment = temp :== ("id", ()) := 0
