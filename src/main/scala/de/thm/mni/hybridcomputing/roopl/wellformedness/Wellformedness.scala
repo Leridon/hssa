@@ -131,8 +131,7 @@ object Wellformedness {
         } yield (x, y)
         swapTyping match
             case None => errors.add(Errors.ImpossibleTyping(statement))
-            // TODO: This is too restrictive, because roopl allows subtypes to be swapped into basetype arrays
-            case Some(leftType, rightType) if leftType != rightType => errors.add(Errors.BadTyping(leftType, rightType, statement))
+            case Some(leftType, rightType) if !leftType.isA(rightType) && !rightType.isA(leftType) => errors.add(Errors.BadTyping(leftType, rightType, statement))
             case _ => ()
 
         val left = mapVarRef(statement.left)

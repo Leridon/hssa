@@ -210,11 +210,11 @@ object Translation {
 
         def generateConstructor(clazz: ScopeTree.Class): hssa.Syntax.Relation = {
             val builder = RelationBuilder(constructor(clazz), ())
-            val block = BlockBuilder(builder, (mmem, 0) :=<- "begin")
             val anonObj = "_anon"
             val table = "_vtable"
+            val block = BlockBuilder(builder, (mmem, 0) :=<- "begin")
 
-            // Allocate #fields + 1 slot (vtable) in memory for the new object
+            // Allocate #fields + 1 slots (vtable) in memory for the new object
             block.adds(
                 (mmem, anonObj) :== ("mmem.allocate", clazz.fields.size + 1) := mmem,
                 table :== ("dup", vtable(clazz)) := (),
@@ -590,12 +590,7 @@ object Translation {
                     
                     val res: Seq[Assignment] = op match
                         case Operator.ADD | Operator.SUB | Operator.XOR =>
-                            val lTemp = relation.nextTempVar()
-                            
-                            Seq(
-                                lTemp :== ("dup", lVar) := (),
-                                temp :== (convert(op), rVar) := lTemp
-                            )
+                            temp :== (convert(op), rVar) := lVar
                         
                         case _ => temp :== (convert(op), (lVar, rVar)) := ()
                     
