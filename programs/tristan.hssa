@@ -85,7 +85,7 @@ rel _Cell.append _this, cell:
                                                 -> end          :=                _m.2, 0                
 
 
-rel _Cell.vtable _method:
+rel _Cell._vtable _method:
 (), 0  :=       begin <-                 
   i    :=      dup _method      :=   ()  
                 -> L8,L10       := (), i 
@@ -103,105 +103,99 @@ res, i :=       L9,L11 <-
                  -> end         := res, 0
 
 
-rel _Cell.new:
+rel _Cell._new:
    _m, 0    :=       begin <-                          
 _m.0, _anon :=   mmem.allocate 3    :=        _m       
-  _vtable   :=   dup _Cell.vtable   :=        ()       
+  _vtable   :=  dup _Cell._vtable   :=        ()       
   _m.1, 0   := mmem.readwrite _anon :=  _m.0, _vtable  
                       -> end        := (_m.1, _anon), 0
 
 
 rel _LinkedList.prependCell _this, cell:
-                  _m, 0                   :=         begin <-                                                         
-             _m.0, _this_ref              :=      mmem.read _this      :=                      _m                     
-                  head                    :=       add _this_ref       :=                      1                      
-               listLength                 :=       add _this_ref       :=                      2                      
-            _m.1, _calleeRef              :=      mmem.read _this      :=                     _m.0                    
-           _m.2, _calleeVtable            :=   mmem.read _calleeRef    :=                     _m.1                    
-              _calleeMethod               :=      _calleeVtable 1      :=                      ()                     
-                  _m.3                    := _calleeMethod _this, cell :=                     _m.2                    
-                   ()                     :=     ~_calleeVtable 1      :=                _calleeMethod                
-                  _m.4                    :=   ~mmem.read _calleeRef   :=             _m.3, _calleeVtable             
-                  _m.5                    :=     ~mmem.read _this      :=               _m.4, _calleeRef              
-               _m.6, _t.2                 :=      mmem.read cell       :=                     _m.5                    
-                  _t.1                    :=     notequal _t.2, 0      :=                      ()                     
-               _m.7, _t.5                 :=      mmem.read head       :=                     _m.6                    
-                  _t.4                    :=     notequal _t.5, 0      :=                      ()                     
-                  _t.0                    :=      and _t.1, _t.4       :=                      ()                     
-                  _t.7                    :=       equal _t.0, 0       :=                      ()                     
-                   ()                     :=      ~and _t.1, _t.4      :=                     _t.0                    
-                   ()                     :=     ~notequal _t.5, 0     :=                     _t.4                    
-                  _m.8                    :=      ~mmem.read head      :=                  _m.7, _t.5                 
-                   ()                     :=     ~notequal _t.2, 0     :=                     _t.1                    
-                  _m.9                    :=      ~mmem.read cell      :=                  _m.8, _t.2                 
-                                                     -> L0,L1          := ((_m.9, _this_ref), listLength, head), _t.7 
+                  _m, 0                   :=              begin <-                                                             
+             _m.0, _this_ref              :=          mmem.read _this           :=                      _m                     
+                  head                    :=           add _this_ref            :=                      1                      
+               listLength                 :=           add _this_ref            :=                      2                      
+                  _m.1                    := _LinkedList.insertHead _this, cell :=                     _m.0                    
+               _m.2, _t.2                 :=           mmem.read cell           :=                     _m.1                    
+                  _t.1                    :=          notequal _t.2, 0          :=                      ()                     
+               _m.3, _t.5                 :=           mmem.read head           :=                     _m.2                    
+                  _t.4                    :=          notequal _t.5, 0          :=                      ()                     
+                  _t.0                    :=           and _t.1, _t.4           :=                      ()                     
+                  _t.7                    :=           equal _t.0, 0            :=                      ()                     
+                   ()                     :=          ~and _t.1, _t.4           :=                     _t.0                    
+                   ()                     :=         ~notequal _t.5, 0          :=                     _t.4                    
+                  _m.4                    :=          ~mmem.read head           :=                  _m.3, _t.5                 
+                   ()                     :=         ~notequal _t.2, 0          :=                     _t.1                    
+                  _m.5                    :=          ~mmem.read cell           :=                  _m.4, _t.2                 
+                                                          -> L0,L1              := ((_m.5, _this_ref), listLength, head), _t.7 
 
- ((_m, _this_ref), listLength, head), 0   :=           L0 <-                                                          
-            _m.0, _calleeRef              :=      mmem.read cell       :=                      _m                     
-           _m.1, _calleeVtable            :=   mmem.read _calleeRef    :=                     _m.0                    
-              _calleeMethod               :=      _calleeVtable 1      :=                      ()                     
-                  _m.2                    := _calleeMethod cell, head  :=                     _m.1                    
-                   ()                     :=     ~_calleeVtable 1      :=                _calleeMethod                
-                  _m.3                    :=   ~mmem.read _calleeRef   :=             _m.2, _calleeVtable             
-                  _m.4                    :=      ~mmem.read cell      :=               _m.3, _calleeRef              
-                                                       -> L2           :=   ((_m.4, _this_ref), listLength, head), 0  
+ ((_m, _this_ref), listLength, head), 0   :=               L0 <-                                                               
+            _m.0, _calleeRef              :=           mmem.read cell           :=                      _m                     
+           _m.1, _calleeVtable            :=        mmem.read _calleeRef        :=                     _m.0                    
+              _calleeMethod               :=          _calleeVtable 1           :=                      ()                     
+                  _m.2                    :=      _calleeMethod cell, head      :=                     _m.1                    
+                   ()                     :=          ~_calleeVtable 1          :=                _calleeMethod                
+                  _m.3                    :=       ~mmem.read _calleeRef        :=             _m.2, _calleeVtable             
+                  _m.4                    :=          ~mmem.read cell           :=               _m.3, _calleeRef              
+                                                           -> L2                :=   ((_m.4, _this_ref), listLength, head), 0  
 
- ((_m, _this_ref), listLength, head), 0   :=           L1 <-                                                          
-                                                       -> L3           :=    ((_m, _this_ref), listLength, head), 0   
+ ((_m, _this_ref), listLength, head), 0   :=               L1 <-                                                               
+                                                           -> L3                :=    ((_m, _this_ref), listLength, head), 0   
 
-((_m, _this_ref), listLength, head), _j.0 :=         L2,L3 <-                                                         
-               _m.0, _t.2                 :=      mmem.read cell       :=                      _m                     
-                  _t.1                    :=     notequal _t.2, 0      :=                      ()                     
-               _m.1, _t.5                 :=      mmem.read head       :=                     _m.0                    
-                  _t.4                    :=       equal _t.5, 0       :=                      ()                     
-                  _t.0                    :=      and _t.1, _t.4       :=                      ()                     
-                   ()                     :=      ~equal _t.0, 0       :=                     _j.0                    
-                   ()                     :=      ~and _t.1, _t.4      :=                     _t.0                    
-                   ()                     :=      ~equal _t.5, 0       :=                     _t.4                    
-                  _m.2                    :=      ~mmem.read head      :=                  _m.1, _t.5                 
-                   ()                     :=     ~notequal _t.2, 0     :=                     _t.1                    
-                  _m.3                    :=      ~mmem.read cell      :=                  _m.2, _t.2                 
-               _m.4, _t.9                 :=      mmem.read cell       :=                     _m.3                    
-                  _t.8                    :=     notequal _t.9, 0      :=                      ()                     
-               _m.5, _t.12                :=      mmem.read head       :=                     _m.4                    
-                  _t.11                   :=      equal _t.12, 0       :=                      ()                     
-                  _t.7                    :=      and _t.8, _t.11      :=                      ()                     
-                  _t.14                   :=       equal _t.7, 0       :=                      ()                     
-                   ()                     :=     ~and _t.8, _t.11      :=                     _t.7                    
-                   ()                     :=      ~equal _t.12, 0      :=                    _t.11                    
-                  _m.6                    :=      ~mmem.read head      :=                 _m.5, _t.12                 
-                   ()                     :=     ~notequal _t.9, 0     :=                     _t.8                    
-                  _m.7                    :=      ~mmem.read cell      :=                  _m.6, _t.9                 
-                                                     -> L4,L5          := ((_m.7, _this_ref), listLength, head), _t.14
+((_m, _this_ref), listLength, head), _j.0 :=              L2,L3 <-                                                             
+               _m.0, _t.2                 :=           mmem.read cell           :=                      _m                     
+                  _t.1                    :=          notequal _t.2, 0          :=                      ()                     
+               _m.1, _t.5                 :=           mmem.read head           :=                     _m.0                    
+                  _t.4                    :=           equal _t.5, 0            :=                      ()                     
+                  _t.0                    :=           and _t.1, _t.4           :=                      ()                     
+                   ()                     :=           ~equal _t.0, 0           :=                     _j.0                    
+                   ()                     :=          ~and _t.1, _t.4           :=                     _t.0                    
+                   ()                     :=           ~equal _t.5, 0           :=                     _t.4                    
+                  _m.2                    :=          ~mmem.read head           :=                  _m.1, _t.5                 
+                   ()                     :=         ~notequal _t.2, 0          :=                     _t.1                    
+                  _m.3                    :=          ~mmem.read cell           :=                  _m.2, _t.2                 
+               _m.4, _t.9                 :=           mmem.read cell           :=                     _m.3                    
+                  _t.8                    :=          notequal _t.9, 0          :=                      ()                     
+               _m.5, _t.12                :=           mmem.read head           :=                     _m.4                    
+                  _t.11                   :=           equal _t.12, 0           :=                      ()                     
+                  _t.7                    :=          and _t.8, _t.11           :=                      ()                     
+                  _t.14                   :=           equal _t.7, 0            :=                      ()                     
+                   ()                     :=          ~and _t.8, _t.11          :=                     _t.7                    
+                   ()                     :=          ~equal _t.12, 0           :=                    _t.11                    
+                  _m.6                    :=          ~mmem.read head           :=                 _m.5, _t.12                 
+                   ()                     :=         ~notequal _t.9, 0          :=                     _t.8                    
+                  _m.7                    :=          ~mmem.read cell           :=                  _m.6, _t.9                 
+                                                          -> L4,L5              := ((_m.7, _this_ref), listLength, head), _t.14
 
- ((_m, _this_ref), listLength, head), 0   :=           L4 <-                                                          
-             _m.0, _leftVal               :=    mmem.readwrite cell    :=                    _m, ()                   
-             _m.1, _rightVal              :=    mmem.readwrite head    :=                _m.0, _leftVal               
-                _m.2, ()                  :=    mmem.readwrite cell    :=               _m.1, _rightVal               
-                                                       -> L6           :=   ((_m.2, _this_ref), listLength, head), 0  
+ ((_m, _this_ref), listLength, head), 0   :=               L4 <-                                                               
+             _m.0, _leftVal               :=        mmem.readwrite cell         :=                    _m, ()                   
+             _m.1, _rightVal              :=        mmem.readwrite head         :=                _m.0, _leftVal               
+                _m.2, ()                  :=        mmem.readwrite cell         :=               _m.1, _rightVal               
+                                                           -> L6                :=   ((_m.2, _this_ref), listLength, head), 0  
 
- ((_m, _this_ref), listLength, head), 0   :=           L5 <-                                                          
-                                                       -> L7           :=    ((_m, _this_ref), listLength, head), 0   
+ ((_m, _this_ref), listLength, head), 0   :=               L5 <-                                                               
+                                                           -> L7                :=    ((_m, _this_ref), listLength, head), 0   
 
-((_m, _this_ref), listLength, head), _j.0 :=         L6,L7 <-                                                         
-               _m.0, _t.2                 :=      mmem.read cell       :=                      _m                     
-                  _t.1                    :=       equal _t.2, 0       :=                      ()                     
-               _m.1, _t.5                 :=      mmem.read head       :=                     _m.0                    
-                  _t.4                    :=     notequal _t.5, 0      :=                      ()                     
-                  _t.0                    :=      and _t.1, _t.4       :=                      ()                     
-                   ()                     :=      ~equal _t.0, 0       :=                     _j.0                    
-                   ()                     :=      ~and _t.1, _t.4      :=                     _t.0                    
-                   ()                     :=     ~notequal _t.5, 0     :=                     _t.4                    
-                  _m.2                    :=      ~mmem.read head      :=                  _m.1, _t.5                 
-                   ()                     :=      ~equal _t.2, 0       :=                     _t.1                    
-                  _m.3                    :=      ~mmem.read cell      :=                  _m.2, _t.2                 
-           _m.4, _assignee_val            := mmem.readwrite listLength :=                   _m.3, ()                  
-             _assignee_val.0              :=           add 1           :=                _assignee_val                
-                _m.5, ()                  := mmem.readwrite listLength :=            _m.4, _assignee_val.0            
-                    2                     :=      ~add _this_ref       :=                  listLength                 
-                    1                     :=      ~add _this_ref       :=                     head                    
-                  _m.6                    :=     ~mmem.read _this      :=               _m.5, _this_ref               
-                                                      -> end           :=                   _m.6, 0                   
+((_m, _this_ref), listLength, head), _j.0 :=              L6,L7 <-                                                             
+               _m.0, _t.2                 :=           mmem.read cell           :=                      _m                     
+                  _t.1                    :=           equal _t.2, 0            :=                      ()                     
+               _m.1, _t.5                 :=           mmem.read head           :=                     _m.0                    
+                  _t.4                    :=          notequal _t.5, 0          :=                      ()                     
+                  _t.0                    :=           and _t.1, _t.4           :=                      ()                     
+                   ()                     :=           ~equal _t.0, 0           :=                     _j.0                    
+                   ()                     :=          ~and _t.1, _t.4           :=                     _t.0                    
+                   ()                     :=         ~notequal _t.5, 0          :=                     _t.4                    
+                  _m.2                    :=          ~mmem.read head           :=                  _m.1, _t.5                 
+                   ()                     :=           ~equal _t.2, 0           :=                     _t.1                    
+                  _m.3                    :=          ~mmem.read cell           :=                  _m.2, _t.2                 
+           _m.4, _assignee_val            :=     mmem.readwrite listLength      :=                   _m.3, ()                  
+             _assignee_val.0              :=               add 1                :=                _assignee_val                
+                _m.5, ()                  :=     mmem.readwrite listLength      :=            _m.4, _assignee_val.0            
+                    2                     :=           ~add _this_ref           :=                  listLength                 
+                    1                     :=           ~add _this_ref           :=                     head                    
+                  _m.6                    :=          ~mmem.read _this          :=               _m.5, _this_ref               
+                                                           -> end               :=                   _m.6, 0                   
 
 
 rel _LinkedList.insertHead _this, cell:
@@ -250,50 +244,44 @@ rel _LinkedList.insertHead _this, cell:
 
 
 rel _LinkedList.appendCell _this, cell:
-                  _m, 0                   :=         begin <-                                                        
-             _m.0, _this_ref              :=      mmem.read _this      :=                     _m                     
-                  head                    :=       add _this_ref       :=                      1                     
-               listLength                 :=       add _this_ref       :=                      2                     
-            _m.1, _calleeRef              :=      mmem.read _this      :=                    _m.0                    
-           _m.2, _calleeVtable            :=   mmem.read _calleeRef    :=                    _m.1                    
-              _calleeMethod               :=      _calleeVtable 1      :=                     ()                     
-                  _m.3                    := _calleeMethod _this, cell :=                    _m.2                    
-                   ()                     :=     ~_calleeVtable 1      :=                _calleeMethod               
-                  _m.4                    :=   ~mmem.read _calleeRef   :=             _m.3, _calleeVtable            
-                  _m.5                    :=     ~mmem.read _this      :=              _m.4, _calleeRef              
-               _m.6, _t.1                 :=      mmem.read head       :=                    _m.5                    
-                  _t.0                    :=     notequal _t.1, 0      :=                     ()                     
-                  _t.3                    :=       equal _t.0, 0       :=                     ()                     
-                   ()                     :=     ~notequal _t.1, 0     :=                    _t.0                    
-                  _m.7                    :=      ~mmem.read head      :=                 _m.6, _t.1                 
-                                                     -> L0,L1          := ((_m.7, _this_ref), listLength, head), _t.3
+                  _m, 0                   :=              begin <-                                                            
+             _m.0, _this_ref              :=          mmem.read _this           :=                     _m                     
+                  head                    :=           add _this_ref            :=                      1                     
+               listLength                 :=           add _this_ref            :=                      2                     
+                  _m.1                    := _LinkedList.insertHead _this, cell :=                    _m.0                    
+               _m.2, _t.1                 :=           mmem.read head           :=                    _m.1                    
+                  _t.0                    :=          notequal _t.1, 0          :=                     ()                     
+                  _t.3                    :=           equal _t.0, 0            :=                     ()                     
+                   ()                     :=         ~notequal _t.1, 0          :=                    _t.0                    
+                  _m.3                    :=          ~mmem.read head           :=                 _m.2, _t.1                 
+                                                          -> L0,L1              := ((_m.3, _this_ref), listLength, head), _t.3
 
- ((_m, _this_ref), listLength, head), 0   :=           L0 <-                                                         
-            _m.0, _calleeRef              :=      mmem.read head       :=                     _m                     
-           _m.1, _calleeVtable            :=   mmem.read _calleeRef    :=                    _m.0                    
-              _calleeMethod               :=      _calleeVtable 1      :=                     ()                     
-                  _m.2                    := _calleeMethod head, cell  :=                    _m.1                    
-                   ()                     :=     ~_calleeVtable 1      :=                _calleeMethod               
-                  _m.3                    :=   ~mmem.read _calleeRef   :=             _m.2, _calleeVtable            
-                  _m.4                    :=      ~mmem.read head      :=              _m.3, _calleeRef              
-                                                       -> L2           :=  ((_m.4, _this_ref), listLength, head), 0  
+ ((_m, _this_ref), listLength, head), 0   :=               L0 <-                                                              
+            _m.0, _calleeRef              :=           mmem.read head           :=                     _m                     
+           _m.1, _calleeVtable            :=        mmem.read _calleeRef        :=                    _m.0                    
+              _calleeMethod               :=          _calleeVtable 1           :=                     ()                     
+                  _m.2                    :=      _calleeMethod head, cell      :=                    _m.1                    
+                   ()                     :=          ~_calleeVtable 1          :=                _calleeMethod               
+                  _m.3                    :=       ~mmem.read _calleeRef        :=             _m.2, _calleeVtable            
+                  _m.4                    :=          ~mmem.read head           :=              _m.3, _calleeRef              
+                                                           -> L2                :=  ((_m.4, _this_ref), listLength, head), 0  
 
- ((_m, _this_ref), listLength, head), 0   :=           L1 <-                                                         
-                                                       -> L3           :=   ((_m, _this_ref), listLength, head), 0   
+ ((_m, _this_ref), listLength, head), 0   :=               L1 <-                                                              
+                                                           -> L3                :=   ((_m, _this_ref), listLength, head), 0   
 
-((_m, _this_ref), listLength, head), _j.0 :=         L2,L3 <-                                                        
-               _m.0, _t.1                 :=      mmem.read head       :=                     _m                     
-                  _t.0                    :=     notequal _t.1, 0      :=                     ()                     
-                   ()                     :=      ~equal _t.0, 0       :=                    _j.0                    
-                   ()                     :=     ~notequal _t.1, 0     :=                    _t.0                    
-                  _m.1                    :=      ~mmem.read head      :=                 _m.0, _t.1                 
-           _m.2, _assignee_val            := mmem.readwrite listLength :=                  _m.1, ()                  
-             _assignee_val.0              :=           add 1           :=                _assignee_val               
-                _m.3, ()                  := mmem.readwrite listLength :=            _m.2, _assignee_val.0           
-                    2                     :=      ~add _this_ref       :=                 listLength                 
-                    1                     :=      ~add _this_ref       :=                    head                    
-                  _m.4                    :=     ~mmem.read _this      :=               _m.3, _this_ref              
-                                                      -> end           :=                   _m.4, 0                  
+((_m, _this_ref), listLength, head), _j.0 :=              L2,L3 <-                                                            
+               _m.0, _t.1                 :=           mmem.read head           :=                     _m                     
+                  _t.0                    :=          notequal _t.1, 0          :=                     ()                     
+                   ()                     :=           ~equal _t.0, 0           :=                    _j.0                    
+                   ()                     :=         ~notequal _t.1, 0          :=                    _t.0                    
+                  _m.1                    :=          ~mmem.read head           :=                 _m.0, _t.1                 
+           _m.2, _assignee_val            :=     mmem.readwrite listLength      :=                  _m.1, ()                  
+             _assignee_val.0              :=               add 1                :=                _assignee_val               
+                _m.3, ()                  :=     mmem.readwrite listLength      :=            _m.2, _assignee_val.0           
+                    2                     :=           ~add _this_ref           :=                 listLength                 
+                    1                     :=           ~add _this_ref           :=                    head                    
+                  _m.4                    :=          ~mmem.read _this          :=               _m.3, _this_ref              
+                                                           -> end               :=                   _m.4, 0                  
 
 
 rel _LinkedList.length _this, result:
@@ -312,7 +300,7 @@ _m.2, _assignee_val := mmem.readwrite result :=       _m.1, ()
                               -> end         :=        _m.5, 0       
 
 
-rel _LinkedList.vtable _method:
+rel _LinkedList._vtable _method:
 (), 0  :=          begin <-                    
   i    :=         dup _method         :=   ()  
                 -> L0,L2,L4,L6        := (), i 
@@ -338,12 +326,12 @@ res, i :=       L1,L3,L5,L7 <-
                     -> end            := res, 0
 
 
-rel _LinkedList.new:
-   _m, 0    :=        begin <-                           
-_m.0, _anon :=    mmem.allocate 3     :=        _m       
-  _vtable   := dup _LinkedList.vtable :=        ()       
-  _m.1, 0   :=  mmem.readwrite _anon  :=  _m.0, _vtable  
-                       -> end         := (_m.1, _anon), 0
+rel _LinkedList._new:
+   _m, 0    :=        begin <-                            
+_m.0, _anon :=     mmem.allocate 3     :=        _m       
+  _vtable   := dup _LinkedList._vtable :=        ()       
+  _m.1, 0   :=  mmem.readwrite _anon   :=  _m.0, _vtable  
+                       -> end          := (_m.1, _anon), 0
 
 
 rel _Program.main _this:
@@ -352,7 +340,7 @@ rel _Program.main _this:
                            listLength                             :=          add _this_ref           :=                                  1                                 
                             sumResult                             :=          add _this_ref           :=                                  2                                 
                            linkedList                             :=          add _this_ref           :=                                  3                                 
-                          _m.1, _newRef                           :=         _LinkedList.new          :=                                _m.0                                
+                          _m.1, _newRef                           :=         _LinkedList._new         :=                                _m.0                                
                              _m.2, 0                              :=    mmem.readwrite linkedList     :=                            _m.1, _newRef                           
                        _m.3, _assignee_val                        :=    mmem.readwrite listLength     :=                              _m.2, ()                              
                          _assignee_val.0                          :=              add 10              :=                            _assignee_val                           
@@ -381,7 +369,7 @@ rel _Program.main _this:
  ((_m, _this_ref), ((x, linkedList), sumResult), listLength), 0   :=              L2 <-                                                                                     
                            _m.0, cell                             :=         mmem.allocate 1          :=                                 _m                                 
                              _m.1, 0                              :=       mmem.readwrite cell        :=                               _m.0, 0                              
-                          _m.2, _newRef                           :=            _Cell.new             :=                                _m.1                                
+                          _m.2, _newRef                           :=            _Cell._new            :=                                _m.1                                
                              _m.3, 0                              :=       mmem.readwrite cell        :=                            _m.2, _newRef                           
                         _m.4, _calleeRef                          :=          mmem.read cell          :=                                _m.3                                
                        _m.5, _calleeVtable                        :=       mmem.read _calleeRef       :=                                _m.4                                
@@ -417,7 +405,7 @@ rel _Program.main _this:
                                                                                   -> end              :=                               _m.4, 0                              
 
 
-rel _Program.vtable _method:
+rel _Program._vtable _method:
   (), 0    :=     begin <-                 
     i      :=    dup _method    :=    ()   
   (), 0    :=        id         :=  (), i  
@@ -427,10 +415,10 @@ res.0, i.0 :=        id         :=  res, 0
                    -> end       := res.0, 0
 
 
-rel _Program.new:
+rel _Program._new:
    _m, 0    :=       begin <-                          
 _m.0, _anon :=   mmem.allocate 4    :=        _m       
-  _vtable   := dup _Program.vtable  :=        ()       
+  _vtable   := dup _Program._vtable :=        ()       
   _m.1, 0   := mmem.readwrite _anon :=  _m.0, _vtable  
                       -> end        := (_m.1, _anon), 0
 
@@ -439,7 +427,7 @@ rel main:
     (), 0      :=     begin <-                      
       _m       :=     mmem.new     :=       ()      
    _m.0, 1     := mmem.allocate 1  :=       _m      
-_m.1, _mainObj :=   _Program.new   :=      _m.0     
+_m.1, _mainObj :=  _Program._new   :=      _m.0     
    _m.2, 0     := mmem.readwrite 1 := _m.1, _mainObj
      _m.3      := _Program.main 1  :=      _m.2     
                        -> end      :=    _m.3, 0    

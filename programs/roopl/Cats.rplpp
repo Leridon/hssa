@@ -1,15 +1,16 @@
 class Animal
     int c1
-    Animal cat
+    Cat cat
 
     method a()
         c1 += 42
     method b()
         c1 += 7
     method main()
-        new Animal cat
+        new Cat cat
         call cat::a()
         call cat::b()
+        call cat::c()
         call a()
         skip
 

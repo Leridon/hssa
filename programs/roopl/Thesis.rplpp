@@ -1,0 +1,24 @@
+class Main
+    method main()
+        construct Cat c
+        call deleteAnimal(c)
+        destruct c
+    method deleteAnimal(Animal a)
+        delete Animal a
+    
+class Animal
+    Animal z
+    int x
+    method roar(Animal y)
+        new Animal z
+        y <=> z
+        x += 1
+        skip
+class Cat inherits Animal
+    method meow()
+        skip
+    
+
+class Kitty inherits Cat
+    method purr()
+        skip

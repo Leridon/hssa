@@ -10,7 +10,7 @@ object CliMain:
         
         try {
             val build_script = Parsing.parse(
-                """load ./programs/roopl/LinkedList.rplpp; roopl; hssa.check; tap {save ./programs/tristan.hssa}; hssa.exec
+                """load ./programs/roopl/LinkedList.rplpp; roopl.parse; roopl.check; roopl.translate; hssa.check; hssa.optimize; tap {save ./programs/tristan.hssa}; hssa.exec;
                   |""".stripMargin)
             
             val f = Evaluation.evaluate(build_script).withImplicitDump
