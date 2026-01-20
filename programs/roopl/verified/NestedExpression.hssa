@@ -1,0 +1,78 @@
+rel _Main.main _this:
+        _m, 0         :=     begin <-                             
+   _m.0, _this_ref    := mmem.read _this  :=          _m          
+          x           :=  add _this_ref   :=           1          
+          y           :=  add _this_ref   :=           2          
+        _t.0          :=      add 5       :=           0          
+ _m.1, _assignee_val  := mmem.readwrite x :=       _m.0, ()       
+   _assignee_val.0    :=     add _t.0     :=     _assignee_val    
+      _m.2, ()        := mmem.readwrite x := _m.1, _assignee_val.0
+          0           :=      ~add 5      :=         _t.0         
+        _t.1          :=      add 5       :=           0          
+_m.3, _assignee_val.1 := mmem.readwrite y :=       _m.2, ()       
+   _assignee_val.2    :=    ~add _t.1     :=    _assignee_val.1   
+      _m.4, ()        := mmem.readwrite y := _m.3, _assignee_val.2
+          0           :=      ~add 5      :=         _t.1         
+     _m.5, _t.2       :=   mmem.read y    :=         _m.4         
+_m.6, _assignee_val.3 := mmem.readwrite x :=       _m.5, ()       
+   _assignee_val.4    :=     xor _t.2     :=    _assignee_val.3   
+      _m.7, ()        := mmem.readwrite x := _m.6, _assignee_val.4
+        _m.8          :=   ~mmem.read y   :=      _m.7, _t.2      
+        _t.4          :=      add 1       :=           0          
+        _t.6          :=      add 2       :=           0          
+        _t.7          :=      add 5       :=           0          
+        _t.5          :=  mul _t.6, _t.7  :=          ()          
+        _t.3          :=     add _t.5     :=         _t.4         
+_m.9, _assignee_val.5 := mmem.readwrite x :=       _m.8, ()       
+   _assignee_val.6    :=     add _t.3     :=    _assignee_val.5   
+      _m.10, ()       := mmem.readwrite x := _m.9, _assignee_val.6
+        _t.8          :=    ~add _t.5     :=         _t.3         
+         ()           := ~mul _t.6, _t.7  :=         _t.5         
+          0           :=      ~add 5      :=         _t.7         
+          0           :=      ~add 2      :=         _t.6         
+          0           :=      ~add 1      :=         _t.8         
+          2           :=  ~add _this_ref  :=           y          
+          1           :=  ~add _this_ref  :=           x          
+        _m.11         := ~mmem.read _this :=   _m.10, _this_ref   
+                              -> end      :=       _m.11, 0       
+
+
+rel _Main._vtable _method:
+(), 0  :=    begin <-             
+  i    :=  dup _method   :=   ()  
+              -> L0      := (), i 
+
+(), 0  :=     L0 <-               
+ res   := dup _Main.main :=   ()  
+              -> L1      := res, 0
+
+res, i :=     L1 <-               
+  ()   :=  ~dup _method  :=   i   
+              -> end     := res, 0
+
+
+rel _Main._new:
+   _m, 0    :=       begin <-                          
+_m.0, _anon :=   mmem.allocate 3    :=        _m       
+  _vtable   :=  dup _Main._vtable   :=        ()       
+  _m.1, 0   := mmem.readwrite _anon :=  _m.0, _vtable  
+                      -> end        := (_m.1, _anon), 0
+
+
+rel main:
+    (), 0      :=       begin <-                        
+      _m       :=       mmem.new       :=       ()      
+ _m.0, _main   :=   mmem.allocate 1    :=       _m      
+_m.1, _mainObj :=      _Main._new      :=      _m.0     
+   _m.2, 0     := mmem.readwrite _main := _m.1, _mainObj
+     _m.3      :=   _Main.main _main   :=      _m.2     
+      ()       :=        ~dup 1        :=     _main     
+                         -> end        :=    _m.3, 0    
+
+
+rel mmem.read _addr:
+     _m, 0       :=       begin <-                              
+_m.0, _readvalue := mmem.readwrite _addr :=        _m, ()       
+   _readcopy     :=    dup _readvalue    :=          ()         
+    _m.1, ()     := mmem.readwrite _addr :=   _m.0, _readvalue  
+                           -> end        := (_m.1, _readcopy), 0

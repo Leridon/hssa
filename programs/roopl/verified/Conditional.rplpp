@@ -1,0 +1,10 @@
+class Main
+  int x
+  method main()
+    x += 5
+
+    if x = 5 && x != 7 then
+      x += 2
+    else
+      skip
+    fi x = 7
