@@ -1,51 +1,59 @@
 rel _Main.main _this:
-          _m, 0            :=       begin <-                                      
-     _m.0, _this_ref       :=   mmem.read _this    :=              _m             
-            x              :=    add _this_ref     :=              1              
-           _t.0            :=        add 5         :=              0              
-   _m.1, _assignee_val     :=   mmem.readwrite x   :=           _m.0, ()          
-     _assignee_val.0       :=       add _t.0       :=        _assignee_val        
-         _m.2, ()          :=   mmem.readwrite x   :=    _m.1, _assignee_val.0    
-            0              :=        ~add 5        :=             _t.0            
-        _m.3, _t.3         :=     mmem.read x      :=             _m.2            
-           _t.4            :=        add 5         :=              0              
-           _t.2            :=   equal _t.3, _t.4   :=              ()             
-        _m.4, _t.6         :=     mmem.read x      :=             _m.3            
-           _t.7            :=        add 7         :=              0              
-           _t.5            := notequal _t.6, _t.7  :=              ()             
-           _t.1            :=    and _t.2, _t.5    :=              ()             
-           _t.8            :=    equal _t.1, 0     :=              ()             
-            ()             :=   ~and _t.2, _t.5    :=             _t.1            
-            ()             := ~notequal _t.6, _t.7 :=             _t.5            
-            0              :=        ~add 7        :=             _t.7            
-           _m.5            :=     ~mmem.read x     :=          _m.4, _t.6         
-            ()             :=  ~equal _t.3, _t.4   :=             _t.2            
-            0              :=        ~add 5        :=             _t.4            
-           _m.6            :=     ~mmem.read x     :=          _m.5, _t.3         
-                                    -> L0,L1       := ((_m.6, _this_ref), x), _t.8
+          _m, 0            :=         begin <-                                        
+     _m.0, _this_ref       :=     mmem.read _this      :=              _m             
+            x              :=      add _this_ref       :=              1              
+           _t.0            :=          add 9           :=              0              
+   _m.1, _assignee_val     :=     mmem.readwrite x     :=           _m.0, ()          
+     _assignee_val.0       :=         add _t.0         :=        _assignee_val        
+         _m.2, ()          :=     mmem.readwrite x     :=    _m.1, _assignee_val.0    
+            0              :=          ~add 9          :=             _t.0            
+        _m.3, _t.3         :=       mmem.read x        :=             _m.2            
+           _t.4            :=          add 5           :=              0              
+           _t.2            := greaterequal _t.3, _t.4  :=              ()             
+        _m.4, _t.6         :=       mmem.read x        :=             _m.3            
+           _t.7            :=          add 7           :=              0              
+           _t.5            :=   notequal _t.6, _t.7    :=              ()             
+           _t.1            :=      and _t.2, _t.5      :=              ()             
+           _t.8            :=      equal _t.1, 0       :=              ()             
+            ()             :=     ~and _t.2, _t.5      :=             _t.1            
+            ()             :=   ~notequal _t.6, _t.7   :=             _t.5            
+            0              :=          ~add 7          :=             _t.7            
+           _m.5            :=       ~mmem.read x       :=          _m.4, _t.6         
+            ()             := ~greaterequal _t.3, _t.4 :=             _t.2            
+            0              :=          ~add 5          :=             _t.4            
+           _m.6            :=       ~mmem.read x       :=          _m.5, _t.3         
+                                      -> L0,L1         := ((_m.6, _this_ref), x), _t.8
 
- ((_m, _this_ref), x), 0   :=        L0 <-                                        
-           _t.0            :=        add 2         :=              0              
-   _m.0, _assignee_val     :=   mmem.readwrite x   :=            _m, ()           
-     _assignee_val.0       :=       add _t.0       :=        _assignee_val        
-         _m.1, ()          :=   mmem.readwrite x   :=    _m.0, _assignee_val.0    
-            0              :=        ~add 2        :=             _t.0            
-                                     -> L2         :=  ((_m.1, _this_ref), x), 0  
+ ((_m, _this_ref), x), 0   :=          L0 <-                                          
+           _t.0            :=          add 3           :=              0              
+   _m.0, _assignee_val     :=     mmem.readwrite x     :=            _m, ()           
+     _assignee_val.0       :=         add _t.0         :=        _assignee_val        
+         _m.1, ()          :=     mmem.readwrite x     :=    _m.0, _assignee_val.0    
+            0              :=          ~add 3          :=             _t.0            
+                                       -> L2           :=  ((_m.1, _this_ref), x), 0  
 
- ((_m, _this_ref), x), 0   :=        L1 <-                                        
-                                     -> L3         :=   ((_m, _this_ref), x), 0   
+ ((_m, _this_ref), x), 0   :=          L1 <-                                          
+                                       -> L3           :=   ((_m, _this_ref), x), 0   
 
-((_m, _this_ref), x), _j.0 :=       L2,L3 <-                                      
-        _m.0, _t.1         :=     mmem.read x      :=              _m             
-           _t.2            :=        add 7         :=              0              
-           _t.0            :=   equal _t.1, _t.2   :=              ()             
-            ()             :=    ~equal _t.0, 0    :=             _j.0            
-            ()             :=  ~equal _t.1, _t.2   :=             _t.0            
-            0              :=        ~add 7        :=             _t.2            
-           _m.1            :=     ~mmem.read x     :=          _m.0, _t.1         
-            1              :=    ~add _this_ref    :=              x              
-           _m.2            :=   ~mmem.read _this   :=       _m.1, _this_ref       
-                                     -> end        :=           _m.2, 0           
+((_m, _this_ref), x), _j.0 :=         L2,L3 <-                                        
+        _m.0, _t.2         :=       mmem.read x        :=              _m             
+           _t.3            :=          add 5           :=              0              
+           _t.1            := greaterequal _t.2, _t.3  :=              ()             
+        _m.1, _t.5         :=       mmem.read x        :=             _m.0            
+           _t.6            :=          add 7           :=              0              
+           _t.4            :=   notequal _t.5, _t.6    :=              ()             
+           _t.0            :=      and _t.1, _t.4      :=              ()             
+            ()             :=      ~equal _t.0, 0      :=             _j.0            
+            ()             :=     ~and _t.1, _t.4      :=             _t.0            
+            ()             :=   ~notequal _t.5, _t.6   :=             _t.4            
+            0              :=          ~add 7          :=             _t.6            
+           _m.2            :=       ~mmem.read x       :=          _m.1, _t.5         
+            ()             := ~greaterequal _t.2, _t.3 :=             _t.1            
+            0              :=          ~add 5          :=             _t.3            
+           _m.3            :=       ~mmem.read x       :=          _m.2, _t.2         
+            1              :=      ~add _this_ref      :=              x              
+           _m.4            :=     ~mmem.read _this     :=       _m.3, _this_ref       
+                                       -> end          :=           _m.4, 0           
 
 
 rel _Main._vtable _method:
