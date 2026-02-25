@@ -4,7 +4,7 @@ class Fib
 
   method main()
     local int n = 4
-    call fib(n)
+        call fib(n)
     delocal int n = 0
 
   method fib(int n)
