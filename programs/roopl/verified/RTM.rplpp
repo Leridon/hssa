@@ -41,8 +41,8 @@ class RTM
         LEFT += 9998
         RIGHT += 9997
         BLANK += 9996
-        // Set max program counter
-        PC_MAX += 7
+        // Set max program counter (FIXED from cservenka version, must be 8 not 7)
+        PC_MAX += 8
 
     method initRules()
         // Initialize transition rule arrays
@@ -246,7 +246,7 @@ class Program
     method main()
         // This program contains a RTM implementing
         // incrementation of a non-negative n-bit binary number by 1 (modulo 2n).
-        // The tape is initialized with | b | 1Â | 1 | 0 | 0 | and after execution,
-        // the tape is left with | bÂ | 0 | 0Â | 1 | 1 |
+        // The tape is initialized with | b | 1 | 1 | 0 | 1 | and after execution,
+        // the tape is left with | b | 0 | 0 | 1 | 1 |
         new RTM bni
         call bni::init()
