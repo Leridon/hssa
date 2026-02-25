@@ -1,0 +1,19 @@
+class Fib
+  int l
+  int r
+
+  method main()
+    local int n = 4
+    call fib(n)
+    delocal int n = 0
+
+  method fib(int n)
+    if n = 0 then
+      l ^= 1
+      r ^= 1
+    else
+      n -= 1
+      call fib(n)
+      l += r
+      r <=> l
+    fi l = r
