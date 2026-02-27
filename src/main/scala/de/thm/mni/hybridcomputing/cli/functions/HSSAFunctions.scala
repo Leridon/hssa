@@ -5,11 +5,21 @@ import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
 import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
 import de.thm.mni.hybridcomputing.hssa.{BindingTree, Language, TypeChecking, Wellformedness}
-import de.thm.mni.hybridcomputing.util.errors.LanguageError
 
 import scala.collection.mutable.ListBuffer
 
 object HSSAFunctions {
+    
+    object asHSSA {
+        def unapply(v: CliChain.Value): Option[CliChain.Value.HSSA] = {
+            v match {
+                case p: CliChain.Value.HSSA => Some(p)
+                case m: CliChain.Value.ModularHSSA => Some(
+                    CliChain.Value.HSSA(hssa.modular.Modular.link(m.program)))
+                case _ => None
+            }
+        }
+    }
     
     import Evaluation.Function
     
@@ -19,39 +29,48 @@ object HSSAFunctions {
             AllInOne,
             Exec,
             Graphs,
-            Check
+            Check,
+            InPlaceFormat
         ),
         Optimizations.all
     ).flatten
     
-    /*
+    
     object InPlaceFormat extends Function("mssa.fixup") {
         override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
             case p: CliChain.Value.ModularHSSA =>
                 
                 CliChain.Value.Sequence(p.program.programs.map(prog => {
                     CliChain.Value.File.fromContent(hssa.modular.Modular.Formatting.format(prog))
+                      .withPath(prog.position.file.path.get)
                 }))
-                
-                AutoDiscard.apply()
         }
-    }*/
+    }
     
     object Parse extends Function("hssa.parse") {
         override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
             case f: CliChain.Value.File =>
                 val lang = hssa.Language.Canon
                 
-                CliChain.Value.HSSA(hssa.parsing.Parsing(lang).parse(
-                    hssa.parsing.Lexing.lex(f.asSourceFile)
-                ))
+                f.path match {
+                    case Some(path) =>
+                        CliChain.Value.ModularHSSA(hssa.modular.Modular.Parsing(lang).parseProject(
+                            path
+                        )._1)
+                    case None =>
+                        CliChain.Value.HSSA(hssa.parsing.Parsing(lang).parse(
+                            hssa.parsing.Lexing.lex(f.asSourceFile)
+                        ))
+                }
+            
+            
             case hssa: CliChain.Value.HSSA => hssa
         }
     }
     
     object Check extends Function("hssa.check") {
         override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
-            case in@CliChain.Value.HSSA(prog) =>
+            case asHSSA(in@CliChain.Value.HSSA(prog)) =>
                 val lang = hssa.Language.Canon
                 
                 Wellformedness(lang).check(prog).raiseIfNonEmpty()
@@ -63,7 +82,7 @@ object HSSAFunctions {
     
     object Exec extends Function("hssa.exec") {
         override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
-            case CliChain.Value.HSSA(program) =>
+            case asHSSA(CliChain.Value.HSSA(program)) =>
                 CliChain.Value.File.fromContent(
                     Interpretation(program.language).interpret(program).toString
                 )

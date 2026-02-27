@@ -91,10 +91,11 @@ object General {
                     this.apply(Value.File.fromContent(Formatting.format(program)))
                 case Value.Roopl(program) =>
                     this.apply(Value.File.fromContent(roopl.Formatting.format(program)))
-                case in => println(in)
+                case in => 
+                    println(in)
             }
             
-            CliChain.Value.Unit
+            input
         }
     }
     

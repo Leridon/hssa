@@ -165,7 +165,7 @@ class RTM
         // Init pc, start and finishing state
         state += 1
         Qs += 1
-        Qf += 6
+        Qf += 7
 
         // Start simulation
         call simulate()

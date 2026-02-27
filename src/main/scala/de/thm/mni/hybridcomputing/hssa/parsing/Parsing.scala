@@ -50,7 +50,7 @@ object Parsing {
         def simple_expresion: P[Syntax.Expression] =
             language.plugins.map(_.literal_parser(this)).foldLeft(failure(""))((a, b) => a | b).map(Expression.Literal(_))
               | ident ^ Syntax.Expression.Variable.apply
-              | LPAREN ~~ expression ~~ RPAREN
+              | posi(LPAREN ~~ expression ~~ RPAREN)
               | TILDE ~~ simple_expresion ^ Syntax.Expression.Invert.apply
               | (in => {
                 Failure(s"Expected simple expression but got ${in.first} at ${in.pos}", in)

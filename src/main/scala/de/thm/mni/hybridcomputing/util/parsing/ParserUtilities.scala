@@ -30,7 +30,7 @@ trait ParserUtilities[TokenClass] extends Parsers {
             
             res.map(f)
               .map({
-                  case pos: Positioned if !pos.hasPosition => pos.setPosition(SourcePosition(in.file, after_whitespace.position, end.position))
+                  case pos: Positioned => pos.setPosition(SourcePosition(in.file, after_whitespace.position, end.position))
                   case r => r
               })
               .map({

@@ -17,11 +17,11 @@ value, 0 :=       L0 <-
            _t.11            :=    dup value.0    :=              ()
            _t.8             :=    add modulo     :=             _t.11
            _t.13            :=     dup _t.8      :=              ()
-           _t.7             :=    minus shift    :=             _t.13
+           _t.7             :=    ~add shift    :=             _t.13
            _t.6             := mod _t.7, modulo  :=              ()
             ()              :=     ~dup _t.6     :=          new_value.0
             ()              := ~mod _t.7, modulo :=             _t.6
-           _t.14            :=   ~minus shift    :=             _t.7
+           _t.14            :=      add shift    :=             _t.7
             ()              :=     ~dup _t.8     :=             _t.14
            _t.12            :=    ~add modulo    :=             _t.8
             ()              :=   ~dup value.0    :=             _t.12

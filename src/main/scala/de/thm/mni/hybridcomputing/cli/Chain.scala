@@ -45,6 +45,8 @@ object CliChain {
             def asSourceFile: SourceFile = in_memory_content.map(SourceFile.fromString)
               .orElse(path.map(SourceFile.fromFile))
               .getOrElse(throw new RuntimeException("File has no path nor content"))
+            
+            def withPath(path: Path): File = copy(path = Some(path), name = Some(path.getFileName.toString))
         }
         
         object File {
