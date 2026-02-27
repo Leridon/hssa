@@ -38,14 +38,18 @@ rel stack_pop:
                                 -> end            :=  ((stack, top), 0)
 
 
-rel move_right:
-(((left, (center, right))), 0) :=  begin <-
+rel tape_init:
+right, 0 := begin <-
+             -> end  := ((), -1, right), 0
+             
+rel tape_move_right:
+((left, center, right), 0) :=  begin <-
             left.1             := ~stack_pop :=            (left, center)
      (right.1, center.1)       := stack_pop  :=                right
-                                    -> end   := (((left.1, (center.1, right.1))), 0)
+                                    -> end   := ((left.1, center.1, right.1), 0)
 
 
-rel maybe_apply ((((q1, q2), ((type, (read, write)))))):
+rel maybe_apply ((q1, q2), (type, read, write)):
          (state, 0)          :=     begin <-
              c               :=  equal (type, 0)  :=                   ()
                                     -> L6,L1      :=               (state, c)
@@ -84,11 +88,11 @@ rel maybe_apply ((((q1, q2), ((type, (read, write)))))):
                                     -> L10,L8     :=            ((Q.1, tape), c)
 
      ((state, tape), 0)      :=       L8 <-
-           tape.1            :=    move_right     :=                  tape
+           tape.1            :=    tape_move_right     :=                  tape
                                       -> L9       :=          ((state, tape.1), 0)
 
      ((state, tape), 0)      :=      L10 <-
-           tape.1            :=    ~move_right    :=                  tape
+           tape.1            :=    ~tape_move_right    :=                  tape
                                      -> L11       :=          ((state, tape.1), 0)
 
          (state, c)          :=     L11,L9 <-
@@ -104,12 +108,9 @@ rel maybe_apply ((((q1, q2), ((type, (read, write)))))):
                                      -> end       :=               (state, 0)
 
 
-rel tape_init:
-right, 0 := begin <-
-             -> end  := ((), -1, right), 0
 
 
-rel rtm.eval (((start_q, ((end_q, (transitions_n, transitions)))))):
+rel rtm.eval (start_q, end_q, transitions_n, transitions):
         (tape_right, 0)          :=               begin <-
               tape               :=               tape_init               :=           tape_right
              state               :=              xor start_q              :=               0
