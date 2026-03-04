@@ -114,7 +114,7 @@ filtered, was_empty :=       L4,L3 <-
 
 
 rel invert: // Involution for inversion
-(kind, content), 0 :=    begin <-
+(2, (kind, content)), 0 :=    begin <-
         c          := equal kind, 2  :=         ()
                          -> L1,L2    := (kind, content), c
 
@@ -126,7 +126,7 @@ rel invert: // Involution for inversion
 
 (kind, content), c :=    L4,L3 <-
         ()         := ~equal kind, 2 :=         c
-                          -> end     := (kind, content), 0
+                          -> end     := (2, (kind, content)), 0
 
 rel eval e, store:
       (), 0        :=                  begin <-
@@ -147,7 +147,7 @@ rel eval e, store:
    (e1, e2), 0     :=                 in_pair <-
         v1         :=               eval e1, store                :=             ()
         v2         :=               eval e2, store                :=             ()
-                                      -> out_pair                 := (((e1, e2), (2, (v1, v2)))), 0
+                                      -> out_pair                 := (((e1, e2), (1, (v1, v2)))), 0
 
        inner, 0        :=               in_inversion <-
          v         :=                eval inner, store                :=             ()
