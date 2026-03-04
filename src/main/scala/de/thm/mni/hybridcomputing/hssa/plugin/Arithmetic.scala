@@ -69,6 +69,9 @@ object Arithmetic extends Language.Plugin {
                         },
                         { case Value.Pair(a, b) => {
                             case v : Basic.Int if v == bool(a == b) => Basic.Unit
+                            case _ =>
+                                println("equa")
+                                ???
                         }
                         }
                     ),

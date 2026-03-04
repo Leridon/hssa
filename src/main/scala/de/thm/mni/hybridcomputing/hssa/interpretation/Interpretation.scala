@@ -56,7 +56,8 @@ case class Interpretation(language: Language) {
             case (Expression.Literal(v), value) if v == value => Map()
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) => assign(pat_1, val_a) ++ assign(pat_2, val_b)
             case (Expression.Invert(sub), rel: Value.Relation) => assign(sub, rel.flipped)
-            case _ => Interpretation.Errors.ReversibilityViolation(s"$value does not match $pattern").setPosition(pattern.position).raise()
+            case _ =>
+                Interpretation.Errors.ReversibilityViolation(s"$value does not match $pattern").setPosition(pattern.position).raise()
         }
     }
     

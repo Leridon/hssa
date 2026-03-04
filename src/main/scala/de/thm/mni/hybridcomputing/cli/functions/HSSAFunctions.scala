@@ -70,7 +70,7 @@ object HSSAFunctions {
     
     object Check extends Function("hssa.check") {
         override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
-            case asHSSA(in@CliChain.Value.HSSA(prog)) =>
+            case in@asHSSA(CliChain.Value.HSSA(prog)) =>
                 val lang = hssa.Language.Canon
                 
                 Wellformedness(lang).check(prog).raiseIfNonEmpty()
