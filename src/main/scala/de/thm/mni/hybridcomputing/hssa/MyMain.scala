@@ -31,7 +31,7 @@ object MyMain {
         var counter = 0
         
         def encode(value: Value): Value = value match {
-            case Basic.Unit => tuple(Basic.Int(0), Basic.Unit)
+            case Basic.Unit => Basic.Unit
         }
         
         def encode(name: String): Basic.Int = {
@@ -87,7 +87,7 @@ object MyMain {
               .foldRight(tuple(Basic.Int(-1), Basic.Unit, Basic.Unit))((builtin, tail) => {
                   tuple(
                       builtin._1,
-                      Value.Pair(Value.Pair(Basic.Int(2), Value.Pair(Basic.Int(0), builtin._2)), Basic.Int(0)),
+                      Value.Pair(Value.Pair(Basic.Int(0), builtin._2), Basic.Int(0)),
                       tail
                   )
               })

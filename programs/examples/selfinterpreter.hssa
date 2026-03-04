@@ -24,9 +24,9 @@
 
 
 /** Values
-    (0, i) -- Primitive value (Unit, Int)
-    (1, (v, v)) -- Pair
-    (2, rel) -- Relation
+    i -- Primitive value (Unit, Int)
+    (v, v) -- Pair
+    rel -- Relation
 
     Relations rel
     (0, prim) -- Primitive
@@ -50,8 +50,8 @@
 
 rel get_kind (kind, content):
 (), 0 := begin<-
-k := dup kind := ()
--> end := k, 0
+  k   := dup kind := ()
+           -> end := k, 0
 
 rel store_add x:
 ((head_x, head_value, tail), entry), 0 :=     begin <-
@@ -114,7 +114,7 @@ filtered, was_empty :=       L4,L3 <-
 
 
 rel invert: // Involution for inversion
-(2, (kind, content)), 0 :=    begin <-
+(kind, content), 0 :=    begin <-
         c          := equal kind, 2  :=         ()
                          -> L1,L2    := (kind, content), c
 
@@ -126,7 +126,7 @@ rel invert: // Involution for inversion
 
 (kind, content), c :=    L4,L3 <-
         ()         := ~equal kind, 2 :=         c
-                          -> end     := (2, (kind, content)), 0
+                          -> end     := (kind, content), 0
 
 rel eval e, store:
       (), 0        :=                  begin <-
@@ -135,7 +135,7 @@ rel eval e, store:
 
       i, 0        :=                 in_unit <-
       v           :=               dup i                          :=            ()
-                                      -> out_unit                 :=        (i, (0, i)), 0
+                                      -> out_unit                 :=        (i, v), 0
 
        x, 0        :=               in_variable <-
        (v, kind)           :=               store_lookup store, x         :=             ()
@@ -147,7 +147,7 @@ rel eval e, store:
    (e1, e2), 0     :=                 in_pair <-
         v1         :=               eval e1, store                :=             ()
         v2         :=               eval e2, store                :=             ()
-                                      -> out_pair                 := (((e1, e2), (1, (v1, v2)))), 0
+                                      -> out_pair                 := (((e1, e2), (v1, v2))), 0
 
        inner, 0        :=               in_inversion <-
          v         :=                eval inner, store                :=             ()
@@ -163,7 +163,7 @@ rel init e, kind:
    (kind, data)    :=                    dup e                    :=             ()
                       -> in_unit,in_variable,in_pair,in_inversion :=         (data, (store, v)), kind
 
-     (i, (store, (0, v))), 0        :=                 in_unit <-
+     (i, (store, v)), 0        :=                 in_unit <-
                     () := ~dup i := v
                                       -> out_unit                 :=        (i, store), 0
 
@@ -172,7 +172,7 @@ rel init e, kind:
        store.1           :=               store_add x         :=             store, (v, kind_copy)
                                     -> out_variable               :=        (x, store.1), 0
 
-   ((e1, e2), (store.0, (1, (v1, v2)))), 0     :=                 in_pair <-
+   ((e1, e2), (store.0, (v1, v2))), 0     :=                 in_pair <-
         store.1    :=               init e1, kind                :=             store.0, v1
         store.2    :=               init e2, kind                :=             store.1, v2
                                       -> out_pair                 := ((e1, e2), store.2), 0
@@ -369,7 +369,7 @@ rel apply (store, relation, v_p):
 rel proc (x, e, blocks):
 store.0, 0 :=      begin <-
    copy    := dup (x, e, blocks) :=                 ()
- store.1   :=    store_add x     := (store.0, ((2, (1, copy)), 0))
+ store.1   :=    store_add x     := (store.0, ((1, copy), 0))
                     -> end       :=             store.1, 0
 
 
@@ -391,9 +391,9 @@ rel main (store, program, x, v_p):
    v_in, 0    :=            begin <-
    store.0    :=           dup store            :=      ()
    store.1    :=          prog program          :=    store.0
-((2, relation), 0) :=    store_lookup store.1, x     :=      ()
+(relation, 0) :=    store_lookup store.1, x     :=      ()
     v_out     := apply (store.1, relation, v_p) :=     v_in
-     ()       :=    ~store_lookup store.1, x    := ((2, relation), 0)
+     ()       :=    ~store_lookup store.1, x    := (relation, 0)
    store.2    :=         ~prog program          :=    store.1
      ()       :=           ~dup store           :=    store.2
                              -> end             :=   v_out, 0
