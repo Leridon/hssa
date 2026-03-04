@@ -1,0 +1,42 @@
+/**
+    (0, ()) -- unit
+    (1, x) -- variable
+    (2, (e, e)) -- pair
+    (3, e) -- inversion
+*/
+
+rel eval e, store:
+(), 0 := begin<-
+(kind, data) := dup e := ()
+-> in_unit, in_variable, in_pair, in_inversion := data, kind
+
+(), 0 := in_unit<-
+-> out_unit := ((), ()), 0
+
+x, 0 := in_variable<-
+// TODO: Lookup
+-> out_variable := (x, v), 0
+
+(e1, e2), 0 := in_pair<-
+v1 := eval e1, store := ()
+v2 := eval e2, store := ()
+-> out_pair := ((e1, e2), (v1, v2)), ()
+
+e, 0 := in_inversion<-
+~v := eval e, store := ()
+-> out_inversion := (e, v), 0
+
+(e_data, value), k :=  in_unit, in_variable, in_pair, in_inversion <-
+() := ~dup e := (kind, e_data)
+-> end := value, 0
+
+
+rel main store, prog, x, v_p:
+v_in, 0 := begin<-
+store.0 := dup store := ()
+store.1 := program prog := store.0
+v_out := apply store.1, rel, v_p := v_in
+
+store.2 := ~program prog := store.1
+() := ~dup store := store.2
+-> end := v_out, 0

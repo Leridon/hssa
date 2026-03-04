@@ -1,0 +1,18 @@
+rel true (x, y):
+(), 0 := begin<-
+    r := dup x := ()
+-> end := r, 0
+
+rel false (x, y):
+(), 0 := begin<-
+    r := dup y := ()
+        -> end := r, 0
+
+rel zero f:
+    x, 0 := begin<-
+    -> end := x, 0
+
+rel succ:
+pre, 0 := begin<-
+r := id := {rel _ f: x, 0 := begin<-; x1 := f := x; x2 := pre := x1; -> end := x2, 0 }
+-> end := r, 0
