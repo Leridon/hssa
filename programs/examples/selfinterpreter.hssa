@@ -333,11 +333,11 @@ store.3, v_out, l_out :=        do_exit exit        :=        store.2
 
 rel steps store, blocks:
 (v_in, l_in), is_first :=     L_repeat,begin <-
-          ()           :=      ~equal l_in, -10       :=        is_first
+          ()           :=      ~equal l_in, -10      :=        is_first
     current_block      :=    forward blocks, l_in    :=           ()
      v_out, l_out      := block current_block, store :=       v_in, l_in
-          ()           :=   ~backward blocks, l_out   :=      current_block
-       is_last         :=      equal l_out, -20       :=           ()
+          ()           :=   ~backward blocks, l_out  :=      current_block
+       is_last         :=      equal l_out, -20      :=           ()
                                -> L_repeat,end       := (v_out, l_out), is_last
 
 rel apply (store, relation, v_p):
@@ -353,9 +353,9 @@ rel apply (store, relation, v_p):
             store.0              :=             dup store              :=                ()
              p_copy              :=              dup v_p               :=                ()
             store.1              :=             init e, 1              :=         (store.0, p_copy)
-             (v_out, -20)               :=       steps store.1, blocks        :=               (v_in, -10)
-       (store.2, p_copy2)        :=             init e, 1              :=              store.1
-               ()                :=             dup store              :=              store.2
+             (v_out, -20)        :=       steps store.1, blocks        :=            (v_in, -10)
+       (store.2, p_copy2)        :=            ~init e, 1              :=              store.1
+               ()                :=            ~dup store              :=              store.2
                ()                :=              ~dup v_p              :=              p_copy2
                                               -> L_proc_out            := ((x, e, blocks), v_out), 0
 
