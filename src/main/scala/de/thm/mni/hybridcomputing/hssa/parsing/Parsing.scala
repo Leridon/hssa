@@ -66,9 +66,9 @@ object Parsing {
         def entry: Parser[Syntax.Entry] =
             expression ~~ ASGN ~~ rep1sep(ident, COMMA) ~~ LARROW ^ Syntax.Entry.apply
         
-        def exit: Parser[Syntax.Exit] = RARROW ~~ rep1sep(ident, COMMA) ~~ ASGN ~~ expression ^ Syntax.Exit.apply
+        def exit: Parser[Syntax.Exit] = RARROW ~~ rep1sep(ident, COMMA) ~~ NGSA ~~ expression ^ Syntax.Exit.apply
         
-        def assignment: Parser[Syntax.Assignment] = expression ~~ ASGN ~~ expression ~~ expression ~~ ASGN ~~ expression ^ Syntax.Assignment.apply
+        def assignment: Parser[Syntax.Assignment] = expression ~~ ASGN ~~ expression ~~ expression ~~ NGSA ~~ expression ^ Syntax.Assignment.apply
         
         def block: P[Syntax.Block] = entry ~~ rep(assignment) ~~ exit ^ Syntax.Block.apply
         

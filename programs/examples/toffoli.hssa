@@ -1,56 +1,56 @@
 rel toffoli:
 (a, b, c), 0 := begin<-
-->E0,B1 := (b, c), a
+->E0,B1 =: (b, c), a
 
     (b, c), 0 := B1<-
-    ->E10,B11 := c, b
+    ->E10,B11 =: c, b
 
         c, 0 := B11<-
-        -> E111,E110 := (), c
+        -> E111,E110 =: (), c
 
         (),c := E110,E111<-
-        -> E11 := c,0
+        -> E11 =: c,0
 
     c, b := E10,E11<-
-    ->E1 := (b, c),0
+    ->E1 =: (b, c),0
 
 (b, c), a := E0,E1<-
--> end := (a, b, c), 0
+-> end =: (a, b, c), 0
 
 rel toffoli.test:
 (), 0 := begin<-
-0, 0, 0 := toffoli := 0, 0, 0
-0, 0, 1 := toffoli := 0, 0, 1
-0, 1, 0 := toffoli := 0, 1, 0
-0, 1, 1 := toffoli := 0, 1, 1
-1, 0, 0 := toffoli := 1, 0, 0
-1, 0, 1 := toffoli := 1, 0, 1
-1, 1, 1 := toffoli := 1, 1, 0
-1, 1, 0 := toffoli := 1, 1, 1
-->end := (), 0
+0, 0, 0 := toffoli =: 0, 0, 0
+0, 0, 1 := toffoli =: 0, 0, 1
+0, 1, 0 := toffoli =: 0, 1, 0
+0, 1, 1 := toffoli =: 0, 1, 1
+1, 0, 0 := toffoli =: 1, 0, 0
+1, 0, 1 := toffoli =: 1, 0, 1
+1, 1, 1 := toffoli =: 1, 1, 0
+1, 1, 0 := toffoli =: 1, 1, 1
+->end =: (), 0
 
 
 rel fredkin:
 (a, b, c), 0 := begin<-
-->B0,B1 := (b, c),a
+->B0,B1 =: (b, c),a
 
     (b, c), 0 := B0<-
-    ->E0 := (b, c),0
+    ->E0 =: (b, c),0
 
     (b, c), 0 := B1<-
-    ->E1 := (c, b),0
+    ->E1 =: (c, b),0
 
 (b, c), a := E0,E1<-
-->end := (a, b, c),0
+->end =: (a, b, c),0
 
 rel fredkin.test:
 (), 0 := begin<-
-0, 0, 0 := fredkin := 0, 0, 0
-0, 0, 1 := fredkin := 0, 0, 1
-0, 1, 0 := fredkin := 0, 1, 0
-0, 1, 1 := fredkin := 0, 1, 1
-1, 0, 0 := fredkin := 1, 0, 0
-1, 1, 0 := fredkin := 1, 0, 1
-1, 0, 1 := fredkin := 1, 1, 0
-1, 1, 1 := fredkin := 1, 1, 1
-->end := (), 0
+0, 0, 0 := fredkin =: 0, 0, 0
+0, 0, 1 := fredkin =: 0, 0, 1
+0, 1, 0 := fredkin =: 0, 1, 0
+0, 1, 1 := fredkin =: 0, 1, 1
+1, 0, 0 := fredkin =: 1, 0, 0
+1, 1, 0 := fredkin =: 1, 0, 1
+1, 0, 1 := fredkin =: 1, 1, 0
+1, 1, 1 := fredkin =: 1, 1, 1
+->end =: (), 0

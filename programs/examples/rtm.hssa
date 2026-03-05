@@ -1,140 +1,140 @@
 rel stack_peek ((head, tail), index):
 ((), 0)  :=          begin <-
-   c     :=      equal (index, 0)      :=    ()
-                     -> L2,L1          := ((), c)
+   c     :=      equal (index, 0)      =:    ()
+                     -> L2,L1          =: ((), c)
 
 ((), 0)  :=           L1 <-
-  res    :=          dup head          :=    ()
-                      -> L3            := (res, 0)
+  res    :=          dup head          =:    ()
+                      -> L3            =: (res, 0)
 
 ((), 0)  :=           L2 <-
-index.1  :=         add index          :=    -1
-  res    := stack_peek (tail, index.1) :=    ()
-   -1    :=         ~add index         := index.1
-                      -> L4            := (res, 0)
+index.1  :=         add index          =:    -1
+  res    := stack_peek (tail, index.1) =:    ()
+   -1    :=         ~add index         =: index.1
+                      -> L4            =: (res, 0)
 
 (res, c) :=          L4,L3 <-
-   ()    :=     ~equal (index, 0)      :=    c
-                      -> end           := (res, 0)
+   ()    :=     ~equal (index, 0)      =:    c
+                      -> end           =: (res, 0)
 
 
 rel stack_pop:
    (stack, 0)     :=           begin <-
-   stack_empty    :=      equal (stack, ())       :=          ()
-                               -> L2,L1           := (stack, stack_empty)
+   stack_empty    :=      equal (stack, ())       =:          ()
+                               -> L2,L1           =: (stack, stack_empty)
 
      ((), 0)      :=            L1 <-
-                                -> L3             :=    (((), -1), 0)
+                                -> L3             =:    (((), -1), 0)
 
 ((head, tail), 0) :=            L2 <-
-                                -> L4             :=  ((tail, head), 0)
+                                -> L4             =:  ((tail, head), 0)
 
 ((stack, top), c) :=           L4,L3 <-
-   stack_empty    :=      equal (stack, ())       :=          ()
-    is_blank      :=       equal (top, -1)        :=          ()
-       ()         := ~and (stack_empty, is_blank) :=          c
-       ()         :=       ~equal (top, -1)       :=       is_blank
-       ()         :=      ~equal (stack, ())      :=     stack_empty
-                                -> end            :=  ((stack, top), 0)
+   stack_empty    :=      equal (stack, ())       =:          ()
+    is_blank      :=       equal (top, -1)        =:          ()
+       ()         := ~and (stack_empty, is_blank) =:          c
+       ()         :=       ~equal (top, -1)       =:       is_blank
+       ()         :=      ~equal (stack, ())      =:     stack_empty
+                                -> end            =:  ((stack, top), 0)
 
 
 rel tape_init:
 right, 0 := begin <-
-             -> end  := ((), -1, right), 0
+             -> end  =: ((), -1, right), 0
              
 rel tape_move_right:
 ((left, center, right), 0) :=  begin <-
-            left.1             := ~stack_pop :=            (left, center)
-     (right.1, center.1)       := stack_pop  :=                right
-                                    -> end   := ((left.1, center.1, right.1), 0)
+            left.1             := ~stack_pop =:            (left, center)
+     (right.1, center.1)       := stack_pop  =:                right
+                                    -> end   =: ((left.1, center.1, right.1), 0)
 
 
 rel maybe_apply ((q1, q2), (type, read, write)):
          (state, 0)          :=     begin <-
-             c               :=  equal (type, 0)  :=                   ()
-                                    -> L6,L1      :=               (state, c)
+             c               :=  equal (type, 0)  =:                   ()
+                                    -> L6,L1      =:               (state, c)
 
 (((Q, (left, S, right))), 0) :=       L1 <-
-            c.1              :=   equal (Q, q1)   :=                   ()
-            c.2              :=  equal (S, read)  :=                   ()
-            c.3              :=  and (c.1, c.2)   :=                   ()
-             ()              := ~equal (S, read)  :=                  c.2
-             ()              :=  ~equal (Q, q1)   :=                  c.1
-                                    -> L4,L2      :=     (((Q, (left, S, right))), c.3)
+            c.1              :=   equal (Q, q1)   =:                   ()
+            c.2              :=  equal (S, read)  =:                   ()
+            c.3              :=  and (c.1, c.2)   =:                   ()
+             ()              := ~equal (S, read)  =:                  c.2
+             ()              :=  ~equal (Q, q1)   =:                  c.1
+                                    -> L4,L2      =:     (((Q, (left, S, right))), c.3)
 
 (((Q, (left, S, right))), 0) :=       L2 <-
-             0               :=      xor q1       :=                   Q
-            Q.1              :=      xor q2       :=                   0
-             0               :=     xor read      :=                   S
-            S.1              :=     xor write     :=                   0
-                                      -> L3       := ((((Q.1, ((left, (S.1, right)))))), 0)
+             0               :=      xor q1       =:                   Q
+            Q.1              :=      xor q2       =:                   0
+             0               :=     xor read      =:                   S
+            S.1              :=     xor write     =:                   0
+                                      -> L3       =: ((((Q.1, ((left, (S.1, right)))))), 0)
 
 (((Q, (left, S, right))), c) :=     L4,L3 <-
-            c.1              :=   equal (Q, q2)   :=                   ()
-            c.2              := equal (S, write)  :=                   ()
-             ()              :=  ~and (c.1, c.2)  :=                   c
-             ()              := ~equal (S, write) :=                  c.2
-             ()              :=  ~equal (Q, q2)   :=                  c.1
-                                      -> L5       :=      (((Q, (left, S, right))), 0)
+            c.1              :=   equal (Q, q2)   =:                   ()
+            c.2              := equal (S, write)  =:                   ()
+             ()              :=  ~and (c.1, c.2)  =:                   c
+             ()              := ~equal (S, write) =:                  c.2
+             ()              :=  ~equal (Q, q2)   =:                  c.1
+                                      -> L5       =:      (((Q, (left, S, right))), 0)
 
        ((Q, tape), 0)        :=       L6 <-
-             c               :=   equal (Q, q1)   :=                   ()
-                                    -> L13,L7     :=             ((Q, tape), c)
+             c               :=   equal (Q, q1)   =:                   ()
+                                    -> L13,L7     =:             ((Q, tape), c)
 
        ((Q, tape), 0)        :=       L7 <-
-             0               :=      xor q1       :=                   Q
-            Q.1              :=      xor q2       :=                   0
-             c               :=  equal (type, 1)  :=                   ()
-                                    -> L10,L8     :=            ((Q.1, tape), c)
+             0               :=      xor q1       =:                   Q
+            Q.1              :=      xor q2       =:                   0
+             c               :=  equal (type, 1)  =:                   ()
+                                    -> L10,L8     =:            ((Q.1, tape), c)
 
      ((state, tape), 0)      :=       L8 <-
-           tape.1            :=    tape_move_right     :=                  tape
-                                      -> L9       :=          ((state, tape.1), 0)
+           tape.1            :=    tape_move_right     =:                  tape
+                                      -> L9       =:          ((state, tape.1), 0)
 
      ((state, tape), 0)      :=      L10 <-
-           tape.1            :=    ~tape_move_right    :=                  tape
-                                     -> L11       :=          ((state, tape.1), 0)
+           tape.1            :=    ~tape_move_right    =:                  tape
+                                     -> L11       =:          ((state, tape.1), 0)
 
          (state, c)          :=     L11,L9 <-
-             ()              := ~equal (type, 1)  :=                   c
-                                     -> L12       :=               (state, 0)
+             ()              := ~equal (type, 1)  =:                   c
+                                     -> L12       =:               (state, 0)
 
        ((Q, tape), c)        :=    L13,L12 <-
-             ()              :=  ~equal (Q, q2)   :=                   c
-                                     -> L14       :=             ((Q, tape), 0)
+             ()              :=  ~equal (Q, q2)   =:                   c
+                                     -> L14       =:             ((Q, tape), 0)
 
          (state, c)          :=     L14,L5 <-
-             ()              := ~equal (type, 0)  :=                   c
-                                     -> end       :=               (state, 0)
+             ()              := ~equal (type, 0)  =:                   c
+                                     -> end       =:               (state, 0)
 
 
 
 
 rel rtm.eval (start_q, end_q, transitions_n, transitions):
         (tape_right, 0)          :=               begin <-
-              tape               :=               tape_init               :=           tape_right
-             state               :=              xor start_q              :=               0
-                                                    -> L1                 :=       ((state, tape), 0)
+              tape               :=               tape_init               =:           tape_right
+             state               :=              xor start_q              =:               0
+                                                    -> L1                 =:       ((state, tape), 0)
 
        ((state, tape), c)        :=               L6,L1 <-
-               ()                :=        ~equal (state, start_q)        :=               c
-                                                    -> L2                 :=    (((state, tape), 0), 0)
+               ()                :=        ~equal (state, start_q)        =:               c
+                                                    -> L2                 =:    (((state, tape), 0), 0)
 
     ((state, rule_index), c)     :=               L2,L3 <-
-               ()                :=       ~greater (rule_index, 0)        :=               c
-              rule               := stack_peek (transitions, rule_index)  :=               ()
-            state.1              :=           maybe_apply rule            :=             state
-               ()                := ~stack_peek (transitions, rule_index) :=              rule
-          rule_index.1           :=                 add 1                 :=           rule_index
-              c.1                :=  less (rule_index.1, transitions_n)   :=               ()
-                                                  -> L4,L3                := ((state.1, rule_index.1), c.1)
+               ()                :=       ~greater (rule_index, 0)        =:               c
+              rule               := stack_peek (transitions, rule_index)  =:               ()
+            state.1              :=           maybe_apply rule            =:             state
+               ()                := ~stack_peek (transitions, rule_index) =:              rule
+          rule_index.1           :=                 add 1                 =:           rule_index
+              c.1                :=  less (rule_index.1, transitions_n)   =:               ()
+                                                  -> L4,L3                =: ((state.1, rule_index.1), c.1)
 
 (((state, tape), rule_index), 0) :=                 L4 <-
-               0                 :=           xor transitions_n           :=           rule_index
-               c                 :=         equal (state, end_q)          :=               ()
-                                                  -> L6,L5                :=       ((state, tape), c)
+               0                 :=           xor transitions_n           =:           rule_index
+               c                 :=         equal (state, end_q)          =:               ()
+                                                  -> L6,L5                =:       ((state, tape), c)
 
        ((state, tape), 0)        :=                 L5 <-
-               0                 :=               xor end_q               :=             state
-           tape_right            :=              ~tape_init               :=              tape
-                                                   -> end                 :=        (tape_right, 0)
+               0                 :=               xor end_q               =:             state
+           tape_right            :=              ~tape_init               =:              tape
+                                                   -> end                 =:        (tape_right, 0)

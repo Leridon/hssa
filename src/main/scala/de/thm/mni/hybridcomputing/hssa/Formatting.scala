@@ -41,9 +41,9 @@ object Formatting {
     
     def formatInColumns(statement: Syntax.Statement): Array[String] = statement match {
         case Syntax.Assignment(target, rel, arg, consumed) =>
-            Array(format(target, false, true), ":=", s"${format(rel, true, true)}${prependSpaceIfNotEmpty(format(arg))}", ":=", format(consumed, false, true))
+            Array(format(target, false, true), ":=", s"${format(rel, true, true)}${prependSpaceIfNotEmpty(format(arg))}", "=:", format(consumed, false, true))
         case Syntax.Exit(labels, argument) =>
-            Array("", "", s"-> ${labels.mkString(",")}", ":=", format(argument))
+            Array("", "", s"-> ${labels.mkString(",")}", "=:", format(argument))
         case Syntax.Entry(initialized, labels) =>
             Array(format(initialized), ":=", s"${labels.mkString(",")} <-", "", "")
     }

@@ -50,350 +50,350 @@
 
 rel get_kind (kind, content):
 (), 0 := begin<-
-  k   := dup kind := ()
-           -> end := k, 0
+  k   := dup kind =: ()
+           -> end =: k, 0
 
 rel store_add x:
 ((head_x, head_value, tail), entry), 0 :=     begin <-
-    0                                  :=  equal head_x, x := () // Assert that variable is new
-                  c                    :=  less head_x, x  :=                   ()
-                                              -> L1,L2     := ((head_x, head_value, tail), entry), c
+    0                                  :=  equal head_x, x =: () // Assert that variable is new
+                  c                    :=  less head_x, x  =:                   ()
+                                              -> L1,L2     =: ((head_x, head_value, tail), entry), c
 
 ((head_x, head_value, tail), entry), 0 :=      L1 <-
-               new_tail                :=   store_add x    :=             (tail, entry)      // Add to tail
-                                               -> L3       :=   (head_x, head_value, new_tail), 0
+               new_tail                :=   store_add x    =:             (tail, entry)      // Add to tail
+                                               -> L3       =:   (head_x, head_value, new_tail), 0
 
          (new_tail, entry), 0          :=      L2 <-                                                // Add as head
-                x_copy                 :=      dup x       :=                   ()
-                                               -> L4       :=      (x_copy, entry, new_tail), 0
+                x_copy                 :=      dup x       =:                   ()
+                                               -> L4       =:      (x_copy, entry, new_tail), 0
 
     (head_x, head_value, tail), c      :=     L3,L4 <-
 // We came from L4 exactly if head is the variable we are adding
-                  ()                   := ~equal head_x, x :=                   c
-                                               -> end      :=     (head_x, head_value, tail), 0
+                  ()                   := ~equal head_x, x =:                   c
+                                               -> end      =:     (head_x, head_value, tail), 0
 
 rel store_lookup store, x:
      (), 0       :=   begin <-
-    store.1      :=  dup store   :=        ()
-(store.2, entry) := ~store_add x :=     store.1
-      look       :=  dup entry   :=        ()
-    store.3      := store_add x  := (store.2, entry)
-       ()        :=  ~dup store  :=     store.3
-                       -> end    :=     look, 0
+    store.1      :=  dup store   =:        ()
+(store.2, entry) := ~store_add x =:     store.1
+      look       :=  dup entry   =:        ()
+    store.3      := store_add x  =: (store.2, entry)
+       ()        :=  ~dup store  =:     store.3
+                       -> end    =:     look, 0
 
 rel filter_global (x, entry, tail):
        (), 0        :=       begin <-
-     is_empty       :=     equal x, -1      :=                   ()
-                             -> L2,L1       :=              (), is_empty
+     is_empty       :=     equal x, -1      =:                   ()
+                             -> L2,L1       =:              (), is_empty
 
        (), 0        :=        L1 <-
-                              -> L3         :=            (-1, (), ()), 0
+                              -> L3         =:            (-1, (), ()), 0
 
        (), 0        :=        L2 <-
-   (value, kind)    :=      dup entry       :=                   ()
-         c          :=    equal kind, 0     :=                   ()
-        ()          :=      ~dup entry      :=             (value, kind)
-   filtered_tail    :=  filter_global tail  :=                   ()
-                       -> L_other,L_global1 :=            filtered_tail, c
+   (value, kind)    :=      dup entry       =:                   ()
+         c          :=    equal kind, 0     =:                   ()
+        ()          :=      ~dup entry      =:             (value, kind)
+   filtered_tail    :=  filter_global tail  =:                   ()
+                       -> L_other,L_global1 =:            filtered_tail, c
 
  filtered_tail, 0   :=     L_global1 <-
-      x_copy        :=        dup x         :=                   ()
-    entry_copy      :=      dup entry       :=                   ()
-                           -> L_global2     := (x_copy, entry_copy, filtered_tail), 0
+      x_copy        :=        dup x         =:                   ()
+    entry_copy      :=      dup entry       =:                   ()
+                           -> L_global2     =: (x_copy, entry_copy, filtered_tail), 0
 
     filtered, c     := L_other,L_global2 <-
-   (value, kind)    :=      dup entry       :=                   ()
-        ()          :=    ~equal kind, 0    :=                   c
-        ()          :=      ~dup entry      :=             (value, kind)
-                              -> L4         :=              filtered, 0
+   (value, kind)    :=      dup entry       =:                   ()
+        ()          :=    ~equal kind, 0    =:                   c
+        ()          :=      ~dup entry      =:             (value, kind)
+                              -> L4         =:              filtered, 0
 
 filtered, was_empty :=       L4,L3 <-
-        ()          :=     ~equal x, -1     :=               was_empty
-                              -> end        :=              filtered, 0
+        ()          :=     ~equal x, -1     =:               was_empty
+                              -> end        =:              filtered, 0
 
 
 
 rel invert: // Involution for inversion
 (kind, content), 0 :=    begin <-
-        c          := equal kind, 2  :=         ()
-                         -> L1,L2    := (kind, content), c
+        c          := equal kind, 2  =:         ()
+                         -> L1,L2    =: (kind, content), c
 
    relation, 0     :=     L1 <-            // was not inverted
-                          -> L3      :=  (2, relation), 0 // wrap in inversion
+                          -> L3      =:  (2, relation), 0 // wrap in inversion
 
  (2, relation), 0  :=     L2 <-                            // was inverted, unwrap
-                          -> L4      :=    relation, 0
+                          -> L4      =:    relation, 0
 
 (kind, content), c :=    L4,L3 <-
-        ()         := ~equal kind, 2 :=         c
-                          -> end     := (kind, content), 0
+        ()         := ~equal kind, 2 =:         c
+                          -> end     =: (kind, content), 0
 
 rel eval e, store:
       (), 0        :=                  begin <-
-   (kind, data)    :=                    dup e                    :=             ()
-                      -> in_unit,in_variable,in_pair,in_inversion :=         data, kind
+   (kind, data)    :=                    dup e                    =:             ()
+                      -> in_unit,in_variable,in_pair,in_inversion =:         data, kind
 
       i, 0        :=                 in_unit <-
-      v           :=               dup i                          :=            ()
-                                      -> out_unit                 :=        (i, v), 0
+      v           :=               dup i                          =:            ()
+                                      -> out_unit                 =:        (i, v), 0
 
        x, 0        :=               in_variable <-
-       (v, kind)           :=               store_lookup store, x         :=             ()
-       v.1 := dup v := ()
-       ()           :=               ~store_lookup store, x         :=             (v, kind)
+       (v, kind)           :=               store_lookup store, x         =:             ()
+       v.1 := dup v =: ()
+       ()           :=               ~store_lookup store, x         =:             (v, kind)
 
-                                    -> out_variable               :=         (x, v.1), 0
+                                    -> out_variable               =:         (x, v.1), 0
 
    (e1, e2), 0     :=                 in_pair <-
-        v1         :=               eval e1, store                :=             ()
-        v2         :=               eval e2, store                :=             ()
-                                      -> out_pair                 := (((e1, e2), (v1, v2))), 0
+        v1         :=               eval e1, store                =:             ()
+        v2         :=               eval e2, store                =:             ()
+                                      -> out_pair                 =: (((e1, e2), (v1, v2))), 0
 
        inner, 0        :=               in_inversion <-
-         v         :=                eval inner, store                :=             ()
-        v.1        :=                   invert                    :=              v
-                                   -> out_inversion               :=         (inner, v.1), 0
+         v         :=                eval inner, store                =:             ()
+        v.1        :=                   invert                    =:              v
+                                   -> out_inversion               =:         (inner, v.1), 0
 
 (e_data, value), kind := out_unit,out_variable,out_pair,out_inversion <-
-        ()         :=                   ~dup e                    :=       (kind, e_data)
-                                        -> end                    :=          value, 0
+        ()         :=                   ~dup e                    =:       (kind, e_data)
+                                        -> end                    =:          value, 0
 
 rel init e, kind:
   (store, v), 0        :=                  begin <-
-   (kind, data)    :=                    dup e                    :=             ()
-                      -> in_unit,in_variable,in_pair,in_inversion :=         (data, (store, v)), kind
+   (kind, data)    :=                    dup e                    =:             ()
+                      -> in_unit,in_variable,in_pair,in_inversion =:         (data, (store, v)), kind
 
      (i, (store, v)), 0        :=                 in_unit <-
-                    () := ~dup i := v
-                                      -> out_unit                 :=        (i, store), 0
+                    () := ~dup i =: v
+                                      -> out_unit                 =:        (i, store), 0
 
        (x, (store, v)), 0        :=               in_variable <-
-       kind_copy   :=               dup kind                    :=             ()
-       store.1           :=               store_add x         :=             store, (v, kind_copy)
-                                    -> out_variable               :=        (x, store.1), 0
+       kind_copy   :=               dup kind                    =:             ()
+       store.1           :=               store_add x         =:             store, (v, kind_copy)
+                                    -> out_variable               =:        (x, store.1), 0
 
    ((e1, e2), (store.0, (v1, v2))), 0     :=                 in_pair <-
-        store.1    :=               init e1, kind                :=             store.0, v1
-        store.2    :=               init e2, kind                :=             store.1, v2
-                                      -> out_pair                 := ((e1, e2), store.2), 0
+        store.1    :=               init e1, kind                =:             store.0, v1
+        store.2    :=               init e2, kind                =:             store.1, v2
+                                      -> out_pair                 =: ((e1, e2), store.2), 0
 
        (e, (store, (2, v))), 0        :=               in_inversion <-
-        v.1        :=                   invert                    :=              v
-     store.1         :=                init e, kind                :=             store, v.1
-                                   -> out_inversion               :=         (e, store.1), 0
+        v.1        :=                   invert                    =:              v
+     store.1         :=                init e, kind                =:             store, v.1
+                                   -> out_inversion               =:         (e, store.1), 0
 
 (e_data, value), kind := out_unit,out_variable,out_pair,out_inversion <-
-        ()         :=                   ~dup e                    :=       (kind, e_data)
-                                        -> end                    :=          value, 0
+        ()         :=                   ~dup e                    =:       (kind, e_data)
+                                        -> end                    =:          value, 0
 
 rel assignment (e1, e2, e3, e4):
  store.0, 0   :=           begin <-
-store.1, v_in :=        ~init (e4, 2)         :=     store.0
-(2, relation) :=       eval e2, store.1       :=        ()
-     v_p      :=       eval e3, store.1       :=        ()
-   store_G    :=    filter_global store.1     :=        ()
-    v_out     := apply store_G, relation, v_p :=       v_in
-     ()       :=      ~eval e3, store.1       :=       v_p
-     ()       :=      ~eval e2, store.1       :=  (2, relation)
-     ()       :=    ~filter_global store.1    :=     store_G
-   store.2    :=         init (e1, 2)         := (store.1, v_out)
-                            -> end            :=    store.2, 0
+store.1, v_in :=        ~init (e4, 2)         =:     store.0
+(2, relation) :=       eval e2, store.1       =:        ()
+     v_p      :=       eval e3, store.1       =:        ()
+   store_G    :=    filter_global store.1     =:        ()
+    v_out     := apply store_G, relation, v_p =:       v_in
+     ()       :=      ~eval e3, store.1       =:       v_p
+     ()       :=      ~eval e2, store.1       =:  (2, relation)
+     ()       :=    ~filter_global store.1    =:     store_G
+   store.2    :=         init (e1, 2)         =: (store.1, v_out)
+                            -> end            =:    store.2, 0
 
 
 rel do_assignments assignments:
           store, 0           :=        begin <-
-      (kind, content)        :=    dup assignments     :=              ()
-                                -> L_empty,L_nonempty1 :=    (store, content), kind
+      (kind, content)        :=    dup assignments     =:              ()
+                                -> L_empty,L_nonempty1 =:    (store, content), kind
 
 ((store.0, (head, tail))), 0 :=     L_nonempty1 <-
-          store.1            :=    assignment head     :=           store.0
-          store.2            :=  do_assignments tail   :=           store.1
-                                    -> L_nonempty2     := ((store.2, (head, tail))), 0
+          store.1            :=    assignment head     =:           store.0
+          store.2            :=  do_assignments tail   =:           store.1
+                                    -> L_nonempty2     =: ((store.2, (head, tail))), 0
 
    (store, content), kind    := L_empty,L_nonempty2 <-
-             ()              :=    ~dup assignments    :=       (kind, content)
-                                        -> end         :=           store, 0
+             ()              :=    ~dup assignments    =:       (kind, content)
+                                        -> end         =:           store, 0
 
 rel index_of e, seq:
          (), 0           :=         begin <-
-    (kind, content)      :=         dup seq          :=             ()
-                             -> L_empty,L_nonempty1  :=       content, kind
+    (kind, content)      :=         dup seq          =:             ()
+                             -> L_empty,L_nonempty1  =:       content, kind
 
        content, 0        :=        L_empty <-
-                                  -> L_empty2        :=      (content, -1), 0
+                                  -> L_empty2        =:      (content, -1), 0
 
     (head, tail), 0      :=      L_nonempty1 <-
-           c             :=      equal head, e       :=             ()
-                             -> L_not_found,L_found  :=      (head, tail), c
+           c             :=      equal head, e       =:             ()
+                             -> L_not_found,L_found  =:      (head, tail), c
 
     (head, tail), 0      :=        L_found <-
-                                  -> L_found2        :=    ((head, tail), 0), 0
+                                  -> L_found2        =:    ((head, tail), 0), 0
 
     (head, tail), 0      :=      L_not_found <-
-         index           :=     index_of e, tail     :=             ()
-      not_in_tail        :=      notequal index, -1      :=             ()
-        index.1          :=     add not_in_tail      :=           index
-           ()            :=     ~notequal index.1, -1      :=        not_in_tail
-                                -> L_not_found2      := ((head, tail), index.1), 0
+         index           :=     index_of e, tail     =:             ()
+      not_in_tail        :=      notequal index, -1      =:             ()
+        index.1          :=     add not_in_tail      =:           index
+           ()            :=     ~notequal index.1, -1      =:        not_in_tail
+                                -> L_not_found2      =: ((head, tail), index.1), 0
 
 ((head, tail), index), c := L_not_found2, L_found2 <-
-           ()            :=      ~equal head, e      :=             c
-                                 -> L_nonempty2      :=  ((head, tail), index), 0
+           ()            :=      ~equal head, e      =:             c
+                                 -> L_nonempty2      =:  ((head, tail), index), 0
 
  (content, index), kind  := L_empty2,L_nonempty2 <-
-           ()            :=         ~dup seq         :=      (kind, content)
-                                     -> end          :=          index, 0
+           ()            :=         ~dup seq         =:      (kind, content)
+                                     -> end          =:          index, 0
 
 
 rel index ((1, (head, tail))):
  i, 0   :=    begin <-
- here   :=   equal i, 0   :=   ()
-              -> L2,L1    := i, here
+ here   :=   equal i, 0   =:   ()
+              -> L2,L1    =: i, here
 
  0, 0   :=     L1 <-
-   e    :=    dup head    :=   ()
-               -> L3      :=  e, 0
+   e    :=    dup head    =:   ()
+               -> L3      =:  e, 0
 
  i, 0   :=     L2 <-
-  i.1   :=     add -1     :=    i
-   e    :=   index tail   :=   i.1
-               -> L4      :=  e, 0
+  i.1   :=     add -1     =:    i
+   e    :=   index tail   =:   i.1
+               -> L4      =:  e, 0
 
 e, here :=    L4,L3 <-
-  ()    := ~equal head, e :=  here
-               -> end     :=  e, 0
+  ()    := ~equal head, e =:  here
+               -> end     =:  e, 0
 
 
 rel forward (1, (((e, labels), assignments, exit), tail)), l:
    (), 0     :=               begin <-
-   index     :=          index_of l, labels          :=    ()
-   found     :=          greater index, -1           :=    ()
-     ()      :=         ~index_of l, labels          :=   index
-                       -> L_not_found, L_found        := (), found
+   index     :=          index_of l, labels          =:    ()
+   found     :=          greater index, -1           =:    ()
+     ()      :=         ~index_of l, labels          =:   index
+                       -> L_not_found, L_found        =: (), found
 
    (), 0     :=            L_not_found <-
-   block     :=             forward tail, l             :=    ()
-                          -> L_not_found2            := block, 0
+   block     :=             forward tail, l             =:    ()
+                          -> L_not_found2            =: block, 0
 
    (), 0     :=              L_found <-
-   block     := dup ((e, labels), assignments, exit) :=    ()
-                            -> L_found2              := block, 0
+   block     := dup ((e, labels), assignments, exit) =:    ()
+                            -> L_found2              =: block, 0
 
 block, found :=       L_not_found2,L_found2 <-
-   index     :=          index_of l, labels          :=    ()
-     ()      :=          ~greater index, -1          :=   found
-     ()      :=         ~index_of l, labels          :=   index
-                               -> end                := block, 0
+   index     :=          index_of l, labels          =:    ()
+     ()      :=          ~greater index, -1          =:   found
+     ()      :=         ~index_of l, labels          =:   index
+                               -> end                =: block, 0
 
 
 rel backward (1, (((entry, assignments, (labels, e))), tail)), l:
    (), 0     :=                begin <-
-   index     :=           index_of l, labels            :=    ()
-   found     :=            greater index, -1            :=    ()
-     ()      :=           ~index_of l, labels           :=   index
-                        -> L_not_found, L_found          := (), found
+   index     :=           index_of l, labels            =:    ()
+   found     :=            greater index, -1            =:    ()
+     ()      :=           ~index_of l, labels           =:   index
+                        -> L_not_found, L_found          =: (), found
 
    (), 0     :=             L_not_found <-
-   block     :=              backward tail, l              :=    ()
-                            -> L_not_found2             := block, 0
+   block     :=              backward tail, l              =:    ()
+                            -> L_not_found2             =: block, 0
 
    (), 0     :=               L_found <-
-   block     := dup ((entry, assignments, (labels, e))) :=    ()
-                              -> L_found2               := block, 0
+   block     := dup ((entry, assignments, (labels, e))) =:    ()
+                              -> L_found2               =: block, 0
 
 block, found :=        L_not_found2,L_found2 <-
-   index     :=           index_of l, labels            :=    ()
-     ()      :=           ~greater index, -1            :=   found
-     ()      :=           ~index_of l, labels           :=   index
-                                -> end                  := block, 0
+   index     :=           index_of l, labels            =:    ()
+     ()      :=           ~greater index, -1            =:   found
+     ()      :=           ~index_of l, labels           =:   index
+                                -> end                  =: block, 0
 
 rel do_entry (e, labels):
 (store.0, v, l), 0 :=      begin <-
-        i          := index_of l, labels :=                   ()
-        i2         :=   ~index labels    :=                    l
-        ()         :=       ~dup i       :=                   i2
-     store.1       :=     init e, 2      := (store.0, (1, (v, (0, i))))
-                            -> end       :=               store.1, 0
+        i          := index_of l, labels =:                   ()
+        i2         :=   ~index labels    =:                    l
+        ()         :=       ~dup i       =:                   i2
+     store.1       :=     init e, 2      =: (store.0, (1, (v, (0, i))))
+                            -> end       =:               store.1, 0
 
 
 rel do_exit (labels, e):
   store.0, 0    :=       begin <-
-(store.1, v, l) := ~do_entry (e, labels) :=      store.0
-                          -> end         := (store.1, v, l), 0
+(store.1, v, l) := ~do_entry (e, labels) =:      store.0
+                          -> end         =: (store.1, v, l), 0
 
 rel block (entry, assignments, exit), store:
    (v_in, l_in), 0    :=          begin <-
-       store.0        :=         dup store          :=          ()
-       store.1        :=       do_entry entry       := (store.0, v_in, l_in)
-       store.2        := do_assignments assignments :=        store.1
-store.3, v_out, l_out :=        do_exit exit        :=        store.2
-         ()           :=         ~dup store         :=        store.3
-                                   -> end           :=   (v_out, l_out), 0
+       store.0        :=         dup store          =:          ()
+       store.1        :=       do_entry entry       =: (store.0, v_in, l_in)
+       store.2        := do_assignments assignments =:        store.1
+store.3, v_out, l_out :=        do_exit exit        =:        store.2
+         ()           :=         ~dup store         =:        store.3
+                                   -> end           =:   (v_out, l_out), 0
 
 
 rel steps store, blocks:
 (v_in, l_in), is_first :=     L_repeat,begin <-
-          ()           :=      ~equal l_in, -10      :=        is_first
-    current_block      :=    forward blocks, l_in    :=           ()
-     v_out, l_out      := block current_block, store :=       v_in, l_in
-          ()           :=   ~backward blocks, l_out  :=      current_block
-       is_last         :=      equal l_out, -20      :=           ()
-                               -> L_repeat,end       := (v_out, l_out), is_last
+          ()           :=      ~equal l_in, -10      =:        is_first
+    current_block      :=    forward blocks, l_in    =:           ()
+     v_out, l_out      := block current_block, store =:       v_in, l_in
+          ()           :=   ~backward blocks, l_out  =:      current_block
+       is_last         :=      equal l_out, -20      =:           ()
+                               -> L_repeat,end       =: (v_out, l_out), is_last
 
 rel apply (store, relation, v_p):
             v_in, 0              :=              begin <-
-    (rel_kind, rel_content)      :=            dup relation            :=                ()
-                                          -> L_prim,L_proc,L_inv       :=   (rel_content, v_in), rel_kind
+    (rel_kind, rel_content)      :=            dup relation            =:                ()
+                                          -> L_prim,L_proc,L_inv       =:   (rel_content, v_in), rel_kind
 
       (prim, v_in), 0       :=             L_prim <-
-             v_out               :=              prim v_p              :=               v_in
-                                              -> L_prim_out            :=       (prim, v_out), 0
+             v_out               :=              prim v_p              =:               v_in
+                                              -> L_prim_out            =:       (prim, v_out), 0
 
 ((x, e, blocks), v_in), 0 :=             L_proc <-
-            store.0              :=             dup store              :=                ()
-             p_copy              :=              dup v_p               :=                ()
-            store.1              :=             init e, 1              :=         (store.0, p_copy)
-             (v_out, -20)        :=       steps store.1, blocks        :=            (v_in, -10)
-       (store.2, p_copy2)        :=            ~init e, 1              :=              store.1
-               ()                :=            ~dup store              :=              store.2
-               ()                :=              ~dup v_p              :=              p_copy2
-                                              -> L_proc_out            := ((x, e, blocks), v_out), 0
+            store.0              :=             dup store              =:                ()
+             p_copy              :=              dup v_p               =:                ()
+            store.1              :=             init e, 1              =:         (store.0, p_copy)
+             (v_out, -20)        :=       steps store.1, blocks        =:            (v_in, -10)
+       (store.2, p_copy2)        :=            ~init e, 1              =:              store.1
+               ()                :=            ~dup store              =:              store.2
+               ()                :=              ~dup v_p              =:              p_copy2
+                                              -> L_proc_out            =: ((x, e, blocks), v_out), 0
 
  (inner_relation, v_in), 0  :=              L_inv <-
-             v_out               := ~apply store, inner_relation, v_p  :=               v_in
-                                               -> L_inv_out            :=  (inner_relation, v_out), 0
+             v_out               := ~apply store, inner_relation, v_p  =:               v_in
+                                               -> L_inv_out            =:  (inner_relation, v_out), 0
 
  (rel_content, v_out), rel_kind  := L_prim_out,L_proc_out,L_inv_out <-
-               ()                :=           ~dup relation            :=      (rel_kind, rel_content)
-                                                  -> end               :=             v_out, 0
+               ()                :=           ~dup relation            =:      (rel_kind, rel_content)
+                                                  -> end               =:             v_out, 0
 rel proc (x, e, blocks):
 store.0, 0 :=      begin <-
-   copy    := dup (x, e, blocks) :=                 ()
- store.1   :=    store_add x     := (store.0, ((1, copy), 0))
-                    -> end       :=             store.1, 0
+   copy    := dup (x, e, blocks) =:                 ()
+ store.1   :=    store_add x     =: (store.0, ((1, copy), 0))
+                    -> end       =:             store.1, 0
 
 
 rel prog procedures:
           store, 0           :=        begin <-
-      (kind, content)        :=     dup procedures     :=              ()
-                                -> L_empty,L_nonempty1 :=    (store, content), kind
+      (kind, content)        :=     dup procedures     =:              ()
+                                -> L_empty,L_nonempty1 =:    (store, content), kind
 
 (store.0, (head, tail)), 0 :=     L_nonempty1 <-
-          store.1            :=       proc head        :=           store.0
-          store.2            :=       prog tail        :=           store.1
-                                    -> L_nonempty2     := ((store.2, (head, tail))), 0
+          store.1            :=       proc head        =:           store.0
+          store.2            :=       prog tail        =:           store.1
+                                    -> L_nonempty2     =: ((store.2, (head, tail))), 0
 
    (store, content), kind    := L_empty,L_nonempty2 <-
-             ()              :=    ~dup procedures     :=       (kind, content)
-                                        -> end         :=           store, 0
+             ()              :=    ~dup procedures     =:       (kind, content)
+                                        -> end         =:           store, 0
 
 rel main (store, program, x, v_p):
    v_in, 0    :=            begin <-
-   store.0    :=           dup store            :=      ()
-   store.1    :=          prog program          :=    store.0
-(relation, 0) :=    store_lookup store.1, x     :=      ()
-    v_out     := apply (store.1, relation, v_p) :=     v_in
-     ()       :=    ~store_lookup store.1, x    := (relation, 0)
-   store.2    :=         ~prog program          :=    store.1
-     ()       :=           ~dup store           :=    store.2
-                             -> end             :=   v_out, 0
+   store.0    :=           dup store            =:      ()
+   store.1    :=          prog program          =:    store.0
+(relation, 0) :=    store_lookup store.1, x     =:      ()
+    v_out     := apply (store.1, relation, v_p) =:     v_in
+     ()       :=    ~store_lookup store.1, x    =: (relation, 0)
+   store.2    :=         ~prog program          =:    store.1
+     ()       :=           ~dup store           =:    store.2
+                             -> end             =:   v_out, 0

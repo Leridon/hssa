@@ -16,6 +16,7 @@ object Lexing {
             case COLON
             case INTLIT
             case ASGN
+            case NGSA
             case TILDE
             case EOF
             case IMPORT
@@ -68,6 +69,7 @@ object Lexing {
               "(" ^^^ symbol(LPAREN) |
               ")" ^^^ symbol(RPAREN) |
               ":=" ^^^ symbol(ASGN) |
+              "=:" ^^^ symbol(NGSA) |
               "," ^^^ symbol(COMMA) |
               "~" ^^^ symbol(TILDE) |
               ":" ^^^ symbol(COLON) |

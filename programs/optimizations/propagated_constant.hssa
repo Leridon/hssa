@@ -1,11 +1,11 @@
 rel test x
     ((), 0) := begin<-
-    y := add 1 := 3
-    res := add x := y
-         ->end := (res, 0)
+    y := add 1 =: 3
+    res := add x =: y
+         ->end =: (res, 0)
 
 
  rel test2 x
     ((), 0) := begin<-
-    4 := add 1 := 3
-         ->end := (4, 0)
+    4 := add 1 =: 3
+         ->end =: (4, 0)
