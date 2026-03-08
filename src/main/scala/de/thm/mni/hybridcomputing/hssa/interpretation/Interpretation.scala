@@ -61,7 +61,7 @@ case class Interpretation(language: Language) {
         }
     }
     
-    def evaluateApplication(rel: Value, instance_argument: Value, relation_argument: Value): Value = {
+    def evaluateApplication(rel: Value, instance_argument: Value, relation_argument: Value, depth: Int = 0): Value = {
         rel match {
             case rel: Value.BuiltinRelation =>
                 try {
@@ -135,7 +135,9 @@ case class Interpretation(language: Language) {
                             
                             val called_rel: Value.Relation = evaluate(relation, block_context).asInstanceOf[Value.Relation]
                             
-                            val result = Try(evaluateApplication(called_rel, instantiationArg, consumedArg)).recoverWith({
+                            println("|".repeat(depth) + relation)
+                            
+                            val result = Try(evaluateApplication(called_rel, instantiationArg, consumedArg, depth + 1)).recoverWith({
                                 case e: AbortDueToErrors =>
                                     e.errors.foreach(e => {
                                         if (e.position == null) e.setPosition(asgn.position)
@@ -181,7 +183,7 @@ case class Interpretation(language: Language) {
           .getOrElse(new HSSAError(LanguageError.Severity.Error, s"Entrypoint $relation_name does not exist").raise())
           .asInstanceOf[Value.Relation]
         
-        evaluateApplication(rel, instance_argument, relation_argument)
+        evaluateApplication(rel, instance_argument, relation_argument, 0)
     }
 }
 

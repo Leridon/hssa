@@ -30,13 +30,9 @@ object MyMain {
         
         var counter = 0
         
-        def encode(value: Value): Value = value match {
-            case Basic.Unit => Basic.Unit
-        }
+        def encode(value: Value): Value = value
         
         def encode(name: String): Basic.Int = {
-            
-            
             Basic.Int(buffer.getOrElseUpdate(name, {
                 counter += 1
                 counter
@@ -105,16 +101,18 @@ object MyMain {
             
             val encoded = new encode(fibpair_prog)
             
-            Interpretation(language).interpret(
-                prog,
-                "main",
-                tuple(
-                    encoded.starting_store,
-                    encoded.encoded,
-                    encoded.encode("fibpair.test"),
-                    encoded.encode(Basic.Unit),
-                ),
-                encoded.encode(Basic.Unit)
+            println(
+                Interpretation(language).interpret(
+                    prog,
+                    "main",
+                    tuple(
+                        encoded.starting_store,
+                        encoded.encoded,
+                        encoded.encode("fibpair"),
+                        encoded.encode(Basic.Unit),
+                    ),
+                    encoded.encode(Basic.Int(5))
+                )
             )
             
         } catch {

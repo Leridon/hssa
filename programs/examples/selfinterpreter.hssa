@@ -192,12 +192,12 @@ rel init e, kind:
 rel assignment (e1, e2, e3, e4):
  store.0, 0   :=           begin <-                              
 store.1, v_in :=        ~init (e4, 2)         =:     store.0     
-(2, relation) :=       eval e2, store.1       =:        ()       
+  relation    :=       eval e2, store.1       =:        ()       
      v_p      :=       eval e3, store.1       =:        ()       
    store_G    :=    filter_global store.1     =:        ()       
     v_out     := apply store_G, relation, v_p =:       v_in      
      ()       :=      ~eval e3, store.1       =:       v_p       
-     ()       :=      ~eval e2, store.1       =:  (2, relation)  
+     ()       :=      ~eval e2, store.1       =:     relation    
      ()       :=    ~filter_global store.1    =:     store_G     
    store.2    :=         init (e1, 2)         =: (store.1, v_out)
                             -> end            =:    store.2, 0   
@@ -313,12 +313,12 @@ block, found :=        L_not_found2,L_found2 <-
 
 
 rel do_entry (e, labels):
-(store.0, v, l), 0 :=      begin <-                                    
-        i          := index_of l, labels =:             ()             
-        i2         :=   ~index labels    =:              l             
-        ()         :=       ~dup i       =:             i2             
-     store.1       :=     init e, 2      =: (store.0, (1, (v, (0, i))))
-                            -> end       =:         store.1, 0         
+(store.0, v, l), 0 :=      begin <-                          
+        i          := index_of l, labels =:        ()        
+        i2         :=   ~index labels    =:         l        
+        ()         :=       ~dup i       =:        i2        
+     store.1       :=     init e, 2      =: (store.0, (v, i))
+                            -> end       =:    store.1, 0    
 
 
 rel do_exit (labels, e):
