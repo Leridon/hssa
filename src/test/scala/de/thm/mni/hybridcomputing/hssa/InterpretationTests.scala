@@ -10,7 +10,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.nio.file.Path
 
 class InterpretationTests extends AnyWordSpec {
-    val program: Syntax.Program = Modular.Chains(Language.Canon).parseAndLink(Path.of("programs/tests.hssa").toAbsolutePath)
+    val program: Syntax.Program = Modular.Chains(Language.Canon).parseAndLink(Path.of("programs/examples/tests.hssa").toAbsolutePath)
     
     
     def run(name: String, direction: Direction): Unit = {

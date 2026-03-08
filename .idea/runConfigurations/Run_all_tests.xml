@@ -24,8 +24,11 @@
     <option name="workingDirectory" value="$ProjectFileDir$" />
     <option name="classBuf">
       <list>
+        <option value="de.thm.mni.hybridcomputing.CountParensTest" />
         <option value="de.thm.mni.hybridcomputing.UniqueNameGeneratorTests" />
+        <option value="de.thm.mni.hybridcomputing.hssa.FormattingTests" />
         <option value="de.thm.mni.hybridcomputing.hssa.InterpretationTests" />
+        <option value="de.thm.mni.hybridcomputing.hssa.ParsingTests" />
         <option value="de.thm.mni.hybridcomputing.hssa.transformations.AutoDiscardTests" />
         <option value="de.thm.mni.hybridcomputing.hssa.transformations.AutoSSATests" />
       </list>

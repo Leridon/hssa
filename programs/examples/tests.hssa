@@ -1,7 +1,7 @@
-import examples.fibpair
-import examples.power
-import examples.rtm_tests
-import examples.toffoli
-import examples.arrays
-import examples.crypto
-import examples.managed_memory
+import fibpair
+import power
+import rtm_tests
+import toffoli
+import arrays
+import crypto
+import managed_memory
