@@ -72,6 +72,8 @@ trait ParserUtilities[TokenClass] extends Parsers {
         def ~~[U](other: => Parser[U]): Parser[T ~ U] = self ~ other
         def ~~![U](other: => Parser[U]): Parser[T ~ U] = self ~! other
     }
+    
+    override def phrase[T](p: Parser[T]): Parser[T] = super.phrase(p ~~ skip)
 }
 
 object ParserUtilities {

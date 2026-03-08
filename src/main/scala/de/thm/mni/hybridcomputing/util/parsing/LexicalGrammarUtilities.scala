@@ -34,7 +34,9 @@ trait LexicalGrammarUtilities[T] extends RegexParsers {
     
     def apply(input: Reader[Char]): (Option[Symbol], Input) = parseNext(input) match {
         case Success(token, rest) => (token, rest) // There is a token or it's EOF
-        case NoSuccess(msg, pos) => LanguageError.LexicalError(s"$msg at ${pos.pos}").raise()
+        case NoSuccess(msg, pos) => LanguageError.LexicalError(s"$msg at ${pos.pos}", SourcePosition(
+            SourceFile.fromString(input.source.toString), 
+            SourcePosition.Position(pos.pos.line, pos.pos.column), null)).raise() // Scan Error, invalid token
     }
     
     def eof: Token[T]
