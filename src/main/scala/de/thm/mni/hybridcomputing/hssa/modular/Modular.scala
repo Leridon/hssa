@@ -86,7 +86,7 @@ object Modular {
         def format(imp: Syntax.Import): String = s"import ${imp.path.name}"
         
         def format(prog: Syntax.ProgramWithImports): String = {
-            val imports = prog.imports.mkString("\n")
+            val imports = prog.imports.map(format).mkString("\n")
             
             if (imports.isEmpty) hssa.Formatting.format(prog.program)
             else imports + "\n\n" + hssa.Formatting.format(prog.program)

@@ -13,10 +13,10 @@ import java.nio.file.*
 class FormattingTests  extends AnyFlatSpec {
     Files.list(Path.of("programs/examples")).forEach(file => {
         s"Formatting of ${file.getFileName}" should "preserve the AST" in {
-            val parsed = Modular.Chains(Language.Canon).parse(file.toAbsolutePath)
+            val parsed = Modular.Parsing(Language.Canon).parse(hssa.parsing.Lexing.lex(SourceFile.fromFile(file.toAbsolutePath)))
             val formatted = Modular.Formatting.format(parsed)
-                        
-            val parsed2 = Parsing(Language.Canon).parse(hssa.parsing.Lexing.lex(SourceFile.fromString(formatted)))
+            
+            val parsed2 = Modular.Parsing(Language.Canon).parse(hssa.parsing.Lexing.lex(SourceFile.fromString(formatted)))
             
             parsed2 shouldEqual parsed
         }
