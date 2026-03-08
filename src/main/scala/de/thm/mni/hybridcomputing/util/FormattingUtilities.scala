@@ -7,15 +7,25 @@ object FormattingUtilities {
     }
     
     def count_parens(s: String): Int = {
-        var open_count = 0
-        var last_open_count = 0
+        @annotation.tailrec
+        def loop(str: String, acc: Int): Int =
+            if (isWrapped(str)) loop(str.substring(1, str.length - 1), acc + 1)
+            else acc
         
-        s.foreach(c => {
-            if (c == '(') open_count += 1
-            else if (c == ')') open_count -= 1
-            else last_open_count = open_count
-        })
+        def isWrapped(str: String): Boolean = {
+            if (str.length < 2 || str.head != '(' || str.last != ')') return false
+            
+            var depth = 0
+            for (i <- 0 until str.length - 1) {
+                if (str(i) == '(') depth += 1
+                else if (str(i) == ')') depth -= 1
+                
+                if (depth == 0) return false
+            }
+            
+            true
+        }
         
-        last_open_count
+        loop(s, 0)
     }
 }

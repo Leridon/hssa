@@ -53,9 +53,11 @@ object Formatting {
     }
     
     private def center(s: String, width: Int): String = {
-        val before = (width - s.length) / 2
+        val spaces = width - s.length
+        val before = spaces / 2
+        val after = spaces - before
         
-        " ".repeat(before) + s + " ".repeat(width - before - s.length)
+        " ".repeat(before) + s + " ".repeat(after)
     }
     
     def format(block: Syntax.Block): String = {
