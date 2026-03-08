@@ -13,12 +13,5 @@ object Basic extends Language.Plugin {
         override def toString = value.toString
     }
     
-    override def literal_parser(grammar: Parsing.Grammar): grammar.Parser[Value] = {
-        import grammar.*
-        import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.Tokens.TokenClass.*
-        
-        LPAREN ~~ RPAREN ^^ (_ => Unit) | valueToken(INTLIT)(classOf[Integer]).map(i => Basic.Int(i.intValue()))
-    }
-    
     override def requirements: Seq[Language.Plugin] = Seq()
 }

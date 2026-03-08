@@ -26,7 +26,6 @@ object Formatting {
             else 0
         
         val inner = exp match
-            case Expression.Literal(Basic.Unit) => ""
             case Expression.Literal(value) => value.toString
             case Expression.Pair(a, b) => s"${format(a, true, true)}, ${format(b, false, true)}"
             case Expression.Unit() => ""

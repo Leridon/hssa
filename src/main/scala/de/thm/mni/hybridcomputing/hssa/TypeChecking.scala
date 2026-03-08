@@ -69,9 +69,7 @@ class TypeChecking(language: Language) {
         def botup(environment: BindingTree, exp: Expression): Types.Type =
             def helper(exp: Expression): Types.Type = {
                 exp match
-                    case Expression.Literal(value) => value match
-                        case Basic.Unit => Types.Unit
-                        case v: Basic.Int => Types.Int
+                    case Expression.Literal(value) => Types.Int
                     case Expression.Variable(name) =>
                         val variable = environment.lookup(name.name).get
                         

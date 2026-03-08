@@ -38,7 +38,7 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
          * @return The statically constant value of this expression
          */
         def staticValue(context: BindingTree.Block): Value = self match
-            case Expression.Literal(value) => value
+            case Expression.Literal(value) => Basic.Int(value)
             case Expression.Variable(name) =>
                 val Some(BindingTree.GlobalBuiltinVariable(_, _, builtin)) = context.lookup(name.name)
                 
@@ -51,7 +51,7 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
     
     class Replacement[T <: Syntax.Expression](val source: Syntax.Assignment, val expression: T, val value: Value) {
         lazy val flat: Option[Seq[FlatReplacement]] = expression match
-            case Expression.Literal(value) => Option.when(value == this.value)(Seq())
+            case Expression.Literal(value) => Option.when(Basic.Int(value) == this.value)(Seq())
             case Expression.Unit() => Option.when(value == Basic.Unit)(Seq())
             case v: Expression.Variable => Some(Seq(Replacement(source, v, value)))
             case Expression.Pair(a, b) => value match
@@ -121,7 +121,8 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
      */
     def reify(value: Value): Syntax.Expression = value match
         case Value.Pair(a, b) => Syntax.Expression.Pair(reify(a), reify(b))
-        case v => Syntax.Expression.Literal(v)
+        case Basic.Unit => Syntax.Expression.Unit()
+        case Basic.Int(value) => Syntax.Expression.Literal(value)
     
     class DistributeReplacements(replacements: MapView[String, Value]) {
         def apply(exp: Syntax.Expression): Syntax.Expression = exp match

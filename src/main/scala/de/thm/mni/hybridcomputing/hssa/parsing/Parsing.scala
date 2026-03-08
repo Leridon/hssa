@@ -3,6 +3,7 @@ package de.thm.mni.hybridcomputing.hssa.parsing
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program}
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.Tokens
+import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.{Language, Syntax}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing
@@ -48,9 +49,9 @@ object Parsing {
         protected def ident: P[Syntax.Identifier] = valueToken(IDENT)(classOf[String]) ^ Syntax.Identifier.apply
         
         def simple_expresion: P[Syntax.Expression] =
-            language.plugins.map(_.literal_parser(this)).foldLeft(failure(""))((a, b) => a | b).map(Expression.Literal(_))
-              | ident ^ Syntax.Expression.Variable.apply
+            ident ^ Syntax.Expression.Variable.apply
               | posi(LPAREN ~~ expression ~~ RPAREN)
+              | valueToken(INTLIT)(classOf[Integer]).map(i => Expression.Literal(i.intValue()))
               | TILDE ~~ simple_expresion ^ Syntax.Expression.Invert.apply
               | (in => {
                 Failure(s"Expected simple expression but got ${in.first} at ${in.pos}", in)

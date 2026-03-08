@@ -26,7 +26,7 @@ case class Interpretation(language: Language) {
     
     def evaluate(exp: Expression, context: ValueContext): Value = {
         exp match {
-            case Expression.Literal(value) => value
+            case Expression.Literal(value) => Basic.Int(value)
             case Expression.Variable(name) => context.get(name.name)
               .getOrElse({
                   new HSSAError(LanguageError.Severity.Error, s"Variable $name is not defined.")
@@ -53,7 +53,7 @@ case class Interpretation(language: Language) {
         (pattern, value) match {
             case (Expression.Variable(name), value) => Map(name.name -> value)
             case (Expression.Unit(), Basic.Unit) => Map()
-            case (Expression.Literal(v), value) if v == value => Map()
+            case (Expression.Literal(v), value) if Basic.Int(v) == value => Map()
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) => assign(pat_1, val_a) ++ assign(pat_2, val_b)
             case (Expression.Invert(sub), rel: Value.Relation) => assign(sub, rel.flipped)
             case _ =>

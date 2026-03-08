@@ -25,8 +25,6 @@ object Language {
         def requirements: Seq[Plugin] = Seq(Basic)
         
         def builtins: Seq[Plugin.Builtin] = Seq()
-        
-        def literal_parser(grammar: Parsing.Grammar): grammar.Parser[Value] = grammar.failure("")
     }
     
     object Plugin {

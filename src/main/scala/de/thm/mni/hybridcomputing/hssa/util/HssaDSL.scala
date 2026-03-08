@@ -59,13 +59,13 @@ object HssaDSL {
         def toExpression(v: T): Syntax.Expression
     
     given Expressionable[Unit] with
-        def toExpression(v: Unit): Syntax.Expression = Syntax.Expression.Literal(Basic.Unit)
+        def toExpression(v: Unit): Syntax.Expression = Syntax.Expression.Unit()
     
     given Expressionable[String] with
         def toExpression(v: String): Syntax.Expression = Syntax.Expression.Variable(Syntax.Identifier(v))
     
     given Expressionable[Int] with
-        def toExpression(v: Int): Syntax.Expression = Syntax.Expression.Literal(Basic.Int(v))
+        def toExpression(v: Int): Syntax.Expression = Syntax.Expression.Literal(v)
     
     given Expressionable[Syntax.Expression] with
         def toExpression(v: Syntax.Expression): Syntax.Expression = v

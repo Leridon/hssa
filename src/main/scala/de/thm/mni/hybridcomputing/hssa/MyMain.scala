@@ -51,7 +51,7 @@ object MyMain {
         }
         
         def encode(exp: Expression): Value = exp match {
-            case Expression.Literal(value) => Value.Pair(Basic.Int(0), value)
+            case Expression.Literal(value) => Value.Pair(Basic.Int(0), Basic.Int(value))
             case Expression.Unit() => Value.Pair(Basic.Int(0), Basic.Unit)
             case Expression.Variable(name) => Value.Pair(Basic.Int(1), encode(name))
             case Expression.Pair(a, b) => Value.Pair(Basic.Int(2), Value.Pair(encode(a), encode(b)))
