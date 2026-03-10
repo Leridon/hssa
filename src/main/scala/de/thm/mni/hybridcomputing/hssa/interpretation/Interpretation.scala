@@ -135,8 +135,6 @@ case class Interpretation(language: Language) {
                             
                             val called_rel: Value.Relation = evaluate(relation, block_context).asInstanceOf[Value.Relation]
                             
-                            println("|".repeat(depth) + relation)
-                            
                             val result = Try(evaluateApplication(called_rel, instantiationArg, consumedArg, depth + 1)).recoverWith({
                                 case e: AbortDueToErrors =>
                                     e.errors.foreach(e => {
