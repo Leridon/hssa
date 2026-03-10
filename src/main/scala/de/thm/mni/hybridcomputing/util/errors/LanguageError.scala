@@ -42,7 +42,24 @@ object LanguageError {
             this.buffer.addOne(message)
         }
         
-        def raiseIfNonEmpty(): Unit = if (this.buffer.nonEmpty) throw AbortDueToErrors(this.buffer.toSeq)
+        def print(): this.type = {
+            if(buffer.nonEmpty) {
+                buffer.foreach(e => {
+                    println(e)
+                    println()
+                })
+            }
+            
+            this
+        }
+        
+        def raiseIfNonEmpty(): this.type = {
+            if (this.buffer.nonEmpty) throw AbortDueToErrors(this.buffer.toSeq)
+            
+            this
+        }
+        
+        def get(): List[LanguageError] = buffer.toList
     }
     
     enum Severity:

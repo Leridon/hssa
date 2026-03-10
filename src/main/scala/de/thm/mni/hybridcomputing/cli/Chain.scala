@@ -92,9 +92,9 @@ object Parsing {
         
         override lazy val whitespace: Parser[Any] = """[ \t\r]*""".r
         
-        def eof: Token[TokenTypes] = symbol(EOF)
+        override def eof_token: TokenTypes = EOF
         
-        override def token: Parser[Token[TokenTypes]] =
+        override def token: Parser[TokenValue] =
             (
               "\".*\"".r ^^ (s => symbol(STRING, s.tail.init)) |
                 "[^\\s{};=]+".r ^^ (s => symbol(STRING, s)) |

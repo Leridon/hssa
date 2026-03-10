@@ -134,9 +134,9 @@ object Lexing {
         
         //override lazy val whitespace: Parser[Any] = """(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))*""".r
         
-        def eof: Token[Tokens.TokenClass] = symbol(EOF)
+        def eof_token = Tokens.TokenClass.EOF
         
-        def token: Parser[Symbol] =
+        def token: Parser[TokenValue] =
             "[a-zA-Z][a-zA-Z_0-9']*".r ^^ {
                 case "class" => symbol(CLASS)
                 case "inherits" => symbol(INHERITS)

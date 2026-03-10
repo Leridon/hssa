@@ -2,14 +2,13 @@ package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity
 
 import scala.collection.mutable
 
 class TypeChecking(language: Language) {
-    class TypeError(expected: Types.Type, actual: Types.Type) extends HSSAError(Severity.Error, s"Type Error: Expected $expected, but got $actual")
+    import de.thm.mni.hybridcomputing.hssa.TypeChecking.TypeError
     
     class Environment(prog: BindingTree.Program) {
         private val map = mutable.Map[Environment.Key, Types.Type]()
@@ -191,4 +190,9 @@ class TypeChecking(language: Language) {
         
         collector
     }
+}
+
+object TypeChecking {
+    class TypeError(expected: Types.Type, actual: Types.Type) extends HSSAError(Severity.Error, s"Type Error: Expected $expected, but got $actual")
+    
 }

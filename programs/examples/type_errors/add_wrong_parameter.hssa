@@ -1,3 +1,5 @@
+// EXPECT welltyped=false
+
 rel type_error:
 (),0 := begin<-
 x := add () =: 0

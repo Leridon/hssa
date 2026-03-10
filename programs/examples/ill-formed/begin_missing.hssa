@@ -1,3 +1,4 @@
+// EXPECT wellformed=false
 rel main:
     x,0 := start<-
        ->stop =: y,0

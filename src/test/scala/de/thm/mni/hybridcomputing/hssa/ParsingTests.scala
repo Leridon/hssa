@@ -17,13 +17,13 @@ class ParsingTests extends org.scalatest.flatspec.AnyFlatSpec{
         program.program.definitions.isEmpty shouldEqual true
     }
     
-    "Parsing" should "work without trailing whitespace" in {
+    it should "work without trailing whitespace" in {
         val program = parse("rel r: (),0:=begin<- ->end=:(),0")
         
         program.program.definitions.size shouldEqual 1
     }
     
-    "Parsing" should "work with trailing whitespace" in {
+    it should "work with trailing whitespace" in {
         val program = parse("rel r: (),0:=begin<- ->end=:(),0\n")
         
         program.program.definitions.size shouldEqual 1

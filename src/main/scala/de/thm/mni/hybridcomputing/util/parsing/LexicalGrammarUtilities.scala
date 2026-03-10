@@ -12,17 +12,34 @@ trait LexicalGrammarUtilities[T] extends RegexParsers {
     final override def skipWhitespace: Boolean = false
     final override val whiteSpace: Regex = "".r
     
+    type TokenValue = (T, Option[Any])
+    
     type Symbol = Token[T]
     
-    def token: Parser[Token[T]]
+    def token: Parser[TokenValue]
     def whitespace: Parser[Any] = success(())
     
-    def symbol(typ: T): Token[T] = Token(typ, None)
-    def symbol(typ: T, value: Any): Token[T] = Token(typ, Some(value))
+    def wrappedToken: Parser[Token[T]] = before => {
+        val res = token.apply(before)
+        
+        
+        res.map(token => {
+            val after = res.next
+            
+            new Token[T](
+                token._1,
+                token._2,
+                before.source.subSequence(before.offset, after.offset).toString
+            )
+        })
+    }
+    
+    def symbol(typ: T): TokenValue = (typ, None)
+    def symbol(typ: T, value: Any): TokenValue = (typ, Some(value))
     
     private lazy val next_token: Parser[Option[Symbol]] =
         whitespace ~> // Skip all whitespace
-          (token ^^ Some.apply | phrase(success(None))) // Expect token or end of input
+          (wrappedToken ^^ Some.apply | phrase(success(None))) // Expect token or end of input
     
     lazy val all: Parser[List[Symbol]] = next_token.flatMap({
         case Some(head) => all ^^ (head :: _)
@@ -32,12 +49,14 @@ trait LexicalGrammarUtilities[T] extends RegexParsers {
     def parseAll(input: Reader[Char]): ParseResult[List[Symbol]] = parse(phrase(all), input)
     def parseNext(input: Reader[Char]): ParseResult[Option[Symbol]] = parse(next_token, input)
     
-    def apply(input: Reader[Char]): (Option[Symbol], Input) = parseNext(input) match {
+    def apply(input: Reader[Char]): (Option[Symbol], Reader[Char]) = parseNext(input) match {
         case Success(token, rest) => (token, rest) // There is a token or it's EOF
         case NoSuccess(msg, pos) => LanguageError.LexicalError(s"$msg at ${pos.pos}", SourcePosition(
-            SourceFile.fromString(input.source.toString), 
+            SourceFile.fromString(input.source.toString),
             SourcePosition.Position(pos.pos.line, pos.pos.column), null)).raise() // Scan Error, invalid token
     }
     
-    def eof: Token[T]
+    def eof_token: T
+    
+    final def eof: Token[T] = new Token[T](eof_token, None, "")
 }

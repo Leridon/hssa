@@ -70,7 +70,7 @@ object Modular {
                 }
             }
             
-            (Syntax.Program(programs.toSeq, language), null)
+            (Syntax.Program(programs.toSeq, language), LanguageError.Collector())
         }
     }
     

@@ -63,7 +63,7 @@ trait ParserUtilities[TokenClass] extends Parsers {
     
     def valueToken[T](token: TokenClass)(implicit c: Class[T]): Parser[T] = {
         skip ~~ acceptMatch(token.toString, {
-            case Token(t, Some(i)) if t == token && c.isInstance(i) => i.asInstanceOf[T]
+            case Token(t, Some(i), _) if t == token && c.isInstance(i) => i.asInstanceOf[T]
         }) | (in => Failure(s"${token.toString} expected, but got ${in.first.typ}", in))
     }
     
