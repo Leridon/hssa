@@ -61,7 +61,7 @@ m.1, 0 := mmem.readwrite 5 =: m, 5
 rel nullpointer_dealloc.test_fails:
 (), 0  :=     begin <-
   m    :=     mmem.new     =:  ()
-m.1, 0 := ~mmem.allocate 1 =: m, 0
+ m.1   := ~mmem.allocate 1 =: m, 0
   ()   :=    ~mmem.new     =:  m.1
                -> end      =: (), 0
 

@@ -9,22 +9,20 @@ import scala.compiletime.uninitialized
 object Types {
     
     trait Type {
-        override def toString: String = resolve(this) match
-            case Int => "int"
-            case Pair(a, b) => s"($a, $b)"
-            case ParameterizedRelation(parameter, in, out) => s"$parameter -> ($in <-> $out)"
-            case _: MetaVariable => s"<mv${this.hashCode()}>"
-            case Literal(value) => value.toString
-            case UnionType(a, b) => s"$a | $b"
-        
         override def equals(obj: Any): Boolean = obj match {
             case o: Type => this eq o
             case _ => false
         }
     }
-    case object Int extends Type
-    case class Pair(a: Type, b: Type) extends Type
-    case class ParameterizedRelation(parameter: Type, in: Type, out: Type) extends Type
+    case object Int extends Type {
+        override def toString: String = "int"
+    }
+    case class Pair(a: Type, b: Type) extends Type {
+        override def toString: String = s"($a, $b)"
+    }
+    case class ParameterizedRelation(parameter: Type, in: Type, out: Type) extends Type {
+        override def toString: String = s"$parameter -> ($in <-> $out)"
+    }
     class MetaVariable extends Type {
         var instance: Type = uninitialized
         
@@ -34,9 +32,15 @@ object Types {
                 case v: MetaVariable => v.resolve
                 case t => t
         }
+        
+        override def toString: String = if (instance != null) instance.toString else s"<mv${this.hashCode()}>"
     }
-    case class Literal(value: Value) extends Type
-    case class UnionType(a: Type, b: Type) extends Type
+    case class Literal(value: Value) extends Type {
+        override def toString: String = value.toString
+    }
+    case class UnionType(a: Type, b: Type) extends Type {
+        override def toString: String = s"$a | $b"
+    }
     
     def resolve(t: Type): Type = t match
         case mv: MetaVariable =>
@@ -50,7 +54,7 @@ object Types {
     def clone(t: Type): Type = {
         val replacements = mutable.Map[MetaVariable, MetaVariable]()
         
-        def helper(t: Type): Type = t match
+        def helper(t: Type): Type = resolve(t) match
             case Pair(a, b) => Pair(helper(a), helper(b))
             case ParameterizedRelation(parameter, in, out) => ParameterizedRelation(helper(parameter), helper(in), helper(out))
             case variable: MetaVariable => replacements.getOrElseUpdate(variable, new MetaVariable)

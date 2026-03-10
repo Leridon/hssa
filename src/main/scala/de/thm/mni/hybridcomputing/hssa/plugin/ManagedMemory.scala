@@ -69,18 +69,17 @@ object ManagedMemory extends Plugin {
         ).name("mmem.allocate", Types.ParameterizedRelation(Types.Int, MMemType, Types.Pair(MMemType, Types.Int))),
         self_inverse(
             int_parameter(pointer => {
-                case Value.Pair(memory: MMem, in: Value) => {
+                case Value.Pair(memory: MMem, in: Value) =>
                     if pointer == 0 then Errors.NullPointerError("read/write").raise()
                     val read_value = memory.content(pointer)
                     if (read_value == null) {
                         Errors.AccessViolation().raise()
                     }
                     memory.content.update(pointer, in)
-
+                    
                     Value.Pair(
                         memory, read_value
                     )
-                }
             })
         ).name("mmem.readwrite", Types.ParameterizedRelation(Types.Int, Types.Pair(MMemType, new Types.MetaVariable), Types.Pair(MMemType, new Types.MetaVariable)))
     )

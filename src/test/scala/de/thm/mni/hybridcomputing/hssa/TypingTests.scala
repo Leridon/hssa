@@ -15,7 +15,7 @@ class TypingTests extends AnyWordSpec with Matchers {
             val verb = if (expected_welltyped) "well-typed" else "ill-typed"
             
             s"$verb: ${test.file.getFileName}" in {
-                val welltyped = !TypeChecking(test.linked.language).check(test.binding_tree).get().exists(_.isInstanceOf[TypeChecking.TypeError])
+                val welltyped = TypeChecking(test.linked.language).check(test.binding_tree).print().get().isEmpty
                 
                 welltyped shouldEqual expected_welltyped
             }
@@ -27,7 +27,7 @@ class TypingTests extends AnyWordSpec with Matchers {
             val verb = if (test.expectations.wellformed) "well-formed" else "ill-formed"
             
             s"$verb: ${test.file.getFileName}" in {
-                val wellformed = Wellformedness(test.linked.language).check(test.linked).get().isEmpty
+                val wellformed = Wellformedness(test.linked.language).check(test.linked).print().get().isEmpty
                 
                 wellformed shouldEqual test.expectations.wellformed
             }

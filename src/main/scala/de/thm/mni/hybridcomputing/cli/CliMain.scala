@@ -10,7 +10,7 @@ object CliMain:
         
         try {
             val build_script = Parsing.parse(
-                """load ./programs/examples/diss.hssa; hssa.parse; mssa.fixup; savefiles
+                """load ./programs/examples/type_errors/~add_wrong_input.hssa; hssa.parse; hssa.check; mssa.fixup; savefiles
                   |""".stripMargin)
             
             /*val build_script = Parsing.parse(
