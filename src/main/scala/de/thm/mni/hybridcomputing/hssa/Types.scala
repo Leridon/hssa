@@ -51,15 +51,37 @@ object Types {
             }
         case _ => t
     
+    def resolveShallow(t: Type): Type = t match
+        case mv: MetaVariable if mv.instance != null => mv.instance
+        case _ => t
+    
     def clone(t: Type): Type = {
-        val replacements = mutable.Map[MetaVariable, MetaVariable]()
+        val seen = mutable.HashMap[Type, Type]()
         
-        def helper(t: Type): Type = resolve(t) match
-            case Pair(a, b) => Pair(helper(a), helper(b))
-            case ParameterizedRelation(parameter, in, out) => ParameterizedRelation(helper(parameter), helper(in), helper(out))
-            case variable: MetaVariable => replacements.getOrElseUpdate(variable, new MetaVariable)
-            case UnionType(a, b) => UnionType(helper(a), helper(b))
-            case _ => t
+        def helper(t: Type): Type = {
+            val r = resolveShallow(t) // important: do not recursively fully resolve cycles
+            
+            seen.getOrElseUpdate(r, {
+                r match
+                    case mv: MetaVariable =>
+                        new MetaVariable
+                    
+                    case Pair(a, b) =>
+                        Pair(helper(a), helper(b))
+                    
+                    case ParameterizedRelation(parameter, in, out) =>
+                        ParameterizedRelation(helper(parameter), helper(in), helper(out))
+                    
+                    case UnionType(a, b) =>
+                        UnionType(helper(a), helper(b))
+                    
+                    case Literal(l) =>
+                        Literal(l)
+                    
+                    case other =>
+                        other
+            })
+        }
         
         helper(t)
     }
@@ -83,13 +105,26 @@ object Types {
         }
     }
     
+    def simplifyUnion(a: Type, b: Type): Type = {
+        (a, b) match {
+            case (a, b) if a == b => a
+            case _ => UnionType(a, b)
+        }
+    }
+    
     def unify(a: Type, b: Type, flipped: Boolean = false): Option[Type] = {
         val a1 = resolve(a)
         val b1 = resolve(b)
         
         (a1, b1) match
             case (a, b) if a eq b => Some(a)
-            case (UnionType(_, _), b) => Some(b)
+            case (UnionType(a, b), t) =>
+                (unify(a, t), unify(b, t)) match
+                    case (Some(x), Some(y)) => Some(simplifyUnion(x, y))
+                    case (Some(x), None) => Some(x)
+                    case (None, Some(x)) => Some(x)
+                    case (None, None) => None
+            //case (UnionType(_, _), b) => Some(b) // Union type currently acts as any type
             case (mv: MetaVariable, other) if mv.instance == null => // TODO: Occurence check to prevent cyclic types?
                 mv.instance = other
                 Some(other)

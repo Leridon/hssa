@@ -1,0 +1,8 @@
+// EXPECT welltyped=false
+rel test:
+c, 0 := begin<-
+->L1,L2 =: (), c
+
+x,c := L1,L2<-
+r := add 1 =: x // x is used as a number, but it's always unit
+-> end =: (r, c), 0
