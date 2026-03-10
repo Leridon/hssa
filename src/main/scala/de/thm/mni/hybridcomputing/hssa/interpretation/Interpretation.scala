@@ -148,10 +148,6 @@ object Interpretation {
         
         def byEntryLabel(label: String): Syntax.Block = relation.blocks.find(b => b.entry.labels.exists(_.name == label)).get
         def byExitLabel(label: String): Syntax.Block = relation.blocks.find(b => b.exit.labels.exists(_.name == label)).get
-        
-        val labels: Set[Syntax.Identifier] = {
-            relation.blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet
-        }
     }
     
     object Errors {
