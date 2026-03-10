@@ -70,13 +70,27 @@ object TestDiscovery {
         lazy val (modular_program, parsing_errors) = Modular.Parsing(Language.Canon).parseProject(file.toAbsolutePath)
         lazy val linked = Modular.link(modular_program)
         lazy val binding_tree = BindingTree.init(linked)
+        
+        lazy val children: Seq[RelationTestCase] =
+            linked.definitions.flatMap(rel => {
+                val expectation: Option[Boolean] =
+                    if (rel.name.name.endsWith(".test")) Some(true)
+                    else if (rel.name.name.endsWith(".test_fails")) Some(false)
+                    else None
+                
+                expectation.map(e => RelationTestCase(this, rel.name.name, e))
+            })
     }
     
-    class RelationTestCase(parent: ProgramTestCase) extends TestCase
+    case class RelationTestCase(parent: ProgramTestCase,
+                                rel_name: String,
+                                expected_success: Boolean
+                               ) extends TestCase
     
     lazy val all: List[ProgramTestCase] = {
         val files = allFiles(Path.of("programs/examples"))
         files.map(file => new ProgramTestCase(file))
     }
     
+    lazy val all_relation_tests: Seq[RelationTestCase] = all.flatMap(_.children)
 }

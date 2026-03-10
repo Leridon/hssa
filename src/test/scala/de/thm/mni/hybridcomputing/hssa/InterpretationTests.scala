@@ -3,66 +3,47 @@ package de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
 import de.thm.mni.hybridcomputing.hssa.modular.Modular
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
+import de.thm.mni.hybridcomputing.hssa.util.TestDiscovery
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.AbortDueToErrors
 import de.thm.mni.hybridcomputing.util.reversibility.Direction
+import org.scalatest.matchers.must.Matchers.{be, noException}
+import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 import java.nio.file.Path
 
-class InterpretationTests extends AnyWordSpec {
-    val program: Syntax.Program = Modular.Chains(Language.Canon).parseAndLink(Path.of("programs/examples/tests.hssa").toAbsolutePath)
+class InterpretationTests extends AnyWordSpec with Matchers {
     
-    
-    def run(name: String, direction: Direction): Unit = {
-        print(s"Running '$name' $direction: ")
-        
-        Interpretation(program.language).interpret(program, name, Basic.Unit, Basic.Unit, direction)
+    "Interpretation" should {
+        TestDiscovery.all_relation_tests.foreach(test => {
+            
+            if(test.expected_success) {
+                s"succeed forwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                    noException should be thrownBy {
+                        Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS)
+                    }
+                }
+                
+                s"succeed backwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                    noException should be thrownBy {
+                        Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS)
+                    }
+                }
+            } else {
+                s"fail forwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                    an [AbortDueToErrors] should be thrownBy {
+                        Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS)
+                    }
+                }
+                
+                s"fail backwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                    an [AbortDueToErrors] should be thrownBy {
+                        Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS)
+                    }
+                }
+            }
+
+        })
     }
-    
-    
-    program.definitions.filter(rel => rel.name.name.endsWith(".test")).foreach(rel => {
-        s"Interpretation of ${rel.name.name}" should {
-            
-            s"succeed forwards" in {
-                try{
-                    run(rel.name.name, Direction.FORWARDS)
-                } catch {
-                    case e: LanguageError.AbortDueToErrors =>
-                        e.errors.foreach(e => {
-                            println(e)
-                            println()
-                        })
-                        
-                        fail("Interpretation has thrown an error")
-                }
-            }
-            
-            s"succeed backwards" in {
-                try{
-                    run(rel.name.name, Direction.BACKWARDS)
-                } catch {
-                    case e: LanguageError.AbortDueToErrors =>
-                        e.errors.foreach(e => {
-                            println(e)
-                            println()
-                        })
-                        
-                        fail("Interpretation has thrown an error")
-                }
-            }
-        }
-    })
-    
-    program.definitions.filter(rel => rel.name.name.endsWith(".test_fails")).foreach(rel => {
-        s"Interpretation of ${rel.name.name}" should {
-            
-            s"fail forwards" in {
-                assertThrows[LanguageError.AbortDueToErrors](run(rel.name.name, Direction.FORWARDS))
-            }
-            
-            s"fail backwards" in {
-                assertThrows[LanguageError.AbortDueToErrors](run(rel.name.name, Direction.BACKWARDS))
-            }
-        }
-    })
 }
