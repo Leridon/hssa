@@ -152,11 +152,11 @@ object Evaluation {
             case StringValue(value) => value
         }).getOrElse(LanguageError(Severity.Error, s"Expected argument for name $name").raise())
         
-        def expectPositionedString(pos: Int = 0): String = {
+        def expectPositionedString(pos: Int = 0, default: Option[String] = None): String = {
             positioned.lift(pos).map({
                 case ChainValue(function) => LanguageError(Severity.Error, s"Expected string argument for position $pos").raise()
                 case StringValue(value) => value
-            }).getOrElse(LanguageError(Severity.Error, s"Expected argument for position $pos").raise())
+            }).orElse(default).getOrElse(LanguageError(Severity.Error, s"Expected argument for position $pos").raise())
         }
         
         def expectPositionedChain(pos: Int = 0): CliChain.Function = {

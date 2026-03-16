@@ -84,7 +84,7 @@ object HSSAFunctions {
         override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
             case asHSSA(CliChain.Value.HSSA(program)) =>
                 CliChain.Value.File.fromContent(
-                    Interpretation(program.language).interpret(program).toString
+                    Interpretation(program.language).interpret(program, args.expectPositionedString(0, Some("main"))).toString
                 )
         }
     }

@@ -136,7 +136,9 @@ case class Interpretation(language: Language) {
         })
         
         val rel: Value.Relation = (if (direction == Direction.FORWARDS) context else inverse_context).get(relation_name)
-          .getOrElse(new HSSAError(LanguageError.Severity.Error, s"Entrypoint $relation_name does not exist").raise())
+          .getOrElse({
+              new HSSAError(LanguageError.Severity.Error, s"Entrypoint $relation_name does not exist").raise()
+          })
           .asInstanceOf[Value.Relation]
         
         evaluateApplication(rel, instance_argument, relation_argument, 0)

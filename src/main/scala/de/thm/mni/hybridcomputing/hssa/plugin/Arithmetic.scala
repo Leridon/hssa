@@ -87,7 +87,7 @@ object Arithmetic extends Language.Plugin {
             comparison("lessequal", _ <= _),
             comparison("greater", _ > _),
             comparison("greaterequal", _ >= _),
-            binary_preserve_left("sub", (a, b) => a - b, (a, b) => a + b),
+            binary_preserve_left("sub", (a, b) => a - b, (a, b) => a - b),
             binary_preserve_left("xor", (a, b) => {
                 if(b == 7) {
                     println(s"xor ${a}, ${b} = ${a ^ b}")
