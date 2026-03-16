@@ -1,23 +1,3 @@
-rel stack_peek ((head, tail), index):
-((), 0)  :=          begin <-                     
-   c     :=      equal (index, 0)      =:    ()   
-                     -> L2,L1          =: ((), c) 
-
-((), 0)  :=           L1 <-                       
-  res    :=          dup head          =:    ()   
-                      -> L3            =: (res, 0)
-
-((), 0)  :=           L2 <-                       
-index.1  :=         add index          =:    -1   
-  res    := stack_peek (tail, index.1) =:    ()   
-   -1    :=         ~add index         =: index.1 
-                      -> L4            =: (res, 0)
-
-(res, c) :=          L4,L3 <-                     
-   ()    :=     ~equal (index, 0)      =:    c    
-                      -> end           =: (res, 0)
-
-
 rel pop:
        (stack, 0)         :=           begin <-                                  
        stack_empty        :=      equal (stack, ())       =:          ()         
@@ -41,10 +21,10 @@ right, 0 := begin <-
 
 
 rel move_right:
-((left, center, right), 0) :=  begin <-                                     
-          left.1           := ~pop =:          (left, center)         
-   (center.1, right.1)     := pop  =:              right              
-                                -> end   =: ((left.1, center.1, right.1), 0)
+((left, center, right), 0) := begin <-                                    
+          left.1           :=   ~pop   =:          (left, center)         
+   (center.1, right.1)     :=   pop    =:              right              
+                               -> end  =: ((left.1, center.1, right.1), 0)
 
 
 rel can_be_applied ((Q, (left, center, right)), ((q1, q2), (type, read, write))):
@@ -61,69 +41,26 @@ right_symbol :=    equal (center, read)     =:      ()
                           -> end            =:     c, 0    
 
 
-rel find_transition (state, (head, tail_rules)):
-(), 0  :=              begin <-                          
-  c    :=     can_be_applied state, head      =:    ()   
-                 -> L_nomatch,L_match         =:  (), c  
-
-(), 0  :=            L_nomatch <-                        
- res   := find_transition (state, tail_rules) =:    ()   
-                     -> L_nomatch2            =: (res, 0)
-
-(), 0  :=             L_match <-                         
- res   :=              dup head               =:    ()   
-                      -> L_match2             =:  res, 0 
-
-res, c :=       L_nomatch2,L_match2 <-                   
-  ()   :=     ~can_be_applied state, head     =:    c    
-                        -> end                =:  res, 0
-
 rel apply_next (head, tail_rules):
-state, 0  :=              begin <-
-  c    :=     can_be_applied state, head      =:    ()
-                 -> L_nomatch,L_match         =:  state, c
+state, 0 :=           begin <-                           
+   c     :=  can_be_applied state, head   =:      ()     
+                -> L_nomatch,L_match      =:   state, c  
 
-state, 0  :=            L_nomatch <-
- state.1   := apply_next tail_rules =:    state
-                     -> L_nomatch2            =: (state.1, 0)
+state, 0 :=         L_nomatch <-                         
+state.1  :=     apply_next tail_rules     =:    state    
+                    -> L_nomatch2         =: (state.1, 0)
 
-state, 0  :=             L_match <-
- state.1   :=              maybe_apply head               =:    state
-                      -> L_match2             =:  state.1, 0
+state, 0 :=          L_match <-                          
+state.1  :=       maybe_apply head        =:    state    
+                     -> L_match2          =:  state.1, 0 
 
-state, c :=       L_nomatch2,L_match2 <-
-head.1     := dup head =: ()
-head.2     := invert =: head.1
-  ()   :=     ~can_be_applied state, head.2     =:    c
-head.3     := invert =: head.2
-()     := ~dup head =: head.3
-                        -> end                =:  res, 0
-
-
-rel find_transition2 (state, (head, tail_rules)):
-(), 0  :=               begin <-                          
-  h    :=               dup head               =:    ()   
- h.1   :=                invert                =:    h    
-  c    :=      can_be_applied state, h.1       =:    ()   
- h.2   :=                invert                =:   h.1   
-  ()   :=              ~dup head               =:   h.2   
-                  -> L_nomatch,L_match         =:  (), c  
-
-(), 0  :=             L_nomatch <-                        
- res   := find_transition2 (state, tail_rules) =:    ()   
-                     -> L_nomatch2             =: (res, 0)
-
-(), 0  :=              L_match <-                         
- res   :=               dup head               =:    ()   
-                      -> L_match2              =:  res, 0 
-
-res, c :=        L_nomatch2,L_match2 <-                   
-  h    :=               dup head               =:    ()   
- h.1   :=                invert                =:    h    
-  ()   :=      ~can_be_applied state, h.1      =:    c    
- h.2   :=                invert                =:   h.1   
-  ()   :=              ~dup head               =:   h.2   
-                         -> end                =:  res, 0 
+state, c :=    L_nomatch2,L_match2 <-                    
+ head.1  :=           dup head            =:      ()     
+ head.2  :=            invert             =:    head.1   
+   ()    := ~can_be_applied state, head.2 =:      c      
+ head.3  :=            invert             =:    head.2   
+   ()    :=           ~dup head           =:    head.3   
+                       -> end             =:   state, 0  
 
 
 rel invert:
@@ -132,46 +69,44 @@ rel invert:
                                      -> end  =: ((q2, q1), type.1, write, read), 0
 
 
-rel maybe_apply ((q1, q2), (type, read, write)):
-         ((Q, (left, S, right)), 0)          :=         begin <-
-             0               :=          xor q1          =:               Q
-            Q.1              :=          xor q2          =:               0
-             c               :=     add type      =:               1
-                                 -> L_move_left,L_read_write,L_move_right  =:           ((Q.1, (left, S, right)), c)
+rel apply_transition ((q1, q2), (type, read, write)):
+((Q, (left, S, right)), 0) :=                  begin <-                                                  
+            0              :=                   xor q1                    =:              Q              
+           Q.1             :=                   xor q2                    =:              0              
+            c              :=                  add type                   =:              1              
+                               -> L_move_left,L_read_write,L_move_right   =: ((Q.1, (left, S, right)), c)
 
-((Q, (left, S, right)), 0) :=     L_read_write <-
-             0               :=         xor read         =:               S               
-            S.1              :=        xor write         =:               0               
-                                    -> L_read_write2     =: ((Q, (left, S.1, right)), 0)
+((Q, (left, S, right)), 0) :=               L_read_write <-                                              
+            0              :=                  xor read                   =:              S              
+           S.1             :=                  xor write                  =:              0              
+                                           -> L_read_write2               =: ((Q, (left, S.1, right)), 0)
 
-     ((state, tape), 0)      :=          L_move_right <-
-           tape.1            :=     move_right      =:              tape             
-                                         -> L_move_right2           =:      ((state, tape.1), 0)
+    ((state, tape), 0)     :=               L_move_right <-                                              
+          tape.1           :=                 move_right                  =:             tape            
+                                           -> L_move_right2               =:     ((state, tape.1), 0)    
 
-     ((state, tape), 0)      :=          L_move_left <-
-           tape.1            :=     ~move_right     =:              tape             
-                                         -> L_move_left2          =:      ((state, tape.1), 0)
+    ((state, tape), 0)     :=               L_move_left <-                                               
+          tape.1           :=                 ~move_right                 =:             tape            
+                                            -> L_move_left2               =:     ((state, tape.1), 0)    
 
-         (state, c)          := L_move_left2,L_read_write2,L_move_right2 <-
-             1               :=     ~add type      =:              c
-                                         -> end          =:            state, 0           
+        (state, c)         := L_move_left2,L_read_write2,L_move_right2 <-                                
+            1              :=                  ~add type                  =:              c              
+                                                -> end                    =:           state, 0          
 
 
 rel rtm.eval (start_q, end_q, transitions_n, transitions):
- (tape_right, 0)   :=                      begin <-                                               
-       tape        :=                     tape_init                      =:       tape_right      
-      state        :=                    xor start_q                     =:           0           
-                                            -> L1                        =:   ((state, tape), 0)  
+ (tape_right, 0)   :=        begin <-                                    
+       tape        :=        tape_init        =:        tape_right       
+      state        :=       dup start_q       =:            ()
+                               -> L1          =:    ((state, tape), 0)   
 
-((state, tape), c) :=                      L6,L1 <-                                               
-        ()         :=              ~equal (state, start_q)               =:           c   
-       rule        :=    find_transition ((state, tape), transitions)    =:           ()          
-(state.1, tape.1)  :=                  maybe_apply rule                  =:     (state, tape)
-        ()         := ~find_transition2 ((state.1, tape.1), transitions) =:          rule         
-        c.1          :=               equal (state.1, end_q)               =:           ()
-                                           -> L6,L5                      =: ((state.1, tape.1), c.1)
+((state, tape), c) :=        L6,L1 <-                                    
+        ()         := ~equal (state, start_q) =:            c            
+(state.1, tape.1)  := apply_next transitions  =:      (state, tape)      
+       c.1         := equal (state.1, end_q)  =:            ()           
+                             -> L6,L5         =: ((state.1, tape.1), c.1)
 
-((state, tape), 0) :=                       L5 <-                                                 
-        0          :=                     xor end_q                      =:         state         
-    tape_right     :=                     ~tape_init                     =:          tape         
-                                            -> end                       =:    (tape_right, 0)    
+((state, tape), 0) :=          L5 <-                                     
+        ()          :=        ~dup end_q        =:          state
+    tape_right     :=       ~tape_init        =:           tape          
+                              -> end          =:     (tape_right, 0)     
