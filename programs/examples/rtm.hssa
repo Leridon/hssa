@@ -51,7 +51,7 @@ state.1  :=     apply_next tail_rules     =:    state
                     -> L_nomatch2         =: (state.1, 0)
 
 state, 0 :=          L_match <-                          
-state.1  :=       maybe_apply head        =:    state    
+state.1  :=       apply_transition head        =:    state
                      -> L_match2          =:  state.1, 0 
 
 state, c :=    L_nomatch2,L_match2 <-                    
@@ -94,10 +94,10 @@ rel apply_transition ((q1, q2), (type, read, write)):
                                                 -> end                    =:           state, 0          
 
 
-rel rtm.eval (start_q, end_q, transitions_n, transitions):
+rel rtm.eval (start_q, end_q, transitions):
  (tape_right, 0)   :=        begin <-                                    
        tape        :=        tape_init        =:        tape_right       
-      state        :=       dup start_q       =:            ()
+      state        :=       dup start_q       =:            ()           
                                -> L1          =:    ((state, tape), 0)   
 
 ((state, tape), c) :=        L6,L1 <-                                    
@@ -107,6 +107,6 @@ rel rtm.eval (start_q, end_q, transitions_n, transitions):
                              -> L6,L5         =: ((state.1, tape.1), c.1)
 
 ((state, tape), 0) :=          L5 <-                                     
-        ()          :=        ~dup end_q        =:          state
+        ()         :=       ~dup end_q        =:          state          
     tape_right     :=       ~tape_init        =:           tape          
                               -> end          =:     (tape_right, 0)     
