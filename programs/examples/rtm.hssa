@@ -1,24 +1,24 @@
 rel pop:
         stack, 0        :=         begin <-                          
         is_empty        :=     equal stack, ()     =:        ()      
-                                   -> L2,L1        =: stack, is_empty
+                              -> nonempty,empty1   =: stack, is_empty
 
-         (), 0          :=          L1 <-                            
-                                    -> L3          =:   (-1, ()), 0  
+         (), 0          :=        empty1 <-                          
+                                  -> empty2        =:   ((), ()), 0  
 
-(top, stack), was_empty :=         L2,L3 <-                          
+(top, stack), was_empty :=    nonempty,empty2 <-                     
         is_empty        :=     equal stack, ()     =:        ()      
-        is_blank        :=      equal top, -1      =:        ()      
+        is_blank        :=      equal top, ()      =:        ()      
            ()           := ~and is_empty, is_blank =:    was_empty   
-           ()           :=      ~equal top, -1     =:     is_blank   
+           ()           :=      ~equal top, ()     =:     is_blank   
            ()           :=     ~equal stack, ()    =:     is_empty   
                                     -> end         =: (top, stack), 0
 
 rel move_right:
-(left, center, right), 0 := begin <-                                  
-         left.1          :=   ~pop   =:          left, center         
-    center.1, right.1    :=    pop   =:              right            
-                             -> end  =: (left.1, center.1, right.1), 0
+(l.0, S.0, r.0), 0 := begin <-                      
+        l.1        :=   ~pop   =:      l.0, S.0     
+     S.1, r.1      :=    pop   =:         r.0       
+                       -> end  =: (l.1, S.1, r.1), 0
 
 rel is_applicable (Q, (left, S, right)), (q1, q2, k, r, w):
 (), 0 :=    begin <-           
@@ -38,62 +38,62 @@ rel invert:
           k.1          := subfrom 0 =:           k.0         
                             -> end  =: (q2, q1, k.1, w, r), 0
 
-rel take_transition q1, q2, type, read, write:
-   (Q, tape), 0   :=                begin <-                                     
-        0         :=                 xor q1                =:          Q         
-       Q.1        :=                 xor q2                =:          0         
-        c         :=                add type               =:          1         
-                     -> move_left1,read_write1,move_right1 =:    (Q.1, tape), c  
+rel apply_transition q1, q2, type, read, write:
+ (Q, tape), 0  :=           begin <-                           
+      ()       :=           ~dup q1           =:        Q      
+       c       :=           add type          =:        1      
+                  -> left1,read_write1,right1 =:     tape, c   
 
-(Q, (l, S, r)), 0 :=             read_write1 <-                                  
-        ()        :=               ~dup read               =:          S         
-       S.1        :=               dup write               =:          ()        
-                                 -> read_write2            =: (Q, (l, S.1, r)), 0
+(l, S.0, r), 0 :=        read_write1 <-                        
+      ()       :=          ~dup read          =:       S.0     
+      S.1      :=          dup write          =:       ()      
+                         -> read_write2       =: (l, S.1, r), 0
 
- (state, tape), 0 :=             move_right1 <-                                  
-      tape.1      :=               move_right              =:         tape       
-                                 -> move_right2            =:  (state, tape.1), 0
+   tape.0, 0   :=          right1 <-                           
+    tape.1     :=          move_right         =:     tape.0    
+                           -> right2          =:    tape.1, 0  
 
- (state, tape), 0 :=             move_left1 <-                                   
-      tape.1      :=              ~move_right              =:         tape       
-                                 -> move_left2             =:  (state, tape.1), 0
+   tape.0, 0   :=           left1 <-                           
+    tape.1     :=         ~move_right         =:     tape.0    
+                            -> left2          =:    tape.1, 0  
 
-     state, c     := move_left2,read_write2,move_right2 <-                       
-        1         :=               ~add type               =:          c         
-                                     -> end                =:       state, 0     
+    tape, c    := left2,read_write2,right2 <-                  
+       1       :=          ~add type          =:        c      
+       Q       :=            dup q2           =:       ()      
+                             -> end           =:  (Q, tape), 0 
 
-rel step head, tail_rules:
-state, 0 :=           begin <-                          
-    c    :=   is_applicable state, head  =:      ()     
-                -> L_nomatch,L_match     =:   state, c  
+rel step head, tail:
+ config, 0  :=            begin <-                         
+     c      :=   is_applicable config, head  =:      ()    
+                      -> nomatch,match       =:  config, c 
 
-state, 0 :=         L_nomatch <-                        
- state.1 :=        step tail_rules       =:     state   
-                    -> L_nomatch2        =: (state.1, 0)
+config.0, 0 :=           nomatch <-                        
+  config.1  :=           step tail           =:   config.0 
+                        -> nomatch2          =: config.1, 0
 
-state, 0 :=          L_match <-                         
- state.1 :=     take_transition head     =:     state   
-                     -> L_match2         =:  state.1, 0 
+config.0, 0 :=            match <-                         
+  config.1  :=     apply_transition head     =:   config.0 
+                         -> match2           =: config.1, 0
 
-state, c :=    L_nomatch2,L_match2 <-                   
- head.1  :=           dup head           =:      ()     
- head.2  :=            invert            =:    head.1   
-   ()    := ~is_applicable state, head.2 =:       c     
- head.3  :=            invert            =:    head.2   
-   ()    :=           ~dup head          =:    head.3   
-                       -> end            =:   state, 0  
+ config, c  :=       nomatch2,match2 <-                    
+   head.1   :=            dup head           =:      ()    
+   head.2   :=             invert            =:    head.1  
+     ()     := ~is_applicable config, head.2 =:      c     
+   head.3   :=             invert            =:    head.2  
+     ()     :=           ~dup head           =:    head.3  
+                           -> end            =:  config, 0 
 
-rel rtm.eval (start_q, end_q, transitions):
-          right, 0          :=        begin <-                                     
-           state            :=      dup start_q      =:              ()            
-                                       -> L1         =: (state, ((), -1, right)), 0
+rel rtm.transduce (q_s, q_f, transitions):
+        input, 0         :=     begin <-                               
+            Q            :=      dup q_s     =:            ()          
+                                -> start     =: (Q, ((), (), input)), 0
 
-      (state, tape), c      :=        L6,L1 <-                                     
-             ()             := ~equal state, start_q =:              c             
-      state.1, tape.1       :=    step transitions   =:         state, tape        
-            c.1             :=  equal state.1, end_q =:              ()            
-                                      -> L6,L5       =:    (state.1, tape.1), c.1  
+   (Q.0, tape.0), c.0    :=   loop,start <-                            
+           ()            :=  ~equal Q.0, q_s =:           c.0          
+       Q.1, tape.1       := step transitions =:       Q.0, tape.0      
+           c.1           :=  equal Q.1, q_f  =:            ()          
+                              -> loop,stop   =:    (Q.1, tape.1), c.1  
 
-(state, ((), -1, right)), 0 :=         L5 <-                                       
-             ()             :=       ~dup end_q      =:            state           
-                                       -> end        =:           right, 0         
+(Q, ((), (), output)), 0 :=      stop <-                               
+           ()            :=     ~dup q_f     =:            Q           
+                                 -> end      =:        output, 0       
