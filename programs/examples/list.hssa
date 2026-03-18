@@ -29,7 +29,7 @@ rel range (()):
                                                  -> L1,L2        =:         ((from, to), done)
 
               (from, to), 0                :=         L1 <-
-                   0                    :=       sub from        =:                 to
+                   0                    :=       subfrom from        =:                 to
                  tail                   :=        nil ()         =:                 ()
                  list                   :=        cons ()        =:            (from, tail)
                                                    -> L3         =:                list, 0

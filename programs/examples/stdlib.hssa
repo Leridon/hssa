@@ -1,0 +1,15 @@
+rel oracle:
+(),0 := begin<-
+ out :=   ~discard =: ()
+ -> end =: out, 0
+
+rel sub rhs:
+lhs,0 := begin<-
+out := ~add rhs =: lhs
+->end =:out,0
+
+rel negate:
+rhs,0 := begin<-
+out := subfrom 0 =: rhs
+-> end =: out, 0
+

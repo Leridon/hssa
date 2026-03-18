@@ -10,6 +10,32 @@ object Arithmetic extends Language.Plugin {
     
     override def requirements: Seq[Language.Plugin] = Seq()
     override def builtins: Seq[Language.Plugin.Builtin] = {
+        def equality(name: String, f: (Value, Value) => Boolean): Language.Plugin.Builtin = {
+            val mv = Types.MetaVariable()
+            
+            Language.Plugin.Builtin(
+                Value.BuiltinRelation(
+                    name,
+                    arg => in => arg match {
+                        case Value.Pair(a, b) => in match {
+                            case Basic.Unit => bool(f(a, b))
+                        }
+                    },
+                    arg => in => arg match {
+                        case Value.Pair(a, b) => in match {
+                            case v if v == bool(f(a, b)) => Basic.Unit
+                        }
+                    },
+                ),
+                Types.ParameterizedRelation(
+                    Types.Pair(mv, mv),
+                    Types.Unit,
+                    Types.Int,
+                )
+            
+            )
+        }
+        
         def comparison(name: String, f: (Int, Int) => Boolean): Language.Plugin.Builtin = binary_preserve_both(name, (a, b) => if (f(a, b)) 1 else 0)
         
         def binary_preserve_left(name: String, fw: (Int, Int) => Int, bw: (Int, Int) => Int): Builtin =
@@ -55,46 +81,15 @@ object Arithmetic extends Language.Plugin {
         )
         
         
-        
         Seq(
-            {
-                val mv = Types.MetaVariable()
-                
-                Language.Plugin.Builtin(
-                    Value.BuiltinRelation(
-                        "equal",
-                        { case Value.Pair(a, b) => {
-                            case Basic.Unit => bool(a == b)
-                        }
-                        },
-                        { case Value.Pair(a, b) => {
-                            case v : Basic.Int if v == bool(a == b) => Basic.Unit
-                            case _ =>
-                                println("equa")
-                                ???
-                        }
-                        }
-                    ),
-                    Types.ParameterizedRelation(
-                        Types.Pair(mv, mv),
-                        Types.Unit,
-                        Types.Int,
-                    )
-                )
-            },
-            comparison("notequal", _ != _),
+            equality("equal", _ == _),
+            equality("notequal", _ != _),
             comparison("less", _ < _),
             comparison("lessequal", _ <= _),
             comparison("greater", _ > _),
             comparison("greaterequal", _ >= _),
-            binary_preserve_left("sub", (a, b) => a - b, (a, b) => a - b),
-            binary_preserve_left("xor", (a, b) => {
-                if(b == 7) {
-                    println(s"xor ${a}, ${b} = ${a ^ b}")
-                }
-                
-                a ^ b
-            }, (a, b) => a ^ b),
+            binary_preserve_left("subfrom", (a, b) => a - b, (a, b) => a - b),
+            binary_preserve_left("xor", (a, b) => a ^ b, (a, b) => a ^ b),
             binary_preserve_left("add", (a, b) => b + a, (a, b) => b - a),
             binary_preserve_both("mul", (a, b) => a * b),
             binary_preserve_both("and", (a, b) => a & b),

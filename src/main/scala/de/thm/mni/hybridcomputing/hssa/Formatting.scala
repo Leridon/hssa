@@ -53,8 +53,8 @@ object Formatting {
     
     private def center(s: String, width: Int): String = {
         val spaces = width - s.length
-        val before = spaces / 2
-        val after = spaces - before
+        val after = spaces / 2
+        val before = spaces - after
         
         " ".repeat(before) + s + " ".repeat(after)
     }
@@ -89,6 +89,6 @@ object Formatting {
     }
     
     def format(prog: Syntax.Program): String = {
-        prog.definitions.map(this.format).mkString("\n\n")
+        prog.definitions.map(this.format).mkString("\n")
     }
 }
