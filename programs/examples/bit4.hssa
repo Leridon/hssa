@@ -21,13 +21,11 @@ a, 0 :=   begin <-
            -> end    =: b, 0
 
 rel or a, b:
-(), 0 :=  begin <-         
-  x   :=  nand a, a =:  () 
-  y   :=  nand b, b =:  () 
-  c   :=  nand x, y =:  () 
-  ()  := ~nand a, a =:   x 
-  ()  := ~nand b, b =:   y 
-           -> end   =: c, 0
+(), 0 :=   begin <-          
+ t.0  := toffoli a, 1 =:   0 
+ t.1  := toffoli b, 1 =:  t.0
+  c   := toffoli a, b =:  t.1
+            -> end    =: c, 0
 
 rel xnor a:
 b, 0 := begin <-        
