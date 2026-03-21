@@ -73,18 +73,24 @@ object TestDiscovery {
         
         lazy val children: Seq[RelationTestCase] =
             linked.definitions.flatMap(rel => {
-                val expectation: Option[Boolean] =
-                    if (rel.name.name.endsWith(".test")) Some(true)
-                    else if (rel.name.name.endsWith(".test_fails")) Some(false)
+                val expectation: Option[RelationExpectations] =
+                    if (rel.name.name.endsWith(".test")) Some(RelationExpectations(true, true))
+                    else if (rel.name.name.endsWith(".test_fw")) Some(RelationExpectations(true, false))
+                    else if (rel.name.name.endsWith(".test_fails")) Some(RelationExpectations(false, false))
                     else None
                 
                 expectation.map(e => RelationTestCase(this, rel.name.name, e))
             })
     }
     
+    case class RelationExpectations(
+                                   success_fw: Boolean,
+                                   success_bw: Boolean
+                                   )
+    
     case class RelationTestCase(parent: ProgramTestCase,
                                 rel_name: String,
-                                expected_success: Boolean
+                                expectations: RelationExpectations,
                                ) extends TestCase
     
     lazy val all: List[ProgramTestCase] = {

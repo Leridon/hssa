@@ -3,8 +3,10 @@ package de.thm.mni.hybridcomputing.cli.functions
 import de.thm.mni.hybridcomputing.cli.{CliChain, Evaluation}
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
+import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
 import de.thm.mni.hybridcomputing.hssa.{BindingTree, Language, TypeChecking, Wellformedness}
+import de.thm.mni.hybridcomputing.util.reversibility.Direction.BACKWARDS
 
 import scala.collection.mutable.ListBuffer
 
@@ -84,7 +86,7 @@ object HSSAFunctions {
         override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
             case asHSSA(CliChain.Value.HSSA(program)) =>
                 CliChain.Value.File.fromContent(
-                    Interpretation(program.language).interpret(program, args.expectPositionedString(0, Some("main"))).toString
+                    Interpretation(program.language).interpret(program, args.expectPositionedString(0, Some("main")), Basic.Unit, Basic.Unit, BACKWARDS).toString
                 )
         }
     }

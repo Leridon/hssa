@@ -19,31 +19,45 @@ import java.nio.file.Paths
 
 class InterpretationTests extends AnyWordSpec with Matchers {
     
+    def wrapErrorPrint(f: => Unit): Unit = try {
+        f
+    } catch {
+        case e: LanguageError.AbortDueToErrors =>
+            e.errors.foreach(e => {
+                println(e)
+                println()
+            })
+            throw e
+    }
+    
     "Interpretation" should {
         TestDiscovery.all_relation_tests.foreach(test => {
             
-            if (test.expected_success) {
+            if (test.expectations.success_fw) {
                 s"succeed forwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
                     noException should be thrownBy {
-                        Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS)
-                    }
-                }
-                
-                s"succeed backwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
-                    noException should be thrownBy {
-                        Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS)
+                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS))
                     }
                 }
             } else {
                 s"fail forwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
                     an[AbortDueToErrors] should be thrownBy {
-                        Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS)
+                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS))
                     }
                 }
                 
+            }
+            
+            if(test.expectations.success_bw) {
+                s"succeed backwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                    noException should be thrownBy {
+                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS))
+                    }
+                }
+            } else {
                 s"fail backwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
                     an[AbortDueToErrors] should be thrownBy {
-                        Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS)
+                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS))
                     }
                 }
             }
@@ -64,7 +78,7 @@ class InterpretationTests extends AnyWordSpec with Matchers {
                 val encoder = new SelfInterpretationEncoder(program)
                 val encoded_program = encoder.encoded
                 
-                Interpretation(test.parent.linked.language).interpret(
+                wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(
                     self_interpreter,
                     "main",
                     SelfInterpretationEncoder.tuple(
@@ -75,35 +89,37 @@ class InterpretationTests extends AnyWordSpec with Matchers {
                     ),
                     encoder.encode(relation_argument),
                     direction
-                )
+                ))
             }
             
-            if (test.expected_success) {
+            if (test.expectations.success_fw) {
                 s"succeed forwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
                     noException should be thrownBy {
                         run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS)
                     }
                 }
+            } else {
                 
+                s"fail forwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                    an[AbortDueToErrors] should be thrownBy {
+                        run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS)
+                    }
+                }
+            }
+            
+            if(test.expectations.success_bw) {
                 s"succeed backwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
                     noException should be thrownBy {
                         run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS)
                     }
                 }
             } else {
-                s"fail forwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
-                    an[AbortDueToErrors] should be thrownBy {
-                        run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS)
-                    }
-                }
-                
                 s"fail backwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
                     an[AbortDueToErrors] should be thrownBy {
                         run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS)
                     }
                 }
             }
-            
         })
     }
 }

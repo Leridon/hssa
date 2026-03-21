@@ -106,6 +106,9 @@ case class Interpretation(language: Language) {
                     
                     evaluate(block.exit.argument, block_context) match {
                         case Value.Pair(arg, Basic.Int(i)) => (arg, block.exit.labels(i).name)
+                        case _ => new HSSAError(LanguageError.Severity.Error, "Exit block must return a pair")
+                          .setPosition(block.exit.argument.position)
+                          .raise()
                     }
                 }
                 

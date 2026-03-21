@@ -38,10 +38,10 @@ rel invert:
           k.1          := subfrom 0 =:           k.0         
                             -> end  =: (q2, q1, k.1, w, r), 0
 
-rel apply_transition q1, q2, type, read, write:
+rel apply_transition q1, q2, kind, read, write:
  (Q, tape), 0  :=           begin <-                           
       ()       :=           ~dup q1           =:        Q      
-       c       :=           add type          =:        1      
+       c       :=           add kind          =:        1      
                   -> left1,read_write1,right1 =:     tape, c   
 
 (l, S.0, r), 0 :=        read_write1 <-                        
@@ -58,7 +58,7 @@ rel apply_transition q1, q2, type, read, write:
                             -> left2          =:    tape.1, 0  
 
     tape, c    := left2,read_write2,right2 <-                  
-       1       :=          ~add type          =:        c      
+       1       :=          ~add kind          =:        c      
        Q       :=            dup q2           =:       ()      
                              -> end           =:  (Q, tape), 0 
 
@@ -97,3 +97,19 @@ rel rtm.transduce (q_s, q_f, transitions):
 (Q, ((), (), output)), 0 :=      stop <-                               
            ()            :=     ~dup q_f     =:            Q           
                                  -> end      =:        output, 0       
+
+rel rtms.identity:
+(), 0 := begin <-                                    
+          -> end  =: (0, 1, ((0, 1, 0, (), ()), ())), 0
+
+rel rtms.increment:
+(), 0 := begin <-                                                                                                                                                                      
+          -> end  =: (0, 5, ((0, 1, 0, (), ()), (1, 2, 1, (), ()), (2, 1, 0, 1, 1), (2, 3, 0, 0, 1), (2, 3, 0, (), ()), (3, 4, -1, (), ()), (4, 3, 0, 1, 0), (4, 5, 0, (), ()), ())), 0
+
+rel rtm.test:
+      (), 0      :=      begin <-                        
+       inc       :=   rtms.increment  =:        ()       
+(0, 0, 1, 1, ()) := rtm.transduce inc =: (1, 1, 0, 1, ())
+(0, 0, 1, 0, ()) := rtm.transduce inc =: (1, 1, 0, 0, ())
+       ()        :=  ~rtms.increment  =:        inc      
+                          -> end      =:       (), 0     

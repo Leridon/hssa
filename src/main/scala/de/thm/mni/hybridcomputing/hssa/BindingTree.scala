@@ -25,7 +25,9 @@ object BindingTree {
         })
         
         private val entries: MultiMap[String, GlobalRelationVariable | GlobalBuiltinVariable] = MultiMap(
-            builtins.map(b => b.name -> b)
+            builtins
+              .filter(b => !relations.exists(r => r.name == b.name))
+              .map(b => b.name -> b)
               ++ relations.map(rel => {
                 rel.name.name -> rel
             }) *
