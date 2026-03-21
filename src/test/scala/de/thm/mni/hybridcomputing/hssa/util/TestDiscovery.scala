@@ -72,7 +72,8 @@ object TestDiscovery {
         lazy val binding_tree = BindingTree.init(linked)
         
         lazy val children: Seq[RelationTestCase] =
-            linked.definitions.flatMap(rel => {
+            program_with_imports.program.definitions
+              .flatMap(rel => {
                 val expectation: Option[RelationExpectations] =
                     if (rel.name.name.endsWith(".test")) Some(RelationExpectations(true, true))
                     else if (rel.name.name.endsWith(".test_fw")) Some(RelationExpectations(true, false))
