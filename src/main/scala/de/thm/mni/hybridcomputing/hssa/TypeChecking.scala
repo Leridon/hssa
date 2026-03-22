@@ -90,6 +90,7 @@ class TypeChecking(language: Language) {
                         
                         Types.ParameterizedRelation(rel.parameter, rel.out, rel.in)
                     case Expression.Unit() => Types.Unit
+                    case Expression.Duplicate(op) => helper(op)
             }
             
             env.get(Environment.ExpressionKey(exp), () => helper(exp))

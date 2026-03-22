@@ -1,17 +1,17 @@
 rel pop:
-        stack, 0        :=         begin <-                          
-        is_empty        :=     equal stack, ()     =:        ()      
+        stack, 0        :=         begin <-
+        is_empty        :=     equal stack, ()     =:        ()
                               -> nonempty,empty1   =: stack, is_empty
 
-         (), 0          :=        empty1 <-                          
-                                  -> empty2        =:   ((), ()), 0  
+         (), 0          :=        empty1 <-
+                                  -> empty2        =:   ((), ()), 0
 
-(top, stack), was_empty :=    nonempty,empty2 <-                     
-        is_empty        :=     equal stack, ()     =:        ()      
-        is_blank        :=      equal top, ()      =:        ()      
-           ()           := ~and is_empty, is_blank =:    was_empty   
-           ()           :=      ~equal top, ()     =:     is_blank   
-           ()           :=     ~equal stack, ()    =:     is_empty   
+(top, stack), was_empty :=    nonempty,empty2 <-
+        is_empty        :=     equal stack, ()     =:        ()
+        is_blank        :=      equal top, ()      =:        ()
+           ()           := ~and is_empty, is_blank =:    was_empty
+           ()           :=      ~equal top, ()     =:     is_blank
+           ()           :=     ~equal stack, ()    =:     is_empty
                                     -> end         =: (top, stack), 0
 
 rel move_right:

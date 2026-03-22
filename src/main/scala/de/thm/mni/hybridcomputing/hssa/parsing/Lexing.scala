@@ -24,6 +24,8 @@ object Lexing {
             case LINEBREAK
             case WHITESPACE
             case BLOCKCOMMENT
+            case APOSTROPH
+            case WILDCARD
             
             override def toString: String = this match
                 case IDENT => "IDENT"
@@ -77,6 +79,8 @@ object Lexing {
               "," ^^^ symbol(COMMA) |
               "~" ^^^ symbol(TILDE) |
               ":" ^^^ symbol(COLON) |
+              "'" ^^^ symbol(APOSTROPH) |
+              "*" ^^^ symbol(WILDCARD) |
               "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
               "'.'".r ^^ (l => symbol(INTLIT, l.charAt(1).toInt))
     }

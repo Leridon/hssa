@@ -29,7 +29,9 @@ object Formatting {
             case Expression.Literal(value) => value.toString
             case Expression.Pair(a, b) => s"${format(a, true, true)}, ${format(b, false, true)}"
             case Expression.Unit() => ""
+            case Expression.Wildcard() => "*"
             case Expression.Variable(name) => name.toString
+            case Expression.Duplicate(name) => s"'${format(name, true, true)}"
             case Expression.Invert(sub) => s"~${format(sub, true, true)}"
         
         val with_parens = FormattingUtilities.parenthesize(inner, paren_count)

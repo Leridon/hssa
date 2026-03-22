@@ -34,13 +34,13 @@ class InterpretationTests extends AnyWordSpec with Matchers {
         TestDiscovery.all_relation_tests.foreach(test => {
             
             if (test.expectations.success_fw) {
-                s"succeed forwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                s"FW ${test.rel_name} success (${test.parent.file.getFileName})" in {
                     noException should be thrownBy {
                         wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS))
                     }
                 }
             } else {
-                s"fail forwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                s"FW ${test.rel_name} fail (${test.parent.file.getFileName})" in {
                     an[AbortDueToErrors] should be thrownBy {
                         wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS))
                     }
@@ -49,13 +49,13 @@ class InterpretationTests extends AnyWordSpec with Matchers {
             }
             
             if(test.expectations.success_bw) {
-                s"succeed backwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                s"BW ${test.rel_name} success (${test.parent.file.getFileName})" in {
                     noException should be thrownBy {
                         wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS))
                     }
                 }
             } else {
-                s"fail backwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                s"BW ${test.rel_name} fail (${test.parent.file.getFileName})" in {
                     an[AbortDueToErrors] should be thrownBy {
                         wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS))
                     }
@@ -93,14 +93,14 @@ class InterpretationTests extends AnyWordSpec with Matchers {
             }
             
             if (test.expectations.success_fw) {
-                s"succeed forwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                s"FW ${test.rel_name} success (${test.parent.file.getFileName})" in {
                     noException should be thrownBy {
                         run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS)
                     }
                 }
             } else {
                 
-                s"fail forwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                s"FW ${test.rel_name} fail (${test.parent.file.getFileName})" in {
                     an[AbortDueToErrors] should be thrownBy {
                         run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS)
                     }
@@ -108,13 +108,13 @@ class InterpretationTests extends AnyWordSpec with Matchers {
             }
             
             if(test.expectations.success_bw) {
-                s"succeed backwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                s"BW ${test.rel_name} success (${test.parent.file.getFileName})" in {
                     noException should be thrownBy {
                         run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS)
                     }
                 }
             } else {
-                s"fail backwards for ${test.rel_name} in ${test.parent.file.getFileName}" in {
+                s"BW ${test.rel_name} fail (${test.parent.file.getFileName})" in {
                     an[AbortDueToErrors] should be thrownBy {
                         run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS)
                     }

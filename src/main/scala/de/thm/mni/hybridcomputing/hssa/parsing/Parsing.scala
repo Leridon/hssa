@@ -48,14 +48,19 @@ object Parsing {
         
         protected def ident: P[Syntax.Identifier] = valueToken(IDENT)(classOf[String]) ^ Syntax.Identifier.apply
         
-        def simple_expresion: P[Syntax.Expression] =
+        def simple_expresion: P[Syntax.Expression] = {
             ident ^ Syntax.Expression.Variable.apply
               | posi(LPAREN ~~ expression ~~ RPAREN)
               | valueToken(INTLIT)(classOf[Integer]).map(i => Expression.Literal(i.intValue()))
               | TILDE ~~ simple_expresion ^ Syntax.Expression.Invert.apply
+              | APOSTROPH ~~ simple_expresion ^ Syntax.Expression.Duplicate.apply
+              | WILDCARD ^ (() => Syntax.Expression.Wildcard())
               | (in => {
                 Failure(s"Expected simple expression but got ${in.first} at ${in.pos}", in)
             })
+        }
+        
+        def asgn_delim: IgnoredParser = ignore(ASGN | NGSA)
         
         def expression: P[Syntax.Expression] =
             repsep(simple_expresion, COMMA) ^ (exps => {
@@ -65,11 +70,11 @@ object Parsing {
               | (in => Failure(s"Expected expression but got ${in.first} at ${in.pos}", in))
         
         def entry: Parser[Syntax.Entry] =
-            expression ~~ ASGN ~~ rep1sep(ident, COMMA) ~~ LARROW ^ Syntax.Entry.apply
+            expression ~~ asgn_delim ~~ rep1sep(ident, COMMA) ~~ LARROW ^ Syntax.Entry.apply
         
         def exit: Parser[Syntax.Exit] = RARROW ~~ rep1sep(ident, COMMA) ~~ NGSA ~~ expression ^ Syntax.Exit.apply
         
-        def assignment: Parser[Syntax.Assignment] = expression ~~ ASGN ~~ expression ~~ expression ~~ NGSA ~~ expression ^ Syntax.Assignment.apply
+        def assignment: Parser[Syntax.Assignment] = expression ~~ asgn_delim ~~ expression ~~ expression ~~ asgn_delim ~~ expression ^ Syntax.Assignment.apply
         
         def block: P[Syntax.Block] = entry ~~ rep(assignment) ~~ exit ^ Syntax.Block.apply
         

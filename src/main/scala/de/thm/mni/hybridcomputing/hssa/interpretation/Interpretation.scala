@@ -4,6 +4,7 @@ import de.thm.mni.hybridcomputing.hssa.Inversion.Global
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression.{Invert, Variable}
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program, Relation}
+import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.Errors.ReversibilityViolation
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value.{BuiltinRelation, UserRelation}
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.{HSSAError, Inversion, Language, Syntax}
@@ -44,6 +45,8 @@ case class Interpretation(language: Language) {
             case Expression.Invert(sub) => evaluate(sub, context) match
                 case rel: UserRelation => rel.flipped
                 case rel: Value.BuiltinRelation => rel.flipped
+            case de.thm.mni.hybridcomputing.hssa.Syntax.Expression.Duplicate(sub) => evaluate(sub, context, false)
+            case de.thm.mni.hybridcomputing.hssa.Syntax.Expression.Wildcard() => ReversibilityViolation("Wildcard/Oracle cannot be evaluated").raise()
         }
     }
     
@@ -56,6 +59,9 @@ case class Interpretation(language: Language) {
                 assign(pat_1, val_a, context)
                 assign(pat_2, val_b, context)
             case (Expression.Invert(sub), rel: Value.Relation) => assign(sub, rel.flipped, context)
+            case (Expression.Wildcard(), _) => // Discard
+            case (Expression.Duplicate(sub), value) =>
+                if (evaluate(sub, context, false) != value) ReversibilityViolation(s"Expected $value but got $value").setPosition(pattern.position).raise()
             case _ =>
                 Interpretation.Errors.ReversibilityViolation(s"$value does not match $pattern").setPosition(pattern.position).raise()
         }

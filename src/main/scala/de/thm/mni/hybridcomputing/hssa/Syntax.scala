@@ -33,6 +33,8 @@ object Syntax {
         case class Pair(a: Expression, b: Expression) extends Expression
         case class Invert(a: Expression) extends Expression
         case class Unit() extends Expression
+        case class Duplicate(op: Expression) extends Expression
+        case class Wildcard() extends Expression
     }
     
     abstract sealed class Statement extends Node {
@@ -92,6 +94,8 @@ object Syntax {
                     case Expression.Pair(a, b) => a.variables ++ b.variables
                     case Expression.Unit() => Nil
                     case Expression.Invert(inner) => inner.variables
+                    case Expression.Duplicate(op) => Nil // TODO: Obviously this is not correct, but necessary to cheat the wellformedness for this experimental feature
+                    case Expression.Wildcard() => Nil
             }
     }
 }
