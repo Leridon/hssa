@@ -40,14 +40,14 @@ class SelfInterpretationEncoder(program: Program) {
     
     def encode(assignment: Assignment): Value =
         SelfInterpretationEncoder.tuple(
-            encode(assignment.target),
-            encode(assignment.relation),
-            encode(assignment.instance_argument),
-            encode(assignment.source),
+            encode(assignment.output),
+            encode(assignment.callee),
+            encode(assignment.parameter),
+            encode(assignment.input),
         )
     
-    def encode(entry: Entry): Value = Value.Pair(encode(entry.initialized), encode(entry.labels.toList, this.encode))
-    def encode(exit: Exit): Value = Value.Pair(encode(exit.labels.toList, this.encode), encode(exit.argument))
+    def encode(entry: Entry): Value = Value.Pair(encode(entry.output), encode(entry.labels.toList, this.encode))
+    def encode(exit: Exit): Value = Value.Pair(encode(exit.labels.toList, this.encode), encode(exit.input))
     def encode(block: Block): Value = SelfInterpretationEncoder.tuple(
         encode(block.entry),
         encode(block.assignments.toList, this.encode),

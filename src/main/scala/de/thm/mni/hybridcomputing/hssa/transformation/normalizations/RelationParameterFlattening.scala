@@ -21,8 +21,8 @@ object RelationParameterFlattening extends Transformer.WithContext.RelationTrans
             Syntax.Expression.Unit(),
             with_pair_expression.blocks.map(block => {
                 // These casts are sound because we converted every argument into a pair expression before
-                val in = block.entry.initialized.asInstanceOf[Syntax.Expression.Pair]
-                val out = block.exit.argument.asInstanceOf[Syntax.Expression.Pair]
+                val in = block.entry.output.asInstanceOf[Syntax.Expression.Pair]
+                val out = block.exit.input.asInstanceOf[Syntax.Expression.Pair]
                 
                 Syntax.Block(
                     Syntax.Entry(insert_parameter(in), block.entry.labels),

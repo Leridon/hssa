@@ -87,7 +87,7 @@ case class Interpretation(language: Language) {
                 def step(block: Syntax.Block, entered_by: String, entry_value: Value): (Value, String) = {
                     val block_context = ValueContext(Some(relation_context))
                     
-                    assign(block.entry.initialized,
+                    assign(block.entry.output,
                         Value.Pair(entry_value, Basic.Int(block.entry.labels.indexWhere(_.name == entered_by))),
                         block_context)
                         
@@ -110,10 +110,10 @@ case class Interpretation(language: Language) {
                             assign(target, result, block_context)
                     }
                     
-                    evaluate(block.exit.argument, block_context) match {
+                    evaluate(block.exit.input, block_context) match {
                         case Value.Pair(arg, Basic.Int(i)) => (arg, block.exit.labels(i).name)
                         case _ => new HSSAError(LanguageError.Severity.Error, "Exit block must return a pair")
-                          .setPosition(block.exit.argument.position)
+                          .setPosition(block.exit.input.position)
                           .raise()
                     }
                 }

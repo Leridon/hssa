@@ -84,21 +84,21 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
      * @return A replacement if the assignment evaluates to a constant, None otherwise.
      */
     def getForwardsReplacement(assignment: Syntax.Assignment, context: BindingTree.Block): Option[AnyReplacement] = {
-        if (!assignment.instance_argument.isStaticConstant(context)) return None
-        if (!assignment.relation.isStaticConstant(context)) return None
-        if (!assignment.source.isStaticConstant(context)) return None
+        if (!assignment.parameter.isStaticConstant(context)) return None
+        if (!assignment.callee.isStaticConstant(context)) return None
+        if (!assignment.input.isStaticConstant(context)) return None
         
         val staticValue = Try(Interpretation(context.program.language).evaluateApplication(
-            assignment.relation.staticValue(context),
-            assignment.instance_argument.staticValue(context),
-            assignment.source.staticValue(context)
+            assignment.callee.staticValue(context),
+            assignment.parameter.staticValue(context),
+            assignment.input.staticValue(context)
         )).toOption // When evaluation fails (for example due to nondeterminism), we don't do any replacement
           .filter(isReifable)
           
         
         // TODO: For violations, we could replace the assignment completely
         
-        staticValue.map(v => Replacement(assignment, assignment.target, v))
+        staticValue.map(v => Replacement(assignment, assignment.output, v))
     }
     
     /**

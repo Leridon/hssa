@@ -72,7 +72,7 @@ object Parsing {
         def entry: Parser[Syntax.Entry] =
             expression ~~ asgn_delim ~~ rep1sep(ident, COMMA) ~~ LARROW ^ Syntax.Entry.apply
         
-        def exit: Parser[Syntax.Exit] = RARROW ~~ rep1sep(ident, COMMA) ~~ NGSA ~~ expression ^ Syntax.Exit.apply
+        def exit: Parser[Syntax.Exit] = RARROW ~~ rep1sep(ident, COMMA) ~~ asgn_delim ~~ expression ^ Syntax.Exit.apply
         
         def assignment: Parser[Syntax.Assignment] = expression ~~ asgn_delim ~~ expression ~~ expression ~~ asgn_delim ~~ expression ^ Syntax.Assignment.apply
         

@@ -10,7 +10,7 @@ object RemoveRedirectingBlocks extends Transformer.RelationTransformer {
         val redirecting_blocks = builder.blocks.filter(block =>
             block.assignment.isEmpty && // An empty block must not have assignments
               block.entry.labels.length == block.exit.labels.length && // An empty block must have the same number of labels in its entry and exit
-              block.entry.initialized == block.exit.argument // An empty block must use the same expression in its entry and exit
+              block.entry.output == block.exit.input // An empty block must use the same expression in its entry and exit
         )
         
         val redirections: Map[String, String] = redirecting_blocks.flatMap(block =>

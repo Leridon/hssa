@@ -150,7 +150,7 @@ rel negate.test:
     (), 0    := begin <-                
 (0, 0, 0, 0) :=  negate  =: (0, 0, 0, 0)
 (1, 1, 1, 1) :=  negate  =: (0, 0, 0, 1)
-                 -> end  =:     (), 0
+                 -> end  =:     (), 0   
 
 rel equal (a0, a1, a2, a3), (b0, b1, b2, b3):
 (), 0 :=   begin <-          
@@ -160,9 +160,7 @@ rel equal (a0, a1, a2, a3), (b0, b1, b2, b3):
   e3  :=  xnor a3, b3 =:  () 
   t0  :=  and e0, e1  =:  () 
   t1  :=  and e2, e3  =:  () 
-
-  c   :=  and t0, t1  =:  ()
-
+  c   :=  and t0, t1  =:  () 
   ()  :=  ~and e2, e3 =:  t1 
   ()  :=  ~and e0, e1 =:  t0 
   ()  := ~xnor a3, b3 =:  e3 
@@ -170,3 +168,23 @@ rel equal (a0, a1, a2, a3), (b0, b1, b2, b3):
   ()  := ~xnor a1, b1 =:  e1 
   ()  := ~xnor a0, b0 =:  e0 
             -> end    =: c, 0
+
+rel encoded_to_integer:
+(0, 0, c, d), 0 :=    begin <-            
+                      -> L0,L1    =:  d, c
+
+      0, 0      :=      L1 <-             
+                       -> L10     =: (), 0
+
+      d, 0      :=      L0 <-             
+                     -> L00,L01   =: (), d
+
+     (), c      := L00,L01,L10 <-         
+                       -> end     =:  c, 0
+
+rel encoded_to_integer.test:
+(), 0 :=      begin <-                     
+  0   := encoded_to_integer =: (0, 0, 0, 0)
+  1   := encoded_to_integer =: (0, 0, 0, 1)
+  2   := encoded_to_integer =: (0, 0, 1, 0)
+               -> end       =:     (), 0   

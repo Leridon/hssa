@@ -53,17 +53,17 @@ object AutoSSA extends Transformer.WithContext.BlockTransformer {
         }
         
         Syntax.Block(
-            Syntax.Entry(handle(block.syntax.entry.initialized, VariableRole.Init), block.syntax.entry.labels),
+            Syntax.Entry(handle(block.syntax.entry.output, VariableRole.Init), block.syntax.entry.labels),
             block.syntax.assignments.map(asgn => {
                 
-                val new_in = handle(asgn.source, VariableRole.Final)
-                val new_par = handle(asgn.instance_argument, VariableRole.Use)
-                val new_rel = handle(asgn.relation, VariableRole.Use)
-                val new_out = handle(asgn.target, VariableRole.Init)
+                val new_in = handle(asgn.input, VariableRole.Final)
+                val new_par = handle(asgn.parameter, VariableRole.Use)
+                val new_rel = handle(asgn.callee, VariableRole.Use)
+                val new_out = handle(asgn.output, VariableRole.Init)
                 
                 Syntax.Assignment(new_out, new_rel, new_par, new_in)
             }),
-            Syntax.Exit(block.syntax.exit.labels, handle(block.syntax.exit.argument, VariableRole.Final)),
+            Syntax.Exit(block.syntax.exit.labels, handle(block.syntax.exit.input, VariableRole.Final)),
         )
     }
 }

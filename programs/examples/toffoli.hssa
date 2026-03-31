@@ -17,12 +17,12 @@ rel toffoli_flat:
   (b, c), a  :=   E0,E1 <-                  
                    -> end    =: (a, b, c), 0
 
-rel toffoli a0, b0:
-  c, 0  :=   begin <-             
-  a, b  :=  dup a0, b0  =:    ()  
-x, y, z := toffoli_flat =: a, b, c
-   ()   :=  ~dup a0, b0 =:   x, y 
-              -> end    =:   z, 0 
+rel toffoli a, b:
+    c, 0    :=   begin <-                 
+  t.a, t.b  :=   dup a, b   =:      ()    
+t.x, t.y, z := toffoli_flat =: t.a, t.b, c
+     ()     :=   ~dup a, b  =:   t.x, t.y 
+                  -> end    =:     z, 0   
 
 rel toffoli_flat.test:
  (), 0  :=   begin <-             

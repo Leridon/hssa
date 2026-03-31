@@ -41,14 +41,14 @@ object Syntax {
         override def toString: String = Formatting.format(this)
     }
     case class Assignment(
-                           target: Expression,
-                           relation: Expression,
-                           instance_argument: Expression,
-                           source: Expression
+                           output: Expression,
+                           callee: Expression,
+                           parameter: Expression,
+                           input: Expression
                          ) extends Statement
     
-    case class Exit(labels: Seq[Identifier], argument: Expression) extends Statement
-    case class Entry(initialized: Expression, labels: Seq[Identifier]) extends Statement
+    case class Exit(labels: Seq[Identifier], input: Expression) extends Statement
+    case class Entry(output: Expression, labels: Seq[Identifier]) extends Statement
     
     case class Block(entry: Entry, assignments: Seq[Assignment], exit: Exit) extends Node {
         lazy val sequence: Seq[Statement] = Seq(entry) ++ assignments ++ Seq(exit)
@@ -68,12 +68,12 @@ object Syntax {
             
             def initializes: Expression = self match
                 case Syntax.Assignment(target, relation, instance_argument, source) => target
-                case entry: Syntax.Entry => entry.initialized
+                case entry: Syntax.Entry => entry.output
                 case exit: Syntax.Exit => Expression.Unit()
             def finalizes: Expression = self match
                 case Syntax.Assignment(target, relation, instance_argument, source) => source
                 case entry: Syntax.Entry => Expression.Unit()
-                case exit: Syntax.Exit => exit.argument
+                case exit: Syntax.Exit => exit.input
             def uses: Expression = self match
                 case Syntax.Assignment(target, relation, instance_argument, source) => Expression.Pair(relation, instance_argument)
                 case entry: Syntax.Entry => Expression.Unit()
