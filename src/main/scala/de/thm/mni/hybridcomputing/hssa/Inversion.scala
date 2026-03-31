@@ -18,7 +18,7 @@ object Inversion {
         
         /**
          * Locally inverts a statement.
-         * All applications are inverted, without considering if the referenced relation is also being syntactically inverted,
+         * All applications are inverted, without considering whether the referenced relation is also being inverted.
          *
          * @param statement The statement to invert
          * @return
