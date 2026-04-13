@@ -40,13 +40,29 @@ case class Interpretation(language: Language) {
                 if (finalizing) context.undefine(name.name)
                 
                 result
-            case Expression.Pair(a, b) => Value.Pair(evaluate(a, context), evaluate(b, context))
+            case Expression.Pair(a, b) =>
+                // Right to left order of evaluation
+                val r = evaluate(b, context)
+                val l = evaluate(a, context)
+                Value.Pair(l, r)
             case Expression.Unit() => Basic.Unit
             case Expression.Invert(sub) => evaluate(sub, context) match
                 case rel: UserRelation => rel.flipped
                 case rel: Value.BuiltinRelation => rel.flipped
             case de.thm.mni.hybridcomputing.hssa.Syntax.Expression.Duplicate(sub) => evaluate(sub, context, false)
             case de.thm.mni.hybridcomputing.hssa.Syntax.Expression.Wildcard() => ReversibilityViolation("Wildcard/Oracle cannot be evaluated").raise()
+            case Expression.Application(rel, parameter, input_output) =>
+                val r = evaluate(rel, context, false).asInstanceOf[Value.Relation]
+                val p = evaluate(parameter, context, false)
+                val in = evaluate(input_output, context, finalizing)
+                
+                Try(evaluateApplication(r, p, in)).recoverWith({
+                    case e: AbortDueToErrors =>
+                        e.errors.foreach(e => {
+                            if (e.position == null) e.setPosition(exp.position)
+                        })
+                        throw e
+                }).get
         }
     }
     
@@ -56,12 +72,26 @@ case class Interpretation(language: Language) {
             case (Expression.Unit(), Basic.Unit) => ()
             case (Expression.Literal(v), value) if Basic.Int(v) == value => ()
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) =>
+                // Left to right order of evaluation
                 assign(pat_1, val_a, context)
                 assign(pat_2, val_b, context)
             case (Expression.Invert(sub), rel: Value.Relation) => assign(sub, rel.flipped, context)
             case (Expression.Wildcard(), _) => // Discard
             case (Expression.Duplicate(sub), value) =>
                 if (evaluate(sub, context, false) != value) ReversibilityViolation(s"Expected $value but got $value").setPosition(pattern.position).raise()
+            case (Expression.Application(rel, parameter, input_output), value) =>
+                val r = evaluate(rel, context, false).asInstanceOf[Value.Relation]
+                val p = evaluate(parameter, context, false)
+                
+                val res = Try(evaluateApplication(r.flipped, p, value)).recoverWith({
+                    case e: AbortDueToErrors =>
+                        e.errors.foreach(e => {
+                            if (e.position == null) e.setPosition(pattern.position)
+                        })
+                        throw e
+                }).get
+                
+                assign(input_output, res, context)
             case _ =>
                 Interpretation.Errors.ReversibilityViolation(s"$value does not match $pattern").setPosition(pattern.position).raise()
         }

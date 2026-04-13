@@ -26,6 +26,8 @@ object Lexing {
             case BLOCKCOMMENT
             case APOSTROPH
             case WILDCARD
+            case LBRACK
+            case RBRACK
             
             override def toString: String = this match
                 case IDENT => "IDENT"
@@ -44,6 +46,8 @@ object Lexing {
                 case BLOCKCOMMENT => "BLOCKCOMMENT"
                 case WHITESPACE => "WHITESPACE"
                 case LINEBREAK => "LINEBREAK"
+                case LBRACK => "LBRACK"
+                case RBRACK => "RBRACK"
                 case EOF => "<eof>"
                 case _ => super.toString
         }
@@ -81,6 +85,8 @@ object Lexing {
               ":" ^^^ symbol(COLON) |
               "'" ^^^ symbol(APOSTROPH) |
               "*" ^^^ symbol(WILDCARD) |
+              "[" ^^^ symbol(LBRACK) |
+              "]" ^^^ symbol(RBRACK) |
               "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
               "'.'".r ^^ (l => symbol(INTLIT, l.charAt(1).toInt))
     }

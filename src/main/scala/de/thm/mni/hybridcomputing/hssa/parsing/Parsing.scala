@@ -51,6 +51,7 @@ object Parsing {
         def simple_expresion: P[Syntax.Expression] = {
             ident ^ Syntax.Expression.Variable.apply
               | posi(LPAREN ~~ expression ~~ RPAREN)
+              | LBRACK ~~ expression ~~ expression ~~ expression ~~ RBRACK ^ Expression.Application.apply
               | valueToken(INTLIT)(classOf[Integer]).map(i => Expression.Literal(i.intValue()))
               | TILDE ~~ simple_expresion ^ Syntax.Expression.Invert.apply
               | APOSTROPH ~~ simple_expresion ^ Syntax.Expression.Duplicate.apply

@@ -4,6 +4,7 @@ import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression.Variable
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing
+import de.thm.mni.hybridcomputing.hssa.util.HssaDSL.assignmentseq
 import de.thm.mni.hybridcomputing.util.parsing.{HasTokens, Positioned}
 
 import scala.language.implicitConversions
@@ -35,6 +36,7 @@ object Syntax {
         case class Unit() extends Expression
         case class Duplicate(op: Expression) extends Expression
         case class Wildcard() extends Expression
+        case class Application(rel: Expression, parameter: Expression, input_output: Expression) extends Expression
     }
     
     abstract sealed class Statement extends Node {
@@ -96,6 +98,31 @@ object Syntax {
                     case Expression.Invert(inner) => inner.variables
                     case Expression.Duplicate(op) => Nil // TODO: Obviously this is not correct, but necessary to cheat the wellformedness for this experimental feature
                     case Expression.Wildcard() => Nil
+                    case Expression.Application(rel, p, io) => Nil
             }
+            
+            def main_variables: List[Variable] = self match {
+                case Expression.Literal(value) => Nil
+                case v@Variable(name) => List(v)
+                case Expression.Pair(a, b) => a.main_variables ++ b.main_variables
+                case Expression.Invert(a) => a.main_variables
+                case Expression.Unit() => Nil
+                case Expression.Duplicate(op) => Nil
+                case Expression.Wildcard() => Nil
+                case Expression.Application(rel, parameter, input_output) => input_output.main_variables
+            }
+            
+            def used_variables: List[Variable] = self match {
+                case Expression.Literal(value) => Nil
+                case Variable(name) => Nil
+                case Expression.Pair(a, b) => a.used_variables ++ b.used_variables
+                case Expression.Invert(a) => a.used_variables
+                case Expression.Unit() => Nil
+                case Expression.Duplicate(op) => op.all_variables
+                case Expression.Wildcard() => Nil
+                case Expression.Application(rel, parameter, input_output) => rel.used_variables ++ parameter.used_variables
+            }
+            
+            def all_variables: List[Variable] = List.concat(self.main_variables, self.used_variables)
     }
 }

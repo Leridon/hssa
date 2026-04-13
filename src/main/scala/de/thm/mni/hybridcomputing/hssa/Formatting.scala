@@ -33,6 +33,7 @@ object Formatting {
             case Expression.Variable(name) => name.toString
             case Expression.Duplicate(name) => s"'${format(name, true, true)}"
             case Expression.Invert(sub) => s"~${format(sub, true, true)}"
+            case Expression.Application(rel, p, in) => s"[${format(rel, true, true)} ${format(p, true, true)} ${format(in, true, true)}]"
         
         val with_parens = FormattingUtilities.parenthesize(inner, paren_count)
         

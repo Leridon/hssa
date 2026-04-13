@@ -1,4 +1,4 @@
-package de.thm.mni.hybridcomputing.hssa.transformation.repairs
+package de.thm.mni.hybridcomputing.hssa.transformation.normalizations
 
 import de.thm.mni.hybridcomputing.hssa.Syntax
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression

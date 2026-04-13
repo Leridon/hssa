@@ -36,6 +36,8 @@ class SelfInterpretationEncoder(program: Program) {
         case Expression.Variable(name) => Value.Pair(Basic.Int(1), encode(name))
         case Expression.Pair(a, b) => Value.Pair(Basic.Int(2), Value.Pair(encode(a), encode(b)))
         case Expression.Invert(a) => Value.Pair(Basic.Int(3), encode(a))
+        case Expression.Wildcard() => Value.Pair(Basic.Int(4), Basic.Unit)
+        case Expression.Duplicate(a) => Value.Pair(Basic.Int(5), encode(a))
     }
     
     def encode(assignment: Assignment): Value =

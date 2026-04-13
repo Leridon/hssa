@@ -11,10 +11,12 @@ import scala.language.implicitConversions
 object HssaDSL {
     case class IncompleteApplication(target: Syntax.Expression, rel: Syntax.Expression, par: Syntax.Expression) {
         def :=(source: Syntax.Expression): Syntax.Assignment = Syntax.Assignment(target, rel, par, source)
+        def =:(source: Syntax.Expression): Syntax.Assignment = Syntax.Assignment(target, rel, par, source)
     }
     
     case class IncompleteExit(labels: Seq[Syntax.Identifier]) {
         def :=(source: Syntax.Expression): Syntax.Exit = Syntax.Exit(labels, source)
+        def =:(source: Syntax.Expression): Syntax.Exit = Syntax.Exit(labels, source)
     }
     
     case class IncompleteEntry(labels: Seq[Syntax.Identifier])
