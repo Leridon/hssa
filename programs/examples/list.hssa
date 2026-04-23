@@ -1,0 +1,45 @@
+rel nil (()):
+(), 0 := begin <-
+       -> end  =: (0, ()), 0
+
+rel cons (()):
+(head, tail), 0 := begin <-
+                 -> end  =: (1, (head, tail)), 0
+
+
+rel map (f):
+  (type, val), 0    :=     begin <-
+       c         := equal (type, 0)  =:        ()
+                        -> L1,L2     =: ((type, val), c)
+
+      val, 0        :=      L2 <-
+  (head, tail)   :=     ~cons ()     =:       val
+     head.1      :=       f ()       =:       head
+     tail.1      :=      map f       =:       tail
+     val.1       :=     cons ()      =: (head.1, tail.1)
+                         -> L3       =:      val.1, 0
+
+((type, val), c) :=     L1,L3 <-
+       ()        := ~equal (type, 0) =:        c
+                         -> end      =:   (type, val), 0
+
+rel range (()):
+              (from, to), 0                :=       begin <-
+                 done                   :=   equal (from, to)    =:                 ()
+                                                 -> L1,L2        =:         ((from, to), done)
+
+              (from, to), 0                :=         L1 <-
+                   0                    :=       subfrom from        =:                 to
+                 tail                   :=        nil ()         =:                 ()
+                 list                   :=        cons ()        =:            (from, tail)
+                                                   -> L3         =:                list, 0
+
+              (from, to), 0                :=         L2 <-
+                from.1                  :=       add from        =:                 1
+                 tail                   :=       range ()        =:            (from.1, to)
+                 list                   :=        cons ()        =:            (from, tail)
+                                                   -> L4         =:                list, 0
+
+((1, (head, (tail_type, tailtail))), c) :=       L3,L4 <-
+                  ()                    := ~equal (0, tail_type) =:                 c
+                                                  -> end         =: (1, (head, (tail_type, tailtail))), 0

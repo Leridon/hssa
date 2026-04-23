@@ -25,8 +25,8 @@ object Inlining {
         val block: BindingTree.Block = relation.blocks.find(_.syntax.assignments.exists(_ eq statement))
           .getOrElse(throw new IllegalArgumentException(s"Cannot inline: Inlined statement does not exist in given relation"))
         
-        val relation_to_inline = Evaluator(block).eval(statement.relation)
-          .getOrElse(throw new IllegalArgumentException(s"Cannot inline: ${statement.relation} does not refer to a statically known relation."))
+        val relation_to_inline = Evaluator(block).eval(statement.callee)
+          .getOrElse(throw new IllegalArgumentException(s"Cannot inline: ${statement.callee} does not refer to a statically known relation."))
         
         val builder = RelationBuilder(relation.syntax)
         
@@ -63,7 +63,7 @@ object Inlining {
         builder.add(Syntax.Block(
             block.syntax.entry,
             before,
-            ->(label_translation(Language.BeginLabel)) := (((if (was_already_flat) statement.source else Syntax.Expression.Pair(statement.source, statement.instance_argument)), live_variables), 0)
+            ->(label_translation(Language.BeginLabel)) := (((if (was_already_flat) statement.input else Syntax.Expression.Pair(statement.input, statement.parameter)), live_variables), 0)
         ))
         
         // Add blocks of inlined function
@@ -71,7 +71,7 @@ object Inlining {
         
         // Add a block for everything after the call
         builder.add(Syntax.Block(
-            (((if (was_already_flat) statement.target else Syntax.Expression.Pair(statement.target, statement.instance_argument)), live_variables), 0) := <--(label_translation(Language.EndLabel)),
+            (((if (was_already_flat) statement.output else Syntax.Expression.Pair(statement.output, statement.parameter)), live_variables), 0) := <--(label_translation(Language.EndLabel)),
             after,
             block.syntax.exit
         ))

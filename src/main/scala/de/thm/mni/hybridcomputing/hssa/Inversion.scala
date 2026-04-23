@@ -13,12 +13,12 @@ object Inversion {
             case l => l
         
         
-        def invert(exit: Syntax.Exit): Syntax.Entry = Syntax.Entry(exit.argument, exit.labels.map(this.invert))
-        def invert(entry: Syntax.Entry): Syntax.Exit = Syntax.Exit(entry.labels.map(this.invert), entry.initialized)
+        def invert(exit: Syntax.Exit): Syntax.Entry = Syntax.Entry(exit.input, exit.labels.map(this.invert))
+        def invert(entry: Syntax.Entry): Syntax.Exit = Syntax.Exit(entry.labels.map(this.invert), entry.output)
         
         /**
          * Locally inverts a statement.
-         * All applications are inverted, without considering if the referenced relation is also being syntactically inverted,
+         * All applications are inverted, without considering whether the referenced relation is also being inverted.
          *
          * @param statement The statement to invert
          * @return

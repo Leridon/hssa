@@ -42,7 +42,24 @@ object LanguageError {
             this.buffer.addOne(message)
         }
         
-        def raiseIfNonEmpty(): Unit = if (this.buffer.nonEmpty) throw AbortDueToErrors(this.buffer.toSeq)
+        def print(): this.type = {
+            if(buffer.nonEmpty) {
+                buffer.foreach(e => {
+                    println(e)
+                    println()
+                })
+            }
+            
+            this
+        }
+        
+        def raiseIfNonEmpty(): this.type = {
+            if (this.buffer.nonEmpty) throw AbortDueToErrors(this.buffer.toSeq)
+            
+            this
+        }
+        
+        def get(): List[LanguageError] = buffer.toList
     }
     
     enum Severity:
@@ -51,6 +68,8 @@ object LanguageError {
     
     def SyntaxError(msg: String): LanguageError = LanguageError(Severity.Error, s"Syntax Error: $msg")
     def LexicalError(msg: String): LanguageError = LanguageError(Severity.Error, s"Lexical Error: $msg")
+    def LexicalError(msg: String, pos : SourcePosition): LanguageError 
+        = LanguageError(Severity.Error, s"Lexical Error: $msg", pos)
     
     class AbortDueToErrors(val errors: Seq[LanguageError]) extends Throwable {
         

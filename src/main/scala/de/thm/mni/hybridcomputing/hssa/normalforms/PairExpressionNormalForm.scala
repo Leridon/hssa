@@ -8,7 +8,7 @@ import de.thm.mni.hybridcomputing.hssa.util.Transformer
 object PairExpressionNormalForm {
     def isInPairExpressionNormalForm(relation: Syntax.Relation): Boolean = relation.blocks.forall(this.isInPairExpressionNormalForm)
     
-    def isInPairExpressionNormalForm(block: Syntax.Block): Boolean = block.exit.argument.isInstanceOf[Expression.Pair] && block.entry.initialized.isInstanceOf[Expression.Pair]
+    def isInPairExpressionNormalForm(block: Syntax.Block): Boolean = block.exit.input.isInstanceOf[Expression.Pair] && block.entry.output.isInstanceOf[Expression.Pair]
     
     class AddPassThrough(passthrough: Syntax.Expression) extends Transformer.BlockTransformer {
         private def pairWithPassthrough(expression: Expression, passthrough: Expression): Expression = {
@@ -21,9 +21,9 @@ object PairExpressionNormalForm {
             if (!isInPairExpressionNormalForm(block)) throw IllegalArgumentException("Block is not in pair expression normal form")
             
             Syntax.Block(
-                pairWithPassthrough(block.entry.initialized, passthrough) := <--(block.entry.labels),
+                pairWithPassthrough(block.entry.output, passthrough) := <--(block.entry.labels),
                 block.assignments,
-                ->(block.exit.labels) := pairWithPassthrough(block.exit.argument, passthrough)
+                ->(block.exit.labels) := pairWithPassthrough(block.exit.input, passthrough)
             )
         }
         

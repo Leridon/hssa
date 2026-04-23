@@ -1,123 +1,123 @@
 rel _Fib.main _this:
      _m, 0      :=     begin <-                        
-_m.0, _this_ref :=  mmem.read _this  :=       _m       
-       l        :=   add _this_ref   :=        1       
-       r        :=   add _this_ref   :=        2       
-     _t.0       :=       add 4       :=        0       
-     _tmp       :=     dup _t.0      :=       ()       
-    _m.1, n     :=  mmem.allocate 1  :=      _m.0      
-    _m.2, 0     := mmem.readwrite n  :=   _m.1, _tmp   
-       0        :=      ~add 4       :=      _t.0      
-     _m.3       := _Fib.fib _this, n :=      _m.2      
-     _t.1       :=       add 0       :=        0       
- _m.4, _tmp.0   := mmem.readwrite n  :=     _m.3, 0    
-      ()        :=     ~dup _t.1     :=     _tmp.0     
-     _m.5       := ~mmem.allocate 1  :=     _m.4, n    
-       0        :=      ~add 0       :=      _t.1      
-       2        :=  ~add _this_ref   :=        r       
-       1        :=  ~add _this_ref   :=        l       
-     _m.6       := ~mmem.read _this  := _m.5, _this_ref
-                        -> end       :=     _m.6, 0    
+_m.0, _this_ref :=  mmem.read _this  =:       _m
+       l        :=   add _this_ref   =:        1
+       r        :=   add _this_ref   =:        2
+     _t.0       :=       add 4       =:        0
+     _tmp       :=     dup _t.0      =:       ()
+    _m.1, n     :=  mmem.allocate 1  =:      _m.0
+    _m.2, 0     := mmem.readwrite n  =:   _m.1, _tmp
+       0        :=      ~add 4       =:      _t.0
+     _m.3       := _Fib.fib _this, n =:      _m.2
+     _t.1       :=       add 0       =:        0
+ _m.4, _tmp.0   := mmem.readwrite n  =:     _m.3, 0
+      ()        :=     ~dup _t.1     =:     _tmp.0
+     _m.5       := ~mmem.allocate 1  =:     _m.4, n
+       0        :=      ~add 0       =:      _t.1
+       2        :=  ~add _this_ref   =:        r
+       1        :=  ~add _this_ref   =:        l
+     _m.6       := ~mmem.read _this  =: _m.5, _this_ref
+                        -> end       =:     _m.6, 0
 
 
 rel _Fib.fib _this, n:
             _m, 0             :=     begin <-                                        
-       _m.0, _this_ref        :=  mmem.read _this  :=               _m               
-              l               :=   add _this_ref   :=                1               
-              r               :=   add _this_ref   :=                2               
-         _m.1, _t.1           :=    mmem.read n    :=              _m.0              
-            _t.2              :=       add 0       :=                0               
-            _t.0              := equal _t.1, _t.2  :=               ()               
-            _t.3              :=   equal _t.0, 0   :=               ()               
-             ()               := ~equal _t.1, _t.2 :=              _t.0              
-              0               :=      ~add 0       :=              _t.2              
-            _m.2              :=   ~mmem.read n    :=           _m.1, _t.1           
-                                     -> L0,L1      := ((_m.2, _this_ref), r, l), _t.3
+       _m.0, _this_ref        :=  mmem.read _this  =:               _m
+              l               :=   add _this_ref   =:                1
+              r               :=   add _this_ref   =:                2
+         _m.1, _t.1           :=    mmem.read n    =:              _m.0
+            _t.2              :=       add 0       =:                0
+            _t.0              := equal _t.1, _t.2  =:               ()
+            _t.3              :=   equal _t.0, 0   =:               ()
+             ()               := ~equal _t.1, _t.2 =:              _t.0
+              0               :=      ~add 0       =:              _t.2
+            _m.2              :=   ~mmem.read n    =:           _m.1, _t.1
+                                     -> L0,L1      =: ((_m.2, _this_ref), r, l), _t.3
 
  ((_m, _this_ref), r, l), 0   :=       L0 <-                                         
-            _t.0              :=       add 1       :=                0               
-     _m.0, _assignee_val      := mmem.readwrite l  :=             _m, ()             
-       _assignee_val.0        :=     xor _t.0      :=          _assignee_val         
-          _m.1, ()            := mmem.readwrite l  :=      _m.0, _assignee_val.0     
-              0               :=      ~add 1       :=              _t.0              
-            _t.1              :=       add 1       :=                0               
-    _m.2, _assignee_val.1     := mmem.readwrite r  :=            _m.1, ()            
-       _assignee_val.2        :=     xor _t.1      :=         _assignee_val.1        
-          _m.3, ()            := mmem.readwrite r  :=      _m.2, _assignee_val.2     
-              0               :=      ~add 1       :=              _t.1              
-                                       -> L2       :=  ((_m.3, _this_ref), r, l), 0  
+            _t.0              :=       add 1       =:                0
+     _m.0, _assignee_val      := mmem.readwrite l  =:             _m, ()
+       _assignee_val.0        :=     xor _t.0      =:          _assignee_val
+          _m.1, ()            := mmem.readwrite l  =:      _m.0, _assignee_val.0
+              0               :=      ~add 1       =:              _t.0
+            _t.1              :=       add 1       =:                0
+    _m.2, _assignee_val.1     := mmem.readwrite r  =:            _m.1, ()
+       _assignee_val.2        :=     xor _t.1      =:         _assignee_val.1
+          _m.3, ()            := mmem.readwrite r  =:      _m.2, _assignee_val.2
+              0               :=      ~add 1       =:              _t.1
+                                       -> L2       =:  ((_m.3, _this_ref), r, l), 0
 
  ((_m, _this_ref), r, l), 0   :=       L1 <-                                         
-            _t.0              :=       add 1       :=                0               
-     _m.0, _assignee_val      := mmem.readwrite n  :=             _m, ()             
-       _assignee_val.0        :=     ~add _t.0     :=          _assignee_val         
-          _m.1, ()            := mmem.readwrite n  :=      _m.0, _assignee_val.0     
-              0               :=      ~add 1       :=              _t.0              
-            _m.2              := _Fib.fib _this, n :=              _m.1              
-         _m.3, _t.1           :=    mmem.read r    :=              _m.2              
-    _m.4, _assignee_val.1     := mmem.readwrite l  :=            _m.3, ()            
-       _assignee_val.2        :=     add _t.1      :=         _assignee_val.1        
-          _m.5, ()            := mmem.readwrite l  :=      _m.4, _assignee_val.2     
-            _m.6              :=   ~mmem.read r    :=           _m.5, _t.1           
-       _m.7, _leftVal         := mmem.readwrite r  :=            _m.6, ()            
-       _m.8, _rightVal        := mmem.readwrite l  :=         _m.7, _leftVal         
-          _m.9, ()            := mmem.readwrite r  :=         _m.8, _rightVal        
-                                       -> L3       :=  ((_m.9, _this_ref), r, l), 0  
+            _t.0              :=       add 1       =:                0
+     _m.0, _assignee_val      := mmem.readwrite n  =:             _m, ()
+       _assignee_val.0        :=     ~add _t.0     =:          _assignee_val
+          _m.1, ()            := mmem.readwrite n  =:      _m.0, _assignee_val.0
+              0               :=      ~add 1       =:              _t.0
+            _m.2              := _Fib.fib _this, n =:              _m.1
+         _m.3, _t.1           :=    mmem.read r    =:              _m.2
+    _m.4, _assignee_val.1     := mmem.readwrite l  =:            _m.3, ()
+       _assignee_val.2        :=     add _t.1      =:         _assignee_val.1
+          _m.5, ()            := mmem.readwrite l  =:      _m.4, _assignee_val.2
+            _m.6              :=   ~mmem.read r    =:           _m.5, _t.1
+       _m.7, _leftVal         := mmem.readwrite r  =:            _m.6, ()
+       _m.8, _rightVal        := mmem.readwrite l  =:         _m.7, _leftVal
+          _m.9, ()            := mmem.readwrite r  =:         _m.8, _rightVal
+                                       -> L3       =:  ((_m.9, _this_ref), r, l), 0
 
 ((_m, _this_ref), r, l), _j.0 :=     L2,L3 <-                                        
-         _m.0, _t.1           :=    mmem.read l    :=               _m               
-         _m.1, _t.2           :=    mmem.read r    :=              _m.0              
-            _t.0              := equal _t.1, _t.2  :=               ()               
-             ()               :=  ~equal _t.0, 0   :=              _j.0              
-             ()               := ~equal _t.1, _t.2 :=              _t.0              
-            _m.2              :=   ~mmem.read r    :=           _m.1, _t.2           
-            _m.3              :=   ~mmem.read l    :=           _m.2, _t.1           
-              2               :=  ~add _this_ref   :=                r               
-              1               :=  ~add _this_ref   :=                l               
-            _m.4              := ~mmem.read _this  :=         _m.3, _this_ref        
-                                      -> end       :=             _m.4, 0            
+         _m.0, _t.1           :=    mmem.read l    =:               _m
+         _m.1, _t.2           :=    mmem.read r    =:              _m.0
+            _t.0              := equal _t.1, _t.2  =:               ()
+             ()               :=  ~equal _t.0, 0   =:              _j.0
+             ()               := ~equal _t.1, _t.2 =:              _t.0
+            _m.2              :=   ~mmem.read r    =:           _m.1, _t.2
+            _m.3              :=   ~mmem.read l    =:           _m.2, _t.1
+              2               :=  ~add _this_ref   =:                r
+              1               :=  ~add _this_ref   =:                l
+            _m.4              := ~mmem.read _this  =:         _m.3, _this_ref
+                                      -> end       =:             _m.4, 0
 
 
 rel _Fib._vtable _method:
 (), 0  :=   begin <-             
-  i    :=  dup _method  :=   ()  
-            -> L4,L6    := (), i 
+  i    :=  dup _method  =:   ()
+            -> L4,L6    =: (), i
 
 (), 0  :=     L4 <-              
- res   := dup _Fib.main :=   ()  
-              -> L5     := res, 0
+ res   := dup _Fib.main =:   ()
+              -> L5     =: res, 0
 
 (), 0  :=     L6 <-              
- res   := dup _Fib.fib  :=   ()  
-              -> L7     := res, 0
+ res   := dup _Fib.fib  =:   ()
+              -> L7     =: res, 0
 
 res, i :=   L5,L7 <-             
-  ()   := ~dup _method  :=   i   
-             -> end     := res, 0
+  ()   := ~dup _method  =:   i
+             -> end     =: res, 0
 
 
 rel _Fib._new:
    _m, 0    :=       begin <-                          
-_m.0, _anon :=   mmem.allocate 3    :=        _m       
-  _vtable   :=   dup _Fib._vtable   :=        ()       
-  _m.1, 0   := mmem.readwrite _anon :=  _m.0, _vtable  
-                      -> end        := (_m.1, _anon), 0
+_m.0, _anon :=   mmem.allocate 3    =:        _m
+  _vtable   :=   dup _Fib._vtable   =:        ()
+  _m.1, 0   := mmem.readwrite _anon =:  _m.0, _vtable
+                      -> end        =: (_m.1, _anon), 0
 
 
 rel main:
     (), 0      :=       begin <-                        
-      _m       :=       mmem.new       :=       ()      
- _m.0, _main   :=   mmem.allocate 1    :=       _m      
-_m.1, _mainObj :=      _Fib._new       :=      _m.0     
-   _m.2, 0     := mmem.readwrite _main := _m.1, _mainObj
-     _m.3      :=   _Fib.main _main    :=      _m.2     
-      ()       :=        ~dup 1        :=     _main     
-                         -> end        :=    _m.3, 0    
+      _m       :=       mmem.new       =:       ()
+ _m.0, _main   :=   mmem.allocate 1    =:       _m
+_m.1, _mainObj :=      _Fib._new       =:      _m.0
+   _m.2, 0     := mmem.readwrite _main =: _m.1, _mainObj
+     _m.3      :=   _Fib.main _main    =:      _m.2
+      ()       :=        ~dup 1        =:     _main
+                         -> end        =:    _m.3, 0
 
 
 rel mmem.read _addr:
      _m, 0       :=       begin <-                              
-_m.0, _readvalue := mmem.readwrite _addr :=        _m, ()       
-   _readcopy     :=    dup _readvalue    :=          ()         
-    _m.1, ()     := mmem.readwrite _addr :=   _m.0, _readvalue  
-                           -> end        := (_m.1, _readcopy), 0
+_m.0, _readvalue := mmem.readwrite _addr =:        _m, ()
+   _readcopy     :=    dup _readvalue    =:          ()
+    _m.1, ()     := mmem.readwrite _addr =:   _m.0, _readvalue
+                           -> end        =: (_m.1, _readcopy), 0

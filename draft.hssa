@@ -1,67 +1,67 @@
 rel nil ()
 () := begin <-
-       -> end  := (0, ())
+       -> end  =: (0, ())
 
 
 rel cons ()
 (head, tail) := begin <-
-                 -> end  := (1, (head, tail))
+                 -> end  =: (1, (head, tail))
 
 
 rel map f
   (type, val)    :=     begin <-
-       c         := equal (type, 0)  :=        ()
-                        -> L1,L2     := ((type, val), c)
+       c         := equal (type, 0)  =:        ()
+                        -> L1,L2     =: ((type, val), c)
 
       val        :=      L2 <-
-  (head, tail)   :=     ~cons ()     :=       val
-     head.1      :=       f ()       :=       head
-     tail.1      :=      map f       :=       tail
-     val.1       :=     cons ()      := (head.1, tail.1)
-                         -> L3       :=      val.1
+  (head, tail)   :=     ~cons ()     =:       val
+     head.1      :=       f ()       =:       head
+     tail.1      :=      map f       =:       tail
+     val.1       :=     cons ()      =: (head.1, tail.1)
+                         -> L3       =:      val.1
 
 ((type, val), c) :=     L1,L3 <-
-       ()        := ~equal (type, 0) :=        c
-                         -> end      :=   (type, val)
+       ()        := ~equal (type, 0) =:        c
+                         -> end      =:   (type, val)
 
 rel range ()
               (from, to)                :=       begin <-
-                 done                   :=   equal (from, to)    :=                 ()
-                                                 -> L1,L2        :=         ((from, to), done)
+                 done                   :=   equal (from, to)    =:                 ()
+                                                 -> L1,L2        =:         ((from, to), done)
 
               (from, to)                :=         L1 <-
-                   0                    :=       sub from        :=                 to
-                 tail                   :=        nil ()         :=                 ()
-                 list                   :=        cons ()        :=            (from, tail)
-                                                   -> L3         :=                list
+                   0                    :=       sub from        =:                 to
+                 tail                   :=        nil ()         =:                 ()
+                 list                   :=        cons ()        =:            (from, tail)
+                                                   -> L3         =:                list
 
               (from, to)                :=         L2 <-
-                from.1                  :=       add from        :=                 1
-                 tail                   :=       range ()        :=            (from.1, to)
-                 list                   :=        cons ()        :=            (from, tail)
-                                                   -> L4         :=                list
+                from.1                  :=       add from        =:                 1
+                 tail                   :=       range ()        =:            (from.1, to)
+                 list                   :=        cons ()        =:            (from, tail)
+                                                   -> L4         =:                list
 
 ((1, (head, (tail_type, tailtail))), c) :=       L3,L4 <-
-                  ()                    := ~equal (0, tail_type) :=                 c
-                                                  -> end         := (1, (head, (tail_type, tailtail)))
+                  ()                    := ~equal (0, tail_type) =:                 c
+                                                  -> end         =: (1, (head, (tail_type, tailtail)))
 
 rel test_list()
     () := begin<-
-    l.8 := range () := (1, 8)
-    l.9 := map factorial := l.8
-            -> end := l.9
+    l.8 := range () =: (1, 8)
+    l.9 := map factorial =: l.8
+            -> end =: l.9
 
 rel factorial ()
            n            :=       begin <-
-                                   -> L1         :=         (n, 1)
+                                   -> L1         =:         (n, 1)
 
 ((n.0, product.0), c.0) :=       L1,L2 <-
-          ()            := ~equal (product.0, 1) :=           c.0
-       product.1        := mul (product.0, n.0)  :=           ()
-          ()            := ~div (product.1, n.0) :=        product.0
-          n.1           :=        add -1         :=           n.0
-          c.1           :=   greater (n.1, 0)    :=           ()
-                                 -> L2,L3        := ((n.1, product.1), c.1)
+          ()            := ~equal (product.0, 1) =:           c.0
+       product.1        := mul (product.0, n.0)  =:           ()
+          ()            := ~div (product.1, n.0) =:        product.0
+          n.1           :=        add -1         =:           n.0
+          c.1           :=   greater (n.1, 0)    =:           ()
+                                 -> L2,L3        =: ((n.1, product.1), c.1)
 
       (0, result)       :=         L3 <-
-                                  -> end         :=         result
+                                  -> end         =:         result

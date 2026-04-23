@@ -1,0 +1,107 @@
+rel pop:
+        stack, 0        :=         begin <-
+        is_empty        :=     equal stack, ()     =:        ()
+                              -> nonempty,empty1   =: stack, is_empty
+
+         (), 0          :=        empty1 <-
+                                  -> empty2        =:   ((), ()), 0
+
+(top, stack), was_empty :=    nonempty,empty2 <-
+        is_empty        :=     equal stack, ()     =:        ()
+        is_blank        :=      equal top, ()      =:        ()
+           ()           := ~and is_empty, is_blank =:    was_empty
+           ()           :=      ~equal top, ()     =:     is_blank
+           ()           :=     ~equal stack, ()    =:     is_empty
+                                    -> end         =: (top, stack), 0
+
+rel move_right:
+(l.0, S.0, r.0), 0 := begin <-                      
+        l.1        :=   ~pop   =:      l.0, S.0     
+     S.1, r.1      :=    pop   =:         r.0       
+                       -> end  =: (l.1, S.1, r.1), 0
+
+rel is_applicable (Q, (left, S, right)), (q1, q2, k, r, w):
+(), 0 :=    begin <-           
+  t0  :=   equal Q, q1  =:  () 
+  t1  :=   equal S, r   =:  () 
+  t2  :=  notequal k, 0 =:  () 
+  t3  :=    or t2, t1   =:  () 
+  c   :=   and t3, t0   =:  () 
+  ()  :=   ~or t2, t1   =:  t3 
+  ()  := ~notequal k, 0 =:  t2 
+  ()  :=   ~equal S, r  =:  t1 
+  ()  :=  ~equal Q, q1  =:  t0 
+             -> end     =: c, 0
+
+rel invert:
+(q1, q2, k.0, r, w), 0 :=  begin <-                          
+          k.1          := subfrom 0 =:           k.0         
+                            -> end  =: (q2, q1, k.1, w, r), 0
+
+rel apply_transition q1, q2, kind, read, write:
+ (Q, tape), 0  :=           begin <-                           
+      ()       :=           ~dup q1           =:        Q      
+       c       :=           add kind          =:        1      
+                  -> left1,read_write1,right1 =:     tape, c   
+
+(l, S.0, r), 0 :=        read_write1 <-                        
+      ()       :=          ~dup read          =:       S.0     
+      S.1      :=          dup write          =:       ()      
+                         -> read_write2       =: (l, S.1, r), 0
+
+   tape.0, 0   :=          right1 <-                           
+    tape.1     :=          move_right         =:     tape.0    
+                           -> right2          =:    tape.1, 0  
+
+   tape.0, 0   :=           left1 <-                           
+    tape.1     :=         ~move_right         =:     tape.0    
+                            -> left2          =:    tape.1, 0  
+
+    tape, c    := left2,read_write2,right2 <-                  
+       1       :=          ~add kind          =:        c      
+       Q       :=            dup q2           =:       ()      
+                             -> end           =:  (Q, tape), 0 
+
+rel step head, tail:
+ config, 0  :=          begin <-                        
+     c      := is_applicable config, head =:      ()    
+                    -> nomatch,match      =:  config, c 
+
+config.0, 0 :=         nomatch <-                       
+  config.1  :=          step tail         =:   config.0 
+                       -> nomatch2        =: config.1, 0
+
+config.0, 0 :=          match <-                        
+  config.1  :=    apply_transition head   =:   config.0 
+                        -> match2         =: config.1, 0
+
+ config, c  :=     nomatch2,match2 <-                   
+     ()     :=           discard          =:      c     
+                         -> end           =:  config, 0 
+
+rel tm.transduce (q_s, q_f, transitions):
+        input, 0         :=     begin <-                               
+            Q            :=      dup q_s     =:            ()          
+                                -> start     =: (Q, ((), (), input)), 0
+
+   (Q.0, tape.0), c.0    :=   loop,start <-                            
+           ()            :=  ~equal Q.0, q_s =:           c.0          
+       Q.1, tape.1       := step transitions =:       Q.0, tape.0      
+           c.1           :=  equal Q.1, q_f  =:            ()          
+                              -> loop,stop   =:    (Q.1, tape.1), c.1  
+
+(Q, ((), (), output)), 0 :=      stop <-                               
+           ()            :=     ~dup q_f     =:            Q           
+                                 -> end      =:        output, 0       
+
+rel tms.increment:
+(), 0 := begin <-                                                                                                                                                                     
+          -> end  =: (0, 5, ((0, 1, 0, (), ()), (1, 2, 1, (), ()), (2, 1, 0, 1, 1), (2, 3, 0, 0, 1), (2, 3, 0, (), 1), (3, 4, -1, (), ()), (4, 3, 0, 1, 0), (4, 5, 0, (), ()), ())), 0
+
+rel tm.increment.test_fw:
+      (), 0      :=     begin <-                        
+       inc       :=   tms.increment  =:        ()       
+(0, 0, 1, 1, ()) := tm.transduce inc =: (1, 1, 0, 1, ())
+(0, 0, 1, 0, ()) := tm.transduce inc =: (1, 1, 0, 0, ())
+       ()        :=  ~tms.increment  =:        inc      
+                         -> end      =:       (), 0     

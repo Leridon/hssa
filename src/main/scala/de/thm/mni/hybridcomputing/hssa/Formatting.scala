@@ -26,12 +26,14 @@ object Formatting {
             else 0
         
         val inner = exp match
-            case Expression.Literal(Basic.Unit) => ""
             case Expression.Literal(value) => value.toString
             case Expression.Pair(a, b) => s"${format(a, true, true)}, ${format(b, false, true)}"
             case Expression.Unit() => ""
+            case Expression.Wildcard() => "*"
             case Expression.Variable(name) => name.toString
+            case Expression.Duplicate(name) => s"'${format(name, true, true)}"
             case Expression.Invert(sub) => s"~${format(sub, true, true)}"
+            case Expression.Application(rel, p, in) => s"[${format(rel, true, true)} ${format(p, true, true)} ${format(in, true, true)}]"
         
         val with_parens = FormattingUtilities.parenthesize(inner, paren_count)
         
@@ -41,9 +43,9 @@ object Formatting {
     
     def formatInColumns(statement: Syntax.Statement): Array[String] = statement match {
         case Syntax.Assignment(target, rel, arg, consumed) =>
-            Array(format(target, false, true), ":=", s"${format(rel, true, true)}${prependSpaceIfNotEmpty(format(arg))}", ":=", format(consumed, false, true))
+            Array(format(target, false, true), ":=", s"${format(rel, true, true)}${prependSpaceIfNotEmpty(format(arg))}", "=:", format(consumed, false, true))
         case Syntax.Exit(labels, argument) =>
-            Array("", "", s"-> ${labels.mkString(",")}", ":=", format(argument))
+            Array("", "", s"-> ${labels.mkString(",")}", "=:", format(argument))
         case Syntax.Entry(initialized, labels) =>
             Array(format(initialized), ":=", s"${labels.mkString(",")} <-", "", "")
     }
@@ -53,9 +55,11 @@ object Formatting {
     }
     
     private def center(s: String, width: Int): String = {
-        val before = (width - s.length) / 2
+        val spaces = width - s.length
+        val after = spaces / 2
+        val before = spaces - after
         
-        " ".repeat(before) + s + " ".repeat(width - before - s.length)
+        " ".repeat(before) + s + " ".repeat(after)
     }
     
     def format(block: Syntax.Block): String = {
@@ -88,6 +92,6 @@ object Formatting {
     }
     
     def format(prog: Syntax.Program): String = {
-        prog.definitions.map(this.format).mkString("\n\n")
+        prog.definitions.map(this.format).mkString("\n")
     }
 }

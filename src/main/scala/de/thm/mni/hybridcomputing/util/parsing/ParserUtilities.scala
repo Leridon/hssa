@@ -30,7 +30,7 @@ trait ParserUtilities[TokenClass] extends Parsers {
             
             res.map(f)
               .map({
-                  case pos: Positioned if !pos.hasPosition => pos.setPosition(SourcePosition(in.file, after_whitespace.position, end.position))
+                  case pos: Positioned => pos.setPosition(SourcePosition(in.file, after_whitespace.position, end.position))
                   case r => r
               })
               .map({
@@ -63,7 +63,7 @@ trait ParserUtilities[TokenClass] extends Parsers {
     
     def valueToken[T](token: TokenClass)(implicit c: Class[T]): Parser[T] = {
         skip ~~ acceptMatch(token.toString, {
-            case Token(t, Some(i)) if t == token && c.isInstance(i) => i.asInstanceOf[T]
+            case Token(t, Some(i), _) if t == token && c.isInstance(i) => i.asInstanceOf[T]
         }) | (in => Failure(s"${token.toString} expected, but got ${in.first.typ}", in))
     }
     
@@ -72,6 +72,8 @@ trait ParserUtilities[TokenClass] extends Parsers {
         def ~~[U](other: => Parser[U]): Parser[T ~ U] = self ~ other
         def ~~![U](other: => Parser[U]): Parser[T ~ U] = self ~! other
     }
+    
+    override def phrase[T](p: Parser[T]): Parser[T] = super.phrase(p ~~ skip)
 }
 
 object ParserUtilities {

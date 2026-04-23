@@ -16,14 +16,18 @@ object Lexing {
             case COLON
             case INTLIT
             case ASGN
+            case NGSA
             case TILDE
             case EOF
             case IMPORT
             case LINECOMMENT
             case LINEBREAK
             case WHITESPACE
-            case BLOCKCOMMENT;
-            
+            case BLOCKCOMMENT
+            case APOSTROPH
+            case WILDCARD
+            case LBRACK
+            case RBRACK
             
             override def toString: String = this match
                 case IDENT => "IDENT"
@@ -42,8 +46,15 @@ object Lexing {
                 case BLOCKCOMMENT => "BLOCKCOMMENT"
                 case WHITESPACE => "WHITESPACE"
                 case LINEBREAK => "LINEBREAK"
+                case LBRACK => "LBRACK"
+                case RBRACK => "RBRACK"
                 case EOF => "<eof>"
                 case _ => super.toString
+        }
+        
+        object TokenClass {
+            def whitespace: Set[TokenClass] = Set(WHITESPACE, LINECOMMENT, BLOCKCOMMENT, LINEBREAK)
+            def comments: Set[TokenClass] = Set(LINECOMMENT, BLOCKCOMMENT)
         }
     }
     
@@ -51,9 +62,9 @@ object Lexing {
         
         import Tokens.TokenClass.*
         
-        def eof: Token[Tokens.TokenClass] = symbol(EOF)
+        def eof_token = EOF
         
-        def token: Parser[Symbol] =
+        def token: Parser[TokenValue] =
             "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ {
                 case "rel" => symbol(Tokens.TokenClass.RELATION)
                 case "import" => symbol(Tokens.TokenClass.IMPORT)
@@ -68,9 +79,14 @@ object Lexing {
               "(" ^^^ symbol(LPAREN) |
               ")" ^^^ symbol(RPAREN) |
               ":=" ^^^ symbol(ASGN) |
+              "=:" ^^^ symbol(NGSA) |
               "," ^^^ symbol(COMMA) |
               "~" ^^^ symbol(TILDE) |
               ":" ^^^ symbol(COLON) |
+              "'" ^^^ symbol(APOSTROPH) |
+              "*" ^^^ symbol(WILDCARD) |
+              "[" ^^^ symbol(LBRACK) |
+              "]" ^^^ symbol(RBRACK) |
               "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
               "'.'".r ^^ (l => symbol(INTLIT, l.charAt(1).toInt))
     }

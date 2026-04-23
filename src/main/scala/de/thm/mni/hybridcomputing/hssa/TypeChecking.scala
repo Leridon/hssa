@@ -2,14 +2,13 @@ package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity
 
 import scala.collection.mutable
 
 class TypeChecking(language: Language) {
-    class TypeError(expected: Types.Type, actual: Types.Type) extends HSSAError(Severity.Error, s"Type Error: Expected $expected, but got $actual")
+    import de.thm.mni.hybridcomputing.hssa.TypeChecking.TypeError
     
     class Environment(prog: BindingTree.Program) {
         private val map = mutable.Map[Environment.Key, Types.Type]()
@@ -69,9 +68,7 @@ class TypeChecking(language: Language) {
         def botup(environment: BindingTree, exp: Expression): Types.Type =
             def helper(exp: Expression): Types.Type = {
                 exp match
-                    case Expression.Literal(value) => value match
-                        case Basic.Unit => Types.Unit
-                        case v: Basic.Int => Types.Int
+                    case Expression.Literal(value) => Types.Int
                     case Expression.Variable(name) =>
                         val variable = environment.lookup(name.name).get
                         
@@ -93,6 +90,7 @@ class TypeChecking(language: Language) {
                         
                         Types.ParameterizedRelation(rel.parameter, rel.out, rel.in)
                     case Expression.Unit() => Types.Unit
+                    case Expression.Duplicate(op) => helper(op)
             }
             
             env.get(Environment.ExpressionKey(exp), () => helper(exp))
@@ -123,7 +121,7 @@ class TypeChecking(language: Language) {
         call_graph.topologically_sorted.foreach(rel => {
             rel.blocks.foreach(block => {
                 {
-                    val t = botup(block, block.syntax.entry.initialized)
+                    val t = botup(block, block.syntax.entry.output)
                     
                     val t2 = Types.Pair(block.entry_labels.map(l => {
                         env.get(Environment.LabelKey(l))
@@ -132,50 +130,50 @@ class TypeChecking(language: Language) {
                     if (Types.unify(t, t2).isEmpty) {
                         collector.add(
                             TypeError(t, t2)
-                              .setPosition(block.syntax.entry.initialized.position)
+                              .setPosition(block.syntax.entry.output.position)
                         )
                     }
                 }
                 
                 block.syntax.assignments.foreach(assignment => {
-                    val t1 = botup(block, assignment.target)
-                    val t2 = botup(block, assignment.relation)
-                    val t3 = botup(block, assignment.instance_argument)
-                    val t4 = botup(block, assignment.source)
+                    val t1 = botup(block, assignment.output)
+                    val t2 = botup(block, assignment.callee)
+                    val t3 = botup(block, assignment.parameter)
+                    val t4 = botup(block, assignment.input)
                     
                     val rel_t = Types.ParameterizedRelation(new Types.MetaVariable, new Types.MetaVariable, new Types.MetaVariable)
                     
                     if (Types.unify(Types.clone(t2), rel_t).isEmpty) {
                         collector.add(
                             TypeError(t2, rel_t)
-                              .setPosition(assignment.relation.position)
+                              .setPosition(assignment.callee.position)
                         )
                     }
                     
                     if (Types.unify(t3, rel_t.parameter).isEmpty) {
                         collector.add(
                             TypeError(rel_t.parameter, t3)
-                              .setPosition(assignment.instance_argument.position)
+                              .setPosition(assignment.parameter.position)
                         )
                     }
                     
                     if(Types.unify(t1, rel_t.out).isEmpty) {
                         collector.add(
                             TypeError(rel_t.out, t1)
-                              .setPosition(assignment.target.position)
+                              .setPosition(assignment.output.position)
                         )
                     }
                     
                     if(Types.unify(t4, rel_t.in).isEmpty) {
                         collector.add(
                             TypeError(t4, rel_t.in)
-                              .setPosition(assignment.source.position)
+                              .setPosition(assignment.input.position)
                         )
                     }
                 })
                 
                 {
-                    val t = botup(block, block.syntax.exit.argument)
+                    val t = botup(block, block.syntax.exit.input)
                     
                     val t2 = Types.Pair(block.exit_labels.map(l => {
                         env.get(Environment.LabelKey(l))
@@ -184,7 +182,7 @@ class TypeChecking(language: Language) {
                     if (Types.unify(t, t2).isEmpty) {
                         collector.add(
                             TypeError(t, t2)
-                              .setPosition(block.syntax.exit.argument.position)
+                              .setPosition(block.syntax.exit.input.position)
                         )
                     }
                 }
@@ -193,4 +191,9 @@ class TypeChecking(language: Language) {
         
         collector
     }
+}
+
+object TypeChecking {
+    class TypeError(expected: Types.Type, actual: Types.Type) extends HSSAError(Severity.Error, s"Type Error: Expected $expected, but got $actual")
+    
 }

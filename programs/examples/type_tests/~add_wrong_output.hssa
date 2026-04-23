@@ -1,0 +1,6 @@
+// EXPECT welltyped=false
+
+rel test:
+0, 0 := begin <-        
+0, 0 :=  ~add 1  =:  0  
+         -> end  =: 0, 0

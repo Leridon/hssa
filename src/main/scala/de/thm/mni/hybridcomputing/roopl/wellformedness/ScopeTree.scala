@@ -146,7 +146,7 @@ object ScopeTree {
                                         Syntax.Statement.New(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(name)),
                                         statement,
                                         Syntax.Statement.Delete(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(name))
-                                    )))
+                                    )).setPosition(statement.position))
             case Syntax.Statement.LocalBlock(typ, name, compute, statement, uncompute) =>
                 Block(scope, typ, name, buildExpression(compute, scope), buildExpression(uncompute, scope), statement)
             case Syntax.Statement.Assignment(assignee, op, value) =>

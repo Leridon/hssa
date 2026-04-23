@@ -61,6 +61,10 @@ object Lexing {
             case NOTEQUAL
             case LESSEQUAL
             case GREATEREQUAL
+            case LINEBREAK
+            case WHITESPACE
+            case LINECOMMENT
+            case BLOCKCOMMENT
             case EOF
             
             override def toString(): String = this match
@@ -116,6 +120,10 @@ object Lexing {
                 case NOTEQUAL => "NOTEQUAL"
                 case LESSEQUAL => "LESSEQUAL"
                 case GREATEREQUAL => "GREATEREQUAL"
+                case LINEBREAK => "LINEBREAK"
+                case WHITESPACE => "WHITESPACE"
+                case LINECOMMENT => "LINECOMMENT"
+                case BLOCKCOMMENT => "BLOCKCOMMENT"
                 case EOF => "EOF"
         }
     }
@@ -124,11 +132,11 @@ object Lexing {
         
         import Tokens.TokenClass.*
         
-        override lazy val whitespace: Parser[Any] = """(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))*""".r
+        //override lazy val whitespace: Parser[Any] = """(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))*""".r
         
-        def eof: Token[Tokens.TokenClass] = symbol(EOF)
+        def eof_token = Tokens.TokenClass.EOF
         
-        def token: Parser[Symbol] =
+        def token: Parser[TokenValue] =
             "[a-zA-Z][a-zA-Z_0-9']*".r ^^ {
                 case "class" => symbol(CLASS)
                 case "inherits" => symbol(INHERITS)
@@ -156,6 +164,11 @@ object Lexing {
                 case "nil" => symbol(NIL)
                 case l => symbol(IDENT, l)
             } |
+              //"""(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))+""".r ^^^ symbol(WHITESPACE) |
+              "\\n".r ^^^ symbol(LINEBREAK) |
+              "\\s+".r ^^^ symbol(WHITESPACE) |
+              """//.*""".r ^^^ symbol(LINECOMMENT) |
+              """/\*[^*]*\*+(?:[^/*][^*]*\*+)*/""".r ^^^ symbol(BLOCKCOMMENT) |
               "," ^^^ symbol(COMMA) |
               "[" ^^^ symbol(LBRACK) |
               "]" ^^^ symbol(RBRACK) |

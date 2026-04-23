@@ -8,6 +8,7 @@
     <option name="classpathModifications">
       <list />
     </option>
+    <option name="defaultTargetName" />
     <option name="envFilePaths">
       <list />
     </option>
@@ -24,10 +25,15 @@
     <option name="workingDirectory" value="$ProjectFileDir$" />
     <option name="classBuf">
       <list>
+        <option value="de.thm.mni.hybridcomputing.CountParensTest" />
         <option value="de.thm.mni.hybridcomputing.UniqueNameGeneratorTests" />
+        <option value="de.thm.mni.hybridcomputing.hssa.FormattingTests" />
         <option value="de.thm.mni.hybridcomputing.hssa.InterpretationTests" />
-        <option value="de.thm.mni.hybridcomputing.hssa.transformations.AutoSSATests" />
+        <option value="de.thm.mni.hybridcomputing.hssa.InversionTests" />
+        <option value="de.thm.mni.hybridcomputing.hssa.ParsingTests" />
+        <option value="de.thm.mni.hybridcomputing.hssa.TypingTests" />
         <option value="de.thm.mni.hybridcomputing.hssa.transformations.AutoDiscardTests" />
+        <option value="de.thm.mni.hybridcomputing.hssa.transformations.AutoSSATests" />
       </list>
     </option>
     <option name="shortenClasspath" value="NONE" />

@@ -8,7 +8,7 @@ enum Direction {
         case FORWARDS => BACKWARDS
         case BACKWARDS => FORWARDS
     
-    def choose[T](fw: T, bw: T): T = this match
+    def choose[T](fw: => T, bw: => T): T = this match
         case FORWARDS => fw
         case BACKWARDS => bw
 }

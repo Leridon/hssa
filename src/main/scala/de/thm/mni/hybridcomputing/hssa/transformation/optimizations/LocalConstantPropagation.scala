@@ -38,7 +38,7 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
          * @return The statically constant value of this expression
          */
         def staticValue(context: BindingTree.Block): Value = self match
-            case Expression.Literal(value) => value
+            case Expression.Literal(value) => Basic.Int(value)
             case Expression.Variable(name) =>
                 val Some(BindingTree.GlobalBuiltinVariable(_, _, builtin)) = context.lookup(name.name)
                 
@@ -51,7 +51,7 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
     
     class Replacement[T <: Syntax.Expression](val source: Syntax.Assignment, val expression: T, val value: Value) {
         lazy val flat: Option[Seq[FlatReplacement]] = expression match
-            case Expression.Literal(value) => Option.when(value == this.value)(Seq())
+            case Expression.Literal(value) => Option.when(Basic.Int(value) == this.value)(Seq())
             case Expression.Unit() => Option.when(value == Basic.Unit)(Seq())
             case v: Expression.Variable => Some(Seq(Replacement(source, v, value)))
             case Expression.Pair(a, b) => value match
@@ -84,21 +84,21 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
      * @return A replacement if the assignment evaluates to a constant, None otherwise.
      */
     def getForwardsReplacement(assignment: Syntax.Assignment, context: BindingTree.Block): Option[AnyReplacement] = {
-        if (!assignment.instance_argument.isStaticConstant(context)) return None
-        if (!assignment.relation.isStaticConstant(context)) return None
-        if (!assignment.source.isStaticConstant(context)) return None
+        if (!assignment.parameter.isStaticConstant(context)) return None
+        if (!assignment.callee.isStaticConstant(context)) return None
+        if (!assignment.input.isStaticConstant(context)) return None
         
         val staticValue = Try(Interpretation(context.program.language).evaluateApplication(
-            assignment.relation.staticValue(context),
-            assignment.instance_argument.staticValue(context),
-            assignment.source.staticValue(context)
+            assignment.callee.staticValue(context),
+            assignment.parameter.staticValue(context),
+            assignment.input.staticValue(context)
         )).toOption // When evaluation fails (for example due to nondeterminism), we don't do any replacement
           .filter(isReifable)
           
         
         // TODO: For violations, we could replace the assignment completely
         
-        staticValue.map(v => Replacement(assignment, assignment.target, v))
+        staticValue.map(v => Replacement(assignment, assignment.output, v))
     }
     
     /**
@@ -121,7 +121,8 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
      */
     def reify(value: Value): Syntax.Expression = value match
         case Value.Pair(a, b) => Syntax.Expression.Pair(reify(a), reify(b))
-        case v => Syntax.Expression.Literal(v)
+        case Basic.Unit => Syntax.Expression.Unit()
+        case Basic.Int(value) => Syntax.Expression.Literal(value)
     
     class DistributeReplacements(replacements: MapView[String, Value]) {
         def apply(exp: Syntax.Expression): Syntax.Expression = exp match

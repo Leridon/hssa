@@ -22,7 +22,7 @@ object MergeStrictlyConsecutiveBlocks extends Transformer.RelationTransformer {
                 a.entry,
                 Seq(
                     a.assignments,
-                    Seq(Syntax.Assignment(b.entry.initialized, Syntax.Expression.Variable("id"), Syntax.Expression.Unit(), a.exit.finalizes)),
+                    Seq(Syntax.Assignment(b.entry.output, Syntax.Expression.Variable("id"), Syntax.Expression.Unit(), a.exit.finalizes)),
                     b.assignments
                 ),
                 b.exit

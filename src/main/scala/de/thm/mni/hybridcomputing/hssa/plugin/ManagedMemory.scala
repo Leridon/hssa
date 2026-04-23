@@ -8,12 +8,13 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Value
 import de.thm.mni.hybridcomputing.hssa.Types
 import de.thm.mni.hybridcomputing.hssa.plugin.BuiltinCreationHelpers.int_parameter
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
-import de.thm.mni.hybridcomputing.hssa.plugin.BuiltinCreationHelpers.self_inverse
-import de.thm.mni.hybridcomputing.hssa.plugin.BuiltinCreationHelpers.FunctionPair
-import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.Errors.RuntimeError
+import de.thm.mni.hybridcomputing.hssa.plugin.BuiltinCreationHelpers.*
+import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.Errors.{ReversibilityViolation, RuntimeError}
+import de.thm.mni.hybridcomputing.hssa.plugin.ManagedMemory.Errors.UnallocationError
+import de.thm.mni.hybridcomputing.util.reversibility.Direction.{BACKWARDS, FORWARDS}
 
 object ManagedMemory extends Plugin {
-
+    
     case class MMem(content: Array[Value]) extends Value {
         override def toString(): String = {
             val allocatedMemory = content.slice(0, content.lastIndexWhere(_ != null) + 1)
@@ -23,66 +24,64 @@ object ManagedMemory extends Plugin {
             ).mkString("\n")
         }
     }
-
+    
     object MMemType extends Types.Type
-
+    
+    given RuntimeCheckable[MMem] with
+        override def check(value: Value): MMem = value match {
+            case m@MMem(content) => m
+            case _ => ReversibilityViolation(s"Expected MMem, got ${value.getClass.getSimpleName}").raise()
+        }
+    
     // Limit the number of objects in managed memory to 1024
     val memorySize: Int = 1024
-
+    
     override def builtins: Seq[Builtin] = Seq(
-        FunctionPair(
-            { case Basic.Unit => unit_input({MMem(new Array[Value](memorySize))})},
-            { case Basic.Unit => {
-                case MMem(content) if content.forall(_ == null) => Basic.Unit
-                case _ => Errors.UnallocationError().raise()
-            }}
-        ).name("mmem.new", Types.ParameterizedRelation(Types.Unit, Types.Unit, MMemType)),
-        FunctionPair(
-            int_parameter(size => {
-                case memory: MMem => {
+        builtin("mmem.new", checkedPar((_: Unit) => {
+            case FORWARDS => checked((_: Unit) => MMem(new Array[Value](memorySize)))
+            case BACKWARDS => consumeIf(checked((m: MMem) => m.content.forall(_ == null)), Errors.AllocationError())
+        }), Types.ParameterizedRelation(Types.Unit, Types.Unit, MMemType)),
+        builtin("mmem.allocate", checkedPar((size: Int) => {
+            case FORWARDS => checked((memory: MMem) => {
+                if size == 0 then Errors.ZeroAllocationError().raise()
+                // tail to protect null pointer
+                val pointer = memory.content.tail.sliding(size).zipWithIndex.find {
+                    case (w, _) if w.length == size => w.forall(_ == null)
+                }.map(_._2).getOrElse(Errors.AllocationError().raise()) + 1
+                
+                for (i <- Range(pointer, pointer + size)) {
+                    memory.content.update(i, Basic.Int(0))
+                }
+                
+                Value.Pair(
+                    memory, Basic.Int(pointer)
+                )
+            })
+            case BACKWARDS => checked((memory: MMem, pointer: Int) =>
+                if (memory.content.slice(pointer, pointer + size).forall(_ == Basic.Int(0))) {
+                    if pointer == 0 then Errors.NullPointerError("deallocate").raise()
                     if size == 0 then Errors.ZeroAllocationError().raise()
-                    // tail to protect null pointer
-                    val pointer = memory.content.tail.sliding(size).zipWithIndex.find {
-                        case (w, _) if w.length == size => w.forall(_ == null)
-                    }.map(_._2).getOrElse(Errors.AllocationError().raise()) + 1
-                    
                     for (i <- Range(pointer, pointer + size)) {
-                        memory.content.update(i, Basic.Int(0))
+                        memory.content.update(i, null)
                     }
-
-                    Value.Pair(
-                        memory, Basic.Int(pointer)
-                    )
+                    memory
+                } else {
+                    UnallocationError().raise()
                 }
-            }),
-            int_parameter(size => {
-                case Value.Pair(memory: MMem, pointer: Basic.Int)
-                    if memory.content.slice(pointer.value, pointer.value + size).forall(_ == Basic.Int(0)) => {
-                        if pointer.value == 0 then Errors.NullPointerError("deallocate").raise()
-                        if size == 0 then Errors.ZeroAllocationError().raise()
-                        for (i <- Range(pointer.value, pointer.value + size)) {
-                            memory.content.update(i, null)
-                        }
-                        memory
-                    }
-            })
-        ).name("mmem.allocate", Types.ParameterizedRelation(Types.Int, MMemType, Types.Pair(MMemType, Types.Int))),
-        self_inverse(
-            int_parameter(pointer => {
-                case Value.Pair(memory: MMem, in: Value) => {
-                    if pointer == 0 then Errors.NullPointerError("read/write").raise()
-                    val read_value = memory.content(pointer)
-                    if (read_value == null) {
-                        Errors.AccessViolation().raise()
-                    }
-                    memory.content.update(pointer, in)
-
-                    Value.Pair(
-                        memory, read_value
-                    )
-                }
-            })
-        ).name("mmem.readwrite", Types.ParameterizedRelation(Types.Int, Types.Pair(MMemType, new Types.MetaVariable), Types.Pair(MMemType, new Types.MetaVariable)))
+            )
+        })),
+        builtin("mmem.readwrite", checkedPar((pointer: Int) => _ => checked((memory: MMem, in: Value) => {
+            if pointer == 0 then Errors.NullPointerError("read/write").raise()
+            val read_value = memory.content(pointer)
+            if (read_value == null) {
+                Errors.AccessViolation().raise()
+            }
+            memory.content.update(pointer, in)
+            
+            Value.Pair(
+                memory, read_value
+            )
+        })), Types.ParameterizedRelation(Types.Int, Types.Pair(MMemType, new Types.MetaVariable), Types.Pair(MMemType, new Types.MetaVariable)))
     )
     
     object Errors {

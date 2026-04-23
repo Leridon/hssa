@@ -10,12 +10,21 @@ object CliMain:
         
         try {
             val build_script = Parsing.parse(
-                """load ./programs/roopl/verified/FibPair.rplpp; roopl; hssa.check; hssa.exec;
-                  |""".stripMargin)
+                """load ./programs/examples/bit4.hssa; hssa.parse; tap {mssa.fixup; savefiles}; hssa.exec add.test"""
+                //"""load ./programs/examples/bit4.hssa; hssa.parse; tap {mssa.fixup; savefiles}; hssa.exec add.test"""
+                //"""load ./programs/examples/bit4.hssa; hssa.parse; tap {mssa.fixup; savefiles}; hssa.exec or.test"""
+                //"""load ./programs/examples/rtm_tests.hssa; hssa.parse; mssa.fixup; savefiles"""
+            )
+            
+            /*val build_script = Parsing.parse(
+                """load ./programs/out.hssa; hssa;
+                  |""".stripMargin)*/
             
             val f = Evaluation.evaluate(build_script).withImplicitDump
             
-            f(CliChain.Value.Unit)
+            val result = f(CliChain.Value.Unit)
+        
+            println(result)
         } catch {
             case e: AbortDueToErrors =>
                 e.errors.foreach(e => {

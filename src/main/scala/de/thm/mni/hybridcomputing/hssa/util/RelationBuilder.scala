@@ -72,8 +72,8 @@ object RelationBuilder {
         private var _exit: Syntax.Exit = init.exit
         
         def updateLabels(f: RelationBuilder.LabelUsage => String): Unit = {
-            _entry = Syntax.Entry(_entry.initialized, _entry.labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(this, i, LabelUsage.Position.ENTRY, l.name) }).map(u => f(u)))
-            _exit = Syntax.Exit(_exit.labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(this, i, LabelUsage.Position.EXIT, l.name) }).map(u => f(u)), _exit.argument)
+            _entry = Syntax.Entry(_entry.output, _entry.labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(this, i, LabelUsage.Position.ENTRY, l.name) }).map(u => f(u)))
+            _exit = Syntax.Exit(_exit.labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(this, i, LabelUsage.Position.EXIT, l.name) }).map(u => f(u)), _exit.input)
         }
         
         def block(): Syntax.Block = Syntax.Block(entry, this.assignment, exit)

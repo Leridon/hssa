@@ -2,7 +2,9 @@ package de.thm.mni.hybridcomputing.hssa.plugin
 
 import de.thm.mni.hybridcomputing.hssa.Language.Plugin
 import de.thm.mni.hybridcomputing.hssa.Types
+import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.Errors.ReversibilityViolation
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value
+import de.thm.mni.hybridcomputing.util.reversibility.Direction.{BACKWARDS, FORWARDS}
 
 object Arrays extends Plugin {
     
@@ -16,32 +18,30 @@ object Arrays extends Plugin {
         case Array(elements) => f(elements)
     }
     
+    given RuntimeCheckable[Array] with
+        override def check(value: Value): Array = value match {
+            case a@Array(elements) => a
+            case _ => ReversibilityViolation("").raise()
+        }
+    
     override def requirements: Seq[Plugin] = super.requirements
     override def builtins: Seq[Plugin.Builtin] = Seq(
-        
-        FunctionPair(
-            int_parameter(size => unit_input({
-                Array(new scala.Array[Value](size).map(_ => Basic.Unit))
-            })),
+        builtin("array.new", checkedPar((size: Int) => {
+            case FORWARDS => checkedUnit(Array(new scala.Array[Value](size).map(_ => Basic.Unit)))
+            case BACKWARDS => consumeIf(checked((a: Array) => size == a.elements.length && a.elements.forall(e => e == Basic.Unit)))
+        }), Types.ParameterizedRelation(Types.Int, Types.Unit, ArrayType)),
+        builtin("array.readwrite", checkedPar((index: Int) => _ => checked((array: Array, write_value: Value) => {
+            val read_value = array.elements(index)
+            val new_array = Array(array.elements.updated(index, write_value))
             
-            int_parameter(size => {
-                case Array(elements) if size == elements.length && elements.forall(e => e == Basic.Unit) => Basic.Unit
-            })
-        ).name("array.new", Types.ParameterizedRelation(Types.Int, Types.Unit, ArrayType)),
-        self_inverse(
-            int_parameter(index => {
-                case Value.Pair(array: Array, write_value) =>
-                    val read_value = array.elements(index)
-                    val new_array = Array(array.elements.updated(index, write_value))
-                    
-                    Value.Pair(
-                        new_array, read_value
-                    )
-            })
-        ).name("array.readwrite", Types.ParameterizedRelation(Types.Int, Types.Pair(ArrayType, new Types.MetaVariable), Types.Pair(ArrayType, new Types.MetaVariable))),
-        FunctionPair(
-            array_parameter(array => produce(Basic.Int(array.length))),
-            array_parameter(array => consume(Basic.Int(array.length))),
-        ).name("array.length", Types.ParameterizedRelation(ArrayType, Types.Unit, Types.Int)),
+            Value.Pair(
+                new_array, read_value
+            )
+        })
+        ), Types.ParameterizedRelation(Types.Int, Types.Pair(ArrayType, new Types.MetaVariable), Types.Pair(ArrayType, new Types.MetaVariable))),
+        builtin("array.length", checkedPar((array: Array) => {
+            case FORWARDS => produce(Basic.Int(array.elements.length))
+            case BACKWARDS => consume(Basic.Int(array.elements.length))
+        }), Types.ParameterizedRelation(ArrayType, Types.Unit, Types.Int))
     )
 }

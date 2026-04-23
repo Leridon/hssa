@@ -18,6 +18,7 @@ object General {
         Foreach,
         Dump,
         Drop,
+        SaveFiles
     )
     
     import Evaluation.Function
@@ -31,11 +32,11 @@ object General {
             _ => CliChain.Value.File.fromPath(p)
         }
     }
-
+    
     object Save extends Function("save") {
         override def instantiate(args: Arguments): CliChain.Function = {
             val path = args.expectPositionedString()
-
+            
             val p = Path.of(path)
             input =>
                 val output: String = input match
@@ -44,7 +45,7 @@ object General {
                     case Value.Roopl(program) =>
                         roopl.Formatting.format(program)
                     case _ => input.toString()
-
+                
                 Files.write(p, output.getBytes(StandardCharsets.UTF_8))
                 CliChain.Value.Unit
         }
@@ -91,10 +92,11 @@ object General {
                     this.apply(Value.File.fromContent(Formatting.format(program)))
                 case Value.Roopl(program) =>
                     this.apply(Value.File.fromContent(roopl.Formatting.format(program)))
-                case in => println(in)
+                case in =>
+                    println(in)
             }
             
-            CliChain.Value.Unit
+            input
         }
     }
     
@@ -102,5 +104,20 @@ object General {
         override def instantiate(args: Arguments): CliChain.Function = _ => Value.Unit
     }
     
-    
+    object SaveFiles extends Function("savefiles") {
+        override def instantiate(args: Arguments): CliChain.Function = {
+            case f: Value.File =>
+                if (f.path.isDefined) {
+                    Files.write(f.path.get, f.in_memory_content.get.getBytes(StandardCharsets.UTF_8))
+                    
+                    f
+                } else {
+                    Dump.apply(f)
+                }
+            case v@Value.Sequence(seq) => {
+                seq.foreach(v => instantiate(args)(v))
+                v
+            }
+        }
+    }
 }
