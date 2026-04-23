@@ -1,0 +1,6 @@
+import ..stdlib
+
+rel use_swap:
+(), 0 := begin<-
+0, 1 := swap =: 1, 0
+-> end =: (), 0

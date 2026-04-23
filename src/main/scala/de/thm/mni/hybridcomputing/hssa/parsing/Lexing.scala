@@ -65,7 +65,7 @@ object Lexing {
         def eof_token = EOF
         
         def token: Parser[TokenValue] =
-            "[a-zA-Z_][a-zA-Z_0-9.]*".r ^^ {
+            "[a-zA-Z_.][a-zA-Z_0-9.]*".r ^^ {
                 case "rel" => symbol(Tokens.TokenClass.RELATION)
                 case "import" => symbol(Tokens.TokenClass.IMPORT)
                 case l => symbol(IDENT, l)
