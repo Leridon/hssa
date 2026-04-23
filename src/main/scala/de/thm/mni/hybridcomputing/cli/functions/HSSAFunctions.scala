@@ -32,7 +32,8 @@ object HSSAFunctions {
             Exec,
             Graphs,
             Check,
-            InPlaceFormat
+            InPlaceFormat,
+            TypeCheck
         ),
         Optimizations.all
     ).flatten
@@ -102,7 +103,7 @@ object HSSAFunctions {
     }
     
     val AllInOne: Function = Function.combine("hssa", Seq(
-        Parse, Check, Exec, TypeCheck
+        Parse, Check, Exec
     ))
     
     object Graphs extends Function("hssa.graphs") {
