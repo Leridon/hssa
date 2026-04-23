@@ -30,12 +30,11 @@ object Value {
     }
     final class BuiltinRelation(
                                  override val name: String,
-                                 private val forwards: Value => Value => Value,
-                                 private val backwards: Value => Value => Value,
+                                 private val implementation: Value => Direction => Value => Value,
                                  private val direction: Direction = Direction.FORWARDS
                                ) extends Relation {
-        def flipped = BuiltinRelation(name, forwards, backwards, direction.inverse)
-        def get: Value => Value => Value = direction.choose(forwards, backwards)
+        def flipped = BuiltinRelation(name, implementation, direction.inverse)
+        def get: Value => Value => Value = p => implementation(p)(direction)
         
         override def toString: String = direction.choose(s"<primitive $name>", s"<primitive ~$name>")
         
