@@ -9,22 +9,11 @@ object CliMain:
         val input = args.map(a => if a.exists(_.isWhitespace) then s""""$a"""" else a).mkString(" ")
         
         try {
-            val build_script = Parsing.parse(
-                """load ./programs/examples/bit4.hssa; hssa.parse; tap {mssa.fixup; savefiles}; hssa.exec add.test"""
-                //"""load ./programs/examples/bit4.hssa; hssa.parse; tap {mssa.fixup; savefiles}; hssa.exec add.test"""
-                //"""load ./programs/examples/bit4.hssa; hssa.parse; tap {mssa.fixup; savefiles}; hssa.exec or.test"""
-                //"""load ./programs/examples/rtm_tests.hssa; hssa.parse; mssa.fixup; savefiles"""
-            )
-            
-            /*val build_script = Parsing.parse(
-                """load ./programs/out.hssa; hssa;
-                  |""".stripMargin)*/
-            
+            val build_script = Parsing.parse(input)
+
             val f = Evaluation.evaluate(build_script).withImplicitDump
             
-            val result = f(CliChain.Value.Unit)
-        
-            println(result)
+            f(CliChain.Value.Unit)
         } catch {
             case e: AbortDueToErrors =>
                 e.errors.foreach(e => {

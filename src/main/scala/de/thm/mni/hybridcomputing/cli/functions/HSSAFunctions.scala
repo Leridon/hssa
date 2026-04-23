@@ -39,7 +39,7 @@ object HSSAFunctions {
     ).flatten
     
     
-    object InPlaceFormat extends Function("mssa.fixup") {
+    object InPlaceFormat extends Function("hssa.formatall") {
         override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
             case p: CliChain.Value.ModularHSSA =>
                 

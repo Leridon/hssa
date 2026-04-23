@@ -75,13 +75,11 @@ object CliChain {
 object Parsing {
     enum TokenTypes:
         case STRING
-        case LPAR
-        case RPAR
         case LCURL
         case RCURL
         case LBRACK
         case RBRACK
-        case SEMIC
+        case SEPARATOR
         case LINEBREAK
         case EQUAL
         case EOF
@@ -96,21 +94,20 @@ object Parsing {
 
         override def token: Parser[TokenValue] =
             "\".*\"".r ^^ (s => symbol(STRING, s.tail.init)) |
-              "[^\\s{};=]+".r ^^ (s => symbol(STRING, s)) |
-              "(" ^^^ symbol(LPAR) |
-              ")" ^^^ symbol(RPAR) |
+              """"(?:\\.|[^"\\])*"""".r ^^ (s => symbol(STRING, s.tail.init)) |
+              "[^\\s{}=,]+".r ^^ (s => symbol(STRING, s)) |
               "{" ^^^ symbol(LCURL) |
               "}" ^^^ symbol(RCURL) |
-              ";" ^^^ symbol(SEMIC) |
+              "," ^^^ symbol(SEPARATOR) |
               "=" ^^^ symbol(EQUAL) |
-              "\n" ^^^ symbol(LINEBREAK)
+              "\n" ^^^ symbol(SEPARATOR)
     }
 
     object Grammar extends ParserUtilities[TokenTypes] with ImplicitConversions {
 
         import TokenTypes.*
 
-        def chain: Parser[ChainExpression] = repsep(fun, rep1(SEMIC | LINEBREAK)) ^^ Sequence.apply
+        def chain: Parser[ChainExpression] = repsep(fun, rep1(SEPARATOR | LINEBREAK)) ^^ Sequence.apply
 
         def simple_arg: Parser[SimpleArgumentValue] =
             LCURL ~~ chain ~~ RCURL ^^ (c => ChainArgument(c))
