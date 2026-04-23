@@ -152,22 +152,29 @@ rel negate.test:
 (1, 1, 1, 1) :=  negate  =: (0, 0, 0, 1)
                  -> end  =:     (), 0   
 
-rel equal (a0, a1, a2, a3), (b0, b1, b2, b3):
-(), 0 :=   begin <-          
-  e0  :=  xnor a0, b0 =:  () 
-  e1  :=  xnor a1, b1 =:  () 
-  e2  :=  xnor a2, b2 =:  () 
-  e3  :=  xnor a3, b3 =:  () 
-  t0  :=  and e0, e1  =:  () 
-  t1  :=  and e2, e3  =:  () 
-  c   :=  and t0, t1  =:  () 
-  ()  :=  ~and e2, e3 =:  t1 
-  ()  :=  ~and e0, e1 =:  t0 
-  ()  := ~xnor a3, b3 =:  e3 
-  ()  := ~xnor a2, b2 =:  e2 
-  ()  := ~xnor a1, b1 =:  e1 
-  ()  := ~xnor a0, b0 =:  e0 
-            -> end    =: c, 0
+rel equal (a0, a1, a2, a3), b:
+     (), 0     :=   begin <-                       
+b0, b1, b2, b3 :=    dup b    =:         ()        
+      e0       :=   xnor a0   =:         b0        
+      e1       :=   xnor a1   =:         b1        
+      e2       :=   xnor a2   =:         b2        
+      e3       :=   xnor a3   =:         b3        
+      t0       :=  and e0, e1 =:         ()        
+      t1       :=  and e2, e3 =:         ()        
+       c       :=  and t0, t1 =:         ()        
+      ()       := ~and e2, e3 =:         t1        
+      ()       := ~and e0, e1 =:         t0        
+      _b3      :=   ~xnor a3  =:         e3        
+      _b2      :=   ~xnor a2  =:         e2        
+      _b1      :=   ~xnor a1  =:         e1        
+      _b0      :=   ~xnor a0  =:         e0        
+      ()       :=    ~dup b   =: _b0, _b1, _b2, _b3
+                     -> end   =:        c, 0       
+
+rel equal.test:
+(), 0 :=             begin <-                     
+  1   := equal (0, 0, 0, 0), (0, 0, 0, 0) =:   () 
+                      -> end              =: (), 0
 
 rel encoded_to_integer:
 (0, 0, c, d), 0 :=    begin <-            

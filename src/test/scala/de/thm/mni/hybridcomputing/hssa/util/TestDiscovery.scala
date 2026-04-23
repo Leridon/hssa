@@ -95,7 +95,7 @@ object TestDiscovery {
                                ) extends TestCase
     
     lazy val all: List[ProgramTestCase] = {
-        val files = allFiles(Path.of("programs/examples"))
+        val files = allFiles(Path.of("programs/hssa"))
         files.map(file => new ProgramTestCase(file))
     }
     

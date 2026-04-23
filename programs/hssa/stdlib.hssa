@@ -13,3 +13,7 @@ rhs,0 := begin<-
 out := subfrom 0 =: rhs
 -> end =: out, 0
 
+rel swap:
+(a, b), 0 := begin<-
+-> end =: (b, a), 0
+

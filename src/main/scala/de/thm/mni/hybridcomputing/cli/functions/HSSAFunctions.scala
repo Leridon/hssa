@@ -6,7 +6,7 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
 import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
 import de.thm.mni.hybridcomputing.hssa.{BindingTree, Language, TypeChecking, Wellformedness}
-import de.thm.mni.hybridcomputing.util.reversibility.Direction.{BACKWARDS, FORWARDS}
+import de.thm.mni.hybridcomputing.util.reversibility.Direction.FORWARDS
 
 import scala.collection.mutable.ListBuffer
 

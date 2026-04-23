@@ -66,7 +66,7 @@ class InterpretationTests extends AnyWordSpec with Matchers {
     }
     
     "Self-Interpretation" should {
-        val self_interpreter = Parsing(Language.Canon).parse(lex(SourceFile.fromFile(Paths.get("programs/examples/selfinterpreter.hssa"))))
+        val self_interpreter = Parsing(Language.Canon).parse(lex(SourceFile.fromFile(Paths.get("programs/hssa/selfinterpreter.hssa"))))
         
         TestDiscovery.all_relation_tests.foreach(test => {
             

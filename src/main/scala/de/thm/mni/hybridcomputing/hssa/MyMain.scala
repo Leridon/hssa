@@ -15,8 +15,8 @@ object MyMain {
         try {
             val language = Language(Seq(Basic, Arithmetic, Information), Language.Canon.semantics)
             
-            val prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/examples/selfinterpreter.hssa"))))
-            val fibpair_prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/examples/fibpair.hssa"))))
+            val prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/hssa/selfinterpreter.hssa"))))
+            val fibpair_prog = Parsing(language).parse(lex(SourceFile.fromFile(Paths.get("programs/hssa/fibpair.hssa"))))
             
             val encoded = new SelfInterpretationEncoder(fibpair_prog)
             

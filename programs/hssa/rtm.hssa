@@ -1,6 +1,6 @@
 rel stack_is_empty (kind, stack):
   (), 0  :=   begin <-                 
-is_empty := xnor kind, 0 =:      ()    
+is_empty := equal kind, 0 =:      ()
                -> end    =: is_empty, 0
 
 rel pop:
