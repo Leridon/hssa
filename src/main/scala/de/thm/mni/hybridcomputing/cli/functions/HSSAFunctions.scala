@@ -76,6 +76,16 @@ object HSSAFunctions {
                 val lang = hssa.Language.Canon
                 
                 Wellformedness(lang).check(prog).raiseIfNonEmpty()
+                
+                in
+        }
+    }
+    
+    object TypeCheck extends Function("hssa.typecheck") {
+        override def instantiate(args: Evaluation.Arguments): CliChain.Function = {
+            case in@asHSSA(CliChain.Value.HSSA(prog)) =>
+                val lang = hssa.Language.Canon
+                
                 TypeChecking(lang).check(BindingTree.init(prog)).raiseIfNonEmpty()
                 
                 in
@@ -92,7 +102,7 @@ object HSSAFunctions {
     }
     
     val AllInOne: Function = Function.combine("hssa", Seq(
-        Parse, Check, Exec
+        Parse, Check, Exec, TypeCheck
     ))
     
     object Graphs extends Function("hssa.graphs") {
