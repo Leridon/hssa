@@ -93,8 +93,7 @@ object Parsing {
         override def eof_token: TokenTypes = EOF
 
         override def token: Parser[TokenValue] =
-            "\".*\"".r ^^ (s => symbol(STRING, s.tail.init)) |
-              """"(?:\\.|[^"\\])*"""".r ^^ (s => symbol(STRING, s.tail.init)) |
+              """"(\\.|[^"\\])*"""".r ^^ (s => symbol(STRING, s.tail.init)) |
               "[^\\s{}=,]+".r ^^ (s => symbol(STRING, s)) |
               "{" ^^^ symbol(LCURL) |
               "}" ^^^ symbol(RCURL) |

@@ -2,7 +2,6 @@ package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.util.FormattingUtilities
 import de.thm.mni.hybridcomputing.util.parsing.{Positioned, SourcePosition}
 

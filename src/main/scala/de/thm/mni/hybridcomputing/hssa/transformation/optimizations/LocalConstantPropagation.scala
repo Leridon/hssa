@@ -3,7 +3,6 @@ package de.thm.mni.hybridcomputing.hssa.transformation.optimizations
 import de.thm.mni.hybridcomputing.hssa.*
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.util.HssaDSL.*
 import de.thm.mni.hybridcomputing.hssa.util.{HssaDSL, Transformer}
 
@@ -38,7 +37,7 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
          * @return The statically constant value of this expression
          */
         def staticValue(context: BindingTree.Block): Value = self match
-            case Expression.Literal(value) => Basic.Int(value)
+            case Expression.Literal(value) => Value.Int(value)
             case Expression.Variable(name) =>
                 val Some(BindingTree.GlobalBuiltinVariable(_, _, builtin)) = context.lookup(name.name)
                 
@@ -46,13 +45,13 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
             case Expression.Pair(a, b) => Value.Pair(a.staticValue(context), b.staticValue(context))
             case Expression.Invert(a) => a.staticValue(context) match
                 case rel: Value.BuiltinRelation => rel.flipped
-            case Expression.Unit() => Basic.Unit
+            case Expression.Unit() => Value.Unit
     }
     
     class Replacement[T <: Syntax.Expression](val source: Syntax.Assignment, val expression: T, val value: Value) {
         lazy val flat: Option[Seq[FlatReplacement]] = expression match
-            case Expression.Literal(value) => Option.when(Basic.Int(value) == this.value)(Seq())
-            case Expression.Unit() => Option.when(value == Basic.Unit)(Seq())
+            case Expression.Literal(value) => Option.when(Value.Int(value) == this.value)(Seq())
+            case Expression.Unit() => Option.when(value == Value.Unit)(Seq())
             case v: Expression.Variable => Some(Seq(Replacement(source, v, value)))
             case Expression.Pair(a, b) => value match
                 case Value.Pair(x, y) =>
@@ -70,8 +69,8 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
     type FlatReplacement = Replacement[Syntax.Expression.Variable]
     
     def isReifable(v: Value): Boolean = v match {
-        case _: Basic.Int => true
-        case Basic.Unit => true
+        case _: Value.Int => true
+        case Value.Unit => true
         case Value.Pair(a, b) => isReifable(a) && isReifable(b)
         case _ => false
     }
@@ -121,8 +120,8 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
      */
     def reify(value: Value): Syntax.Expression = value match
         case Value.Pair(a, b) => Syntax.Expression.Pair(reify(a), reify(b))
-        case Basic.Unit => Syntax.Expression.Unit()
-        case Basic.Int(value) => Syntax.Expression.Literal(value)
+        case Value.Unit => Syntax.Expression.Unit()
+        case Value.Int(value) => Syntax.Expression.Literal(value)
     
     class DistributeReplacements(replacements: MapView[String, Value]) {
         def apply(exp: Syntax.Expression): Syntax.Expression = exp match

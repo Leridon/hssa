@@ -6,7 +6,6 @@ import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program, Relation}
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.Errors.ReversibilityViolation
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value.{BuiltinRelation, UserRelation}
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.{HSSAError, Inversion, Language, Syntax}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.{AbortDueToErrors, Severity}
@@ -28,7 +27,7 @@ case class Interpretation(language: Language) {
     
     def evaluate(exp: Expression, context: ValueContext, finalizing: Boolean = false): Value = {
         exp match {
-            case Expression.Literal(value) => Basic.Int(value)
+            case Expression.Literal(value) => Value.Int(value)
             case Expression.Variable(name) =>
                 val result = context.get(name.name)
                   .getOrElse({
@@ -45,7 +44,7 @@ case class Interpretation(language: Language) {
                 val r = evaluate(b, context)
                 val l = evaluate(a, context)
                 Value.Pair(l, r)
-            case Expression.Unit() => Basic.Unit
+            case Expression.Unit() => Value.Unit
             case Expression.Invert(sub) => evaluate(sub, context) match
                 case rel: UserRelation => rel.flipped
                 case rel: Value.BuiltinRelation => rel.flipped
@@ -69,8 +68,8 @@ case class Interpretation(language: Language) {
     private def assign(pattern: Expression, value: Value, context: ValueContext): Unit = {
         (pattern, value) match {
             case (Expression.Variable(name), value) => context.define(name.name, value)
-            case (Expression.Unit(), Basic.Unit) => ()
-            case (Expression.Literal(v), value) if Basic.Int(v) == value => ()
+            case (Expression.Unit(), Value.Unit) => ()
+            case (Expression.Literal(v), value) if Value.Int(v) == value => ()
             case (Expression.Pair(pat_1, pat_2), Value.Pair(val_a, val_b)) =>
                 // Left to right order of evaluation
                 assign(pat_1, val_a, context)
@@ -118,7 +117,7 @@ case class Interpretation(language: Language) {
                     val block_context = ValueContext(Some(relation_context))
                     
                     assign(block.entry.output,
-                        Value.Pair(entry_value, Basic.Int(block.entry.labels.indexWhere(_.name == entered_by))),
+                        Value.Pair(entry_value, Value.Int(block.entry.labels.indexWhere(_.name == entered_by))),
                         block_context)
                         
                     block.assignments.foreach {
@@ -141,7 +140,7 @@ case class Interpretation(language: Language) {
                     }
                     
                     evaluate(block.exit.input, block_context) match {
-                        case Value.Pair(arg, Basic.Int(i)) => (arg, block.exit.labels(i).name)
+                        case Value.Pair(arg, Value.Int(i)) => (arg, block.exit.labels(i).name)
                         case _ => new HSSAError(LanguageError.Severity.Error, "Exit block must return a pair")
                           .setPosition(block.exit.input.position)
                           .raise()
@@ -160,7 +159,7 @@ case class Interpretation(language: Language) {
         }
     }
     
-    def interpret(program: Program, relation_name: String = "main", instance_argument: Value = Basic.Unit, relation_argument: Value = Basic.Unit, direction: Direction = Direction.FORWARDS): Value = {
+    def interpret(program: Program, relation_name: String = "main", instance_argument: Value = Value.Unit, relation_argument: Value = Value.Unit, direction: Direction = Direction.FORWARDS): Value = {
         val inverted = Inversion.Global.invert(program)
         
         val context = ValueContext(Some(builtins))

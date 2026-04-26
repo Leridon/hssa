@@ -8,7 +8,7 @@ import de.thm.mni.hybridcomputing.util.reversibility.Direction.{BACKWARDS, FORWA
 
 object Arrays extends Plugin {
     
-    import BuiltinCreationHelpers.*
+    import PrimitiveCreationHelpers.*
     
     case class Array(elements: scala.Array[Value]) extends Value
     
@@ -27,8 +27,8 @@ object Arrays extends Plugin {
     override def requirements: Seq[Plugin] = super.requirements
     override def builtins: Seq[Plugin.Builtin] = Seq(
         builtin("array.new", checkedPar((size: Int) => {
-            case FORWARDS => checkedUnit(Array(new scala.Array[Value](size).map(_ => Basic.Unit)))
-            case BACKWARDS => consumeIf(checked((a: Array) => size == a.elements.length && a.elements.forall(e => e == Basic.Unit)))
+            case FORWARDS => checkedUnit(Array(new scala.Array[Value](size).map(_ => Value.Unit)))
+            case BACKWARDS => consumeIf(checked((a: Array) => size == a.elements.length && a.elements.forall(e => e == Value.Unit)))
         }), Types.ParameterizedRelation(Types.Int, Types.Unit, ArrayType)),
         builtin("array.readwrite", checkedPar((index: Int) => _ => checked((array: Array, write_value: Value) => {
             val read_value = array.elements(index)
@@ -40,8 +40,8 @@ object Arrays extends Plugin {
         })
         ), Types.ParameterizedRelation(Types.Int, Types.Pair(ArrayType, new Types.MetaVariable), Types.Pair(ArrayType, new Types.MetaVariable))),
         builtin("array.length", checkedPar((array: Array) => {
-            case FORWARDS => produce(Basic.Int(array.elements.length))
-            case BACKWARDS => consume(Basic.Int(array.elements.length))
+            case FORWARDS => produce(Value.Int(array.elements.length))
+            case BACKWARDS => consume(Value.Int(array.elements.length))
         }), Types.ParameterizedRelation(ArrayType, Types.Unit, Types.Int))
     )
 }

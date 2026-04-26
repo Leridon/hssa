@@ -5,7 +5,6 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
 import de.thm.mni.hybridcomputing.hssa.modular.Modular
 import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.util.TestDiscovery
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.AbortDueToErrors
@@ -36,13 +35,13 @@ class InterpretationTests extends AnyWordSpec with Matchers {
             if (test.expectations.success_fw) {
                 s"FW ${test.rel_name} success (${test.parent.file.getFileName})" in {
                     noException should be thrownBy {
-                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS))
+                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Value.Unit, Value.Unit, Direction.FORWARDS))
                     }
                 }
             } else {
                 s"FW ${test.rel_name} fail (${test.parent.file.getFileName})" in {
                     an[AbortDueToErrors] should be thrownBy {
-                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS))
+                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Value.Unit, Value.Unit, Direction.FORWARDS))
                     }
                 }
                 
@@ -51,13 +50,13 @@ class InterpretationTests extends AnyWordSpec with Matchers {
             if(test.expectations.success_bw) {
                 s"BW ${test.rel_name} success (${test.parent.file.getFileName})" in {
                     noException should be thrownBy {
-                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS))
+                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Value.Unit, Value.Unit, Direction.BACKWARDS))
                     }
                 }
             } else {
                 s"BW ${test.rel_name} fail (${test.parent.file.getFileName})" in {
                     an[AbortDueToErrors] should be thrownBy {
-                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS))
+                        wrapErrorPrint(Interpretation(test.parent.linked.language).interpret(test.parent.linked, test.rel_name, Value.Unit, Value.Unit, Direction.BACKWARDS))
                     }
                 }
             }
@@ -95,14 +94,14 @@ class InterpretationTests extends AnyWordSpec with Matchers {
             if (test.expectations.success_fw) {
                 s"FW ${test.rel_name} success (${test.parent.file.getFileName})" in {
                     noException should be thrownBy {
-                        run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS)
+                        run_in_selfinterpreter(test.parent.linked, test.rel_name, Value.Unit, Value.Unit, Direction.FORWARDS)
                     }
                 }
             } else {
                 
                 s"FW ${test.rel_name} fail (${test.parent.file.getFileName})" in {
                     an[AbortDueToErrors] should be thrownBy {
-                        run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.FORWARDS)
+                        run_in_selfinterpreter(test.parent.linked, test.rel_name, Value.Unit, Value.Unit, Direction.FORWARDS)
                     }
                 }
             }
@@ -110,13 +109,13 @@ class InterpretationTests extends AnyWordSpec with Matchers {
             if(test.expectations.success_bw) {
                 s"BW ${test.rel_name} success (${test.parent.file.getFileName})" in {
                     noException should be thrownBy {
-                        run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS)
+                        run_in_selfinterpreter(test.parent.linked, test.rel_name, Value.Unit, Value.Unit, Direction.BACKWARDS)
                     }
                 }
             } else {
                 s"BW ${test.rel_name} fail (${test.parent.file.getFileName})" in {
                     an[AbortDueToErrors] should be thrownBy {
-                        run_in_selfinterpreter(test.parent.linked, test.rel_name, Basic.Unit, Basic.Unit, Direction.BACKWARDS)
+                        run_in_selfinterpreter(test.parent.linked, test.rel_name, Value.Unit, Value.Unit, Direction.BACKWARDS)
                     }
                 }
             }

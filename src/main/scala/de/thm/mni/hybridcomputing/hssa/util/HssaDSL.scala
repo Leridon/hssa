@@ -3,7 +3,6 @@ package de.thm.mni.hybridcomputing.hssa.util
 import de.thm.mni.hybridcomputing.hssa.Language.Plugin
 import de.thm.mni.hybridcomputing.hssa.Syntax
 import de.thm.mni.hybridcomputing.hssa.Syntax.Identifier
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
 import scala.annotation.targetName
 import scala.language.implicitConversions

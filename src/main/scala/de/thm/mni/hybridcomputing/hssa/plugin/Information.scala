@@ -4,7 +4,7 @@ import de.thm.mni.hybridcomputing.hssa.{HSSAError, Types}
 import de.thm.mni.hybridcomputing.hssa.Language.Plugin
 import de.thm.mni.hybridcomputing.hssa.Types.ParameterizedRelation
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.plugin.BuiltinCreationHelpers.*
+import de.thm.mni.hybridcomputing.hssa.plugin.PrimitiveCreationHelpers.*
 import de.thm.mni.hybridcomputing.util.reversibility.Direction
 import de.thm.mni.hybridcomputing.util.reversibility.Direction.{BACKWARDS, FORWARDS}
 
@@ -25,10 +25,7 @@ object Information extends Plugin {
                 Types.Unit, mv, mv
             )
         }),
-        builtin("dup", value => {
-            case FORWARDS => checked((_: Unit) => value)
-            case BACKWARDS => input => consume(value)(input)
-        }, {
+        builtin("dup", value => produce_consume(value), {
             val mv = new Types.MetaVariable
             
             Types.ParameterizedRelation(mv, Types.Unit, mv)

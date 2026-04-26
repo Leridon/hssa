@@ -6,6 +6,14 @@ import de.thm.mni.hybridcomputing.util.reversibility.Direction
 trait Value
 
 object Value {
+    object Unit extends Value {
+        override def toString: String = "()"
+    }
+
+    case class Int(value: scala.Int) extends Value {
+        override def toString = value.toString
+    }
+
     case class Pair(a: Value, b: Value) extends Value {
         override def toString: String = s"($a, $b)"
     }

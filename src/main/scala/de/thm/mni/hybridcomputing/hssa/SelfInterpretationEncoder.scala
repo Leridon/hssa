@@ -2,7 +2,6 @@ package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Assignment, Block, Entry, Exit, Expression, Identifier, Program, Relation}
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
 import scala.collection.mutable
 
@@ -16,28 +15,28 @@ class SelfInterpretationEncoder(program: Program) {
     
     def encode(value: Value): Value = value
     
-    def encode(name: String): Basic.Int = {
-        Basic.Int(buffer.getOrElseUpdate(name, {
+    def encode(name: String): Value.Int = {
+        Value.Int(buffer.getOrElseUpdate(name, {
             counter += 1
             counter
         }))
     }
     
-    def encode(identifier: Identifier): Basic.Int = encode(identifier.name)
+    def encode(identifier: Identifier): Value.Int = encode(identifier.name)
     
     def encode[A](seq: List[A], encoder: A => Value): Value = seq match {
-        case ::(head, next) => Value.Pair(Basic.Int(1), Value.Pair(encoder(head), encode(next, encoder)))
-        case Nil => Value.Pair(Basic.Int(0), Value.Pair(Basic.Unit, Basic.Unit))
+        case ::(head, next) => Value.Pair(Value.Int(1), Value.Pair(encoder(head), encode(next, encoder)))
+        case Nil => Value.Pair(Value.Int(0), Value.Pair(Value.Unit, Value.Unit))
     }
     
     def encode(exp: Expression): Value = exp match {
-        case Expression.Literal(value) => Value.Pair(Basic.Int(0), Basic.Int(value))
-        case Expression.Unit() => Value.Pair(Basic.Int(0), Basic.Unit)
-        case Expression.Variable(name) => Value.Pair(Basic.Int(1), encode(name))
-        case Expression.Pair(a, b) => Value.Pair(Basic.Int(2), Value.Pair(encode(a), encode(b)))
-        case Expression.Invert(a) => Value.Pair(Basic.Int(3), encode(a))
-        case Expression.Wildcard() => Value.Pair(Basic.Int(4), Basic.Unit)
-        case Expression.Duplicate(a) => Value.Pair(Basic.Int(5), encode(a))
+        case Expression.Literal(value) => Value.Pair(Value.Int(0), Value.Int(value))
+        case Expression.Unit() => Value.Pair(Value.Int(0), Value.Unit)
+        case Expression.Variable(name) => Value.Pair(Value.Int(1), encode(name))
+        case Expression.Pair(a, b) => Value.Pair(Value.Int(2), Value.Pair(encode(a), encode(b)))
+        case Expression.Invert(a) => Value.Pair(Value.Int(3), encode(a))
+        case Expression.Wildcard() => Value.Pair(Value.Int(4), Value.Unit)
+        case Expression.Duplicate(a) => Value.Pair(Value.Int(5), encode(a))
     }
     
     def encode(assignment: Assignment): Value =
@@ -66,10 +65,10 @@ class SelfInterpretationEncoder(program: Program) {
         
         program.language.builtins.map(b => (encode(b.value.name), b.value))
           .sortBy(-_._1.value)
-          .foldRight(SelfInterpretationEncoder.tuple(Basic.Int(-1), Basic.Unit, Basic.Unit))((builtin, tail) => {
+          .foldRight(SelfInterpretationEncoder.tuple(Value.Int(-1), Value.Unit, Value.Unit))((builtin, tail) => {
               SelfInterpretationEncoder.tuple(
                   builtin._1,
-                  Value.Pair(Value.Pair(Basic.Int(0), builtin._2), Basic.Int(0)),
+                  Value.Pair(Value.Pair(Value.Int(0), builtin._2), Value.Int(0)),
                   tail
               )
           })

@@ -3,12 +3,12 @@ package de.thm.mni.hybridcomputing.hssa.plugin
 import de.thm.mni.hybridcomputing.hssa.Language.Plugin
 import de.thm.mni.hybridcomputing.hssa.Language.Plugin.Builtin
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value.BuiltinRelation
-import de.thm.mni.hybridcomputing.hssa.plugin.BuiltinCreationHelpers.unit_input
+import de.thm.mni.hybridcomputing.hssa.plugin.PrimitiveCreationHelpers.unit_input
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value
 import de.thm.mni.hybridcomputing.hssa.Types
-import de.thm.mni.hybridcomputing.hssa.plugin.BuiltinCreationHelpers.int_parameter
+import de.thm.mni.hybridcomputing.hssa.plugin.PrimitiveCreationHelpers.int_parameter
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
-import de.thm.mni.hybridcomputing.hssa.plugin.BuiltinCreationHelpers.*
+import de.thm.mni.hybridcomputing.hssa.plugin.PrimitiveCreationHelpers.*
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.Errors.{ReversibilityViolation, RuntimeError}
 import de.thm.mni.hybridcomputing.hssa.plugin.ManagedMemory.Errors.UnallocationError
 import de.thm.mni.hybridcomputing.util.reversibility.Direction.{BACKWARDS, FORWARDS}
@@ -50,15 +50,15 @@ object ManagedMemory extends Plugin {
                 }.map(_._2).getOrElse(Errors.AllocationError().raise()) + 1
                 
                 for (i <- Range(pointer, pointer + size)) {
-                    memory.content.update(i, Basic.Int(0))
+                    memory.content.update(i, Value.Int(0))
                 }
                 
                 Value.Pair(
-                    memory, Basic.Int(pointer)
+                    memory, Value.Int(pointer)
                 )
             })
             case BACKWARDS => checked((memory: MMem, pointer: Int) =>
-                if (memory.content.slice(pointer, pointer + size).forall(_ == Basic.Int(0))) {
+                if (memory.content.slice(pointer, pointer + size).forall(_ == Value.Int(0))) {
                     if pointer == 0 then Errors.NullPointerError("deallocate").raise()
                     if size == 0 then Errors.ZeroAllocationError().raise()
                     for (i <- Range(pointer, pointer + size)) {

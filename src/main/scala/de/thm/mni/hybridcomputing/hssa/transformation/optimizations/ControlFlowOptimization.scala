@@ -4,7 +4,6 @@ import de.thm.mni.hybridcomputing.hssa.{BindingTree, Inversion, Syntax}
 import de.thm.mni.hybridcomputing.hssa.Syntax.Expression
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.transformation.repairs.AutoSSA
 import de.thm.mni.hybridcomputing.hssa.util.HssaDSL.*
 import de.thm.mni.hybridcomputing.hssa.util.{RelationBuilder, Transformer}
@@ -15,7 +14,7 @@ object ControlFlowOptimization {
 /*class RemoveUnreachableCode(strict: Boolean) extends Transformer.WithContext.RelationTransformer {
     private def reach(block: Syntax.Block): Set[String] = {
         block.exit.argument match {
-            case Expression.Pair(_, Expression.Literal(Basic.Int(constant_condition))) => block.exit.labels.lift(constant_condition).map(_.name).toSet
+            case Expression.Pair(_, Expression.Literal(Value.Int(constant_condition))) => block.exit.labels.lift(constant_condition).map(_.name).toSet
             case _ => block.exit.labels.map(_.name).toSet
         }
     }

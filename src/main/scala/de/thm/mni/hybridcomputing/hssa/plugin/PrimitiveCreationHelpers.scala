@@ -7,26 +7,26 @@ import de.thm.mni.hybridcomputing.hssa.interpretation.Value
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.reversibility.Direction
 
-object BuiltinCreationHelpers {
+object PrimitiveCreationHelpers {
     type InstantiatedFunction = Value => Value
     type Function = Value => InstantiatedFunction
     
     def int_parameter(f: Int => Value => Value): Function = {
-        case Basic.Int(i) => f(i)
+        case Value.Int(i) => f(i)
     }
     
     def unit_input(f: => Value): InstantiatedFunction = {
-        case Basic.Unit => f
+        case Value.Unit => f
     }
     
     def consumeIf(predicate: Value => Boolean, error: => LanguageError = ReversibilityViolation("consumed value did not match expectation")): InstantiatedFunction = {
-        case v if predicate(v) => Basic.Unit
+        case v if predicate(v) => Value.Unit
         case _ => error.raise()
     }
     def consume(expected_value: Value, error: => LanguageError = ReversibilityViolation(s"consumed value did not match expected value")): InstantiatedFunction = consumeIf(_ == expected_value)
     
     def produce(value: Value): InstantiatedFunction = {
-        case Basic.Unit => value
+        case Value.Unit => value
     }
     
     def produce_consume(value: Value): Direction => InstantiatedFunction = {
@@ -40,9 +40,9 @@ object BuiltinCreationHelpers {
                  typ: Types.ParameterizedRelation = Types.ParameterizedRelation(new Types.MetaVariable, new Types.MetaVariable, new Types.MetaVariable),
                ) = Language.Plugin.Builtin(Value.BuiltinRelation(name, implementation), typ)
     
-    def bool(b: Boolean): Value = if (b) Basic.Int(1) else Basic.Int(0)
-    def wrap(i: Int): Value = Basic.Int(i)
-    def wrap(u: Unit): Value = Basic.Unit
+    def bool(b: Boolean): Value = if (b) Value.Int(1) else Value.Int(0)
+    def wrap(i: Int): Value = Value.Int(i)
+    def wrap(u: Unit): Value = Value.Unit
     def wrap(i: (Value, Value)): Value = Value.Pair(i._1, i._2)
     
     trait RuntimeCheckable[T]:
@@ -50,13 +50,13 @@ object BuiltinCreationHelpers {
     
     given RuntimeCheckable[Int] with
         def check(value: Value): Int = value match {
-            case Basic.Int(i) => i
+            case Value.Int(i) => i
             case _ => ReversibilityViolation(s"Expected int, got ${value.getClass.getSimpleName}").raise()
         }
     
     given RuntimeCheckable[Unit] with
         def check(value: Value): Unit = value match {
-            case Basic.Unit => ()
+            case Value.Unit => ()
             case _ => ReversibilityViolation(s"Expected unit, got ${value.getClass.getSimpleName}").raise()
         }
     given RuntimeCheckable[Value] with

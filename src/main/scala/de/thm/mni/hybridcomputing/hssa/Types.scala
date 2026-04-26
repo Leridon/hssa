@@ -1,7 +1,6 @@
 package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 
 import scala.collection.mutable
 import scala.compiletime.uninitialized
@@ -86,7 +85,7 @@ object Types {
         helper(t)
     }
     
-    val Unit: Literal = Literal(Basic.Unit)
+    val Unit: Literal = Literal(Value.Unit)
     
     class UnificationError
     

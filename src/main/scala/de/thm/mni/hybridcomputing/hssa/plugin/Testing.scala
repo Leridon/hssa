@@ -2,7 +2,7 @@ package de.thm.mni.hybridcomputing.hssa.plugin
 
 import de.thm.mni.hybridcomputing.hssa.{HSSAError, Language}
 import de.thm.mni.hybridcomputing.hssa.Language.Plugin
-import de.thm.mni.hybridcomputing.hssa.plugin.BuiltinCreationHelpers.*
+import de.thm.mni.hybridcomputing.hssa.plugin.PrimitiveCreationHelpers.*
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value
 import de.thm.mni.hybridcomputing.hssa.interpretation.Value
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity

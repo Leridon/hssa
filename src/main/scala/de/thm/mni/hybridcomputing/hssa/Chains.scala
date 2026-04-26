@@ -2,7 +2,6 @@ package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.Program
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.plugin.Basic
 import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.reversibility.Direction
@@ -34,7 +33,7 @@ class Chains(val language: Language) {
         TypeChecking(language).check(BindingTree.init(prog)).raiseIfNonEmpty()
     }
     
-    def checkAndExecute(prog: Program, relation_name: String = "main", instance_argument: Value = Basic.Unit, relation_argument: Value = Basic.Unit, direction: Direction = Direction.FORWARDS): Value = {
+    def checkAndExecute(prog: Program, relation_name: String = "main", instance_argument: Value = Value.Unit, relation_argument: Value = Value.Unit, direction: Direction = Direction.FORWARDS): Value = {
         check(prog)
         
         Interpretation(language).interpret(prog, relation_name, instance_argument, relation_argument, direction)
@@ -44,7 +43,7 @@ class Chains(val language: Language) {
         def run(name: String, direction: Direction): Unit = {
             print(s"Running '${name}' ${direction}: ")
             
-            Try(Interpretation(language).interpret(prog, name, Basic.Unit, Basic.Unit, direction)) match
+            Try(Interpretation(language).interpret(prog, name, Value.Unit, Value.Unit, direction)) match
                 case Failure(exception) =>
                     println("Failed")
                     
