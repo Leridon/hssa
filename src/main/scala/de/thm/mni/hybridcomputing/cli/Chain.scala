@@ -116,7 +116,7 @@ object Parsing {
             string ~~ EQUAL ~~ simple_arg ^^ { case s ~ arg => NamedArgument(s, arg) }
               | simple_arg
 
-        protected def string: Parser[String] = valueToken(STRING)(classOf[String])
+        protected def string: Parser[String] = valueToken[String](STRING)
 
         def fun: Parser[Fun] = string ~~ rep(arg) ^^ { case s ~ args => Fun(s, args) }
     }

@@ -45,13 +45,13 @@ object Parsing {
         
         override def skipTokens: Set[Lexing.Tokens.TokenClass] = Set(WHITESPACE, BLOCKCOMMENT, LINECOMMENT, LINEBREAK)
         
-        protected def ident: P[Syntax.Identifier] = valueToken(IDENT)(classOf[String]) ^ Syntax.Identifier.apply
+        protected def ident: P[Syntax.Identifier] = valueToken[String](IDENT) ^ Syntax.Identifier.apply
         
         def simple_expresion: P[Syntax.Expression] = {
             ident ^ Syntax.Expression.Variable.apply
               | posi(LPAREN ~~ expression ~~ RPAREN)
               | LBRACK ~~ expression ~~ expression ~~ expression ~~ RBRACK ^ Expression.Application.apply
-              | valueToken(INTLIT)(classOf[Integer]).map(i => Expression.Literal(i.intValue()))
+              | valueToken[Integer](INTLIT).map(i => Expression.Literal(i.intValue()))
               | TILDE ~~ simple_expresion ^ Syntax.Expression.Invert.apply
               | APOSTROPH ~~ simple_expresion ^ Syntax.Expression.Duplicate.apply
               | WILDCARD ^ (() => Syntax.Expression.Wildcard())

@@ -2,6 +2,7 @@ package de.thm.mni.hybridcomputing.util.parsing
 
 import scala.annotation.targetName
 import scala.language.implicitConversions
+import scala.reflect.ClassTag
 import scala.util.parsing.combinator.Parsers
 
 trait ParserUtilities[TokenClass] extends Parsers {
@@ -61,9 +62,9 @@ trait ParserUtilities[TokenClass] extends Parsers {
     
     implicit def acc(token: TokenClass): IgnoredParser = skip ~~ ignore(super.acceptIf(_.typ == token)(elem => s"Expected $token, but got $elem"))
     
-    def valueToken[T](token: TokenClass)(implicit c: Class[T]): Parser[T] = {
+    def valueToken[T](token: TokenClass)(implicit c: ClassTag[T]): Parser[T] = {
         skip ~~ acceptMatch(token.toString, {
-            case Token(t, Some(i), _) if t == token && c.isInstance(i) => i.asInstanceOf[T]
+            case Token(t, Some(i), _) if t == token && c.runtimeClass.isInstance(i) => i.asInstanceOf[T]
         }) | (in => Failure(s"${token.toString} expected, but got ${in.first.typ}", in))
     }
     

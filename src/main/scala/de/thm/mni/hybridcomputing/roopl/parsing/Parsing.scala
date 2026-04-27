@@ -38,15 +38,15 @@ object Parsing {
         override def skipTokens: Set[Lexing.Tokens.TokenClass] = Set(WHITESPACE, BLOCKCOMMENT, LINECOMMENT, LINEBREAK)
 
         def variableIdent: P[Syntax.VariableIdentifier] = posi {
-            valueToken(IDENT)(classOf[String]) ^^ Syntax.VariableIdentifier.apply
+            valueToken[String](IDENT) ^^ Syntax.VariableIdentifier.apply
         }
 
         def classIdent: P[Syntax.ClassIdentifier] = posi {
-            valueToken(IDENT)(classOf[String]) ^^ Syntax.ClassIdentifier.apply
+            valueToken[String](IDENT) ^^ Syntax.ClassIdentifier.apply
         }
 
         def methodIdent: P[Syntax.MethodIdentifier] = posi {
-            valueToken(IDENT)(classOf[String]) ^^ Syntax.MethodIdentifier.apply
+            valueToken[String](IDENT) ^^ Syntax.MethodIdentifier.apply
         }
 
         def program: P[Syntax.Program] = posi {
@@ -62,8 +62,8 @@ object Parsing {
         }
 
         def dataType: P[Syntax.DataType] = posi {
-            INTEGER ~~ LBRACK ~~ RBRACK ^ Syntax.DataType.IntegerArray
-            | INTEGER ^ Syntax.DataType.Integer
+            INTEGER ~~ LBRACK ~~ RBRACK ^ Syntax.DataType.IntegerArray.apply
+            | INTEGER ^ Syntax.DataType.Integer.apply
             | classIdent ~~ LBRACK ~~ RBRACK ^^ Syntax.DataType.ClassArray.apply
             | classIdent ^^ Syntax.DataType.Class.apply
         }
@@ -101,7 +101,7 @@ object Parsing {
             | UNCALL ~~ methodIdent ~~ LPAR ~~! repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.UncallLocal.apply
             | CALL ~~ variableLiteral ~~ DBLCOLON ~~! methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Call.apply
             | UNCALL ~~ variableLiteral ~~ DBLCOLON ~~! methodIdent ~~ LPAR ~~ repsep(variableIdent, COMMA) ~~ RPAR ^^ Syntax.Statement.Uncall.apply
-            | SKIP ^ Syntax.Statement.Skip
+            | SKIP ^ Syntax.Statement.Skip.apply
             | (in => Failure(s"Expected statement but got ${in.first}", in))
         }
 
@@ -208,7 +208,7 @@ object Parsing {
         
 
         def simple_expression: P[Syntax.Expression] =
-            valueToken(INTLIT)(classOf[Integer]) ^ (i => Syntax.Expression.Literal.apply(i.intValue()))
+            valueToken[Integer](INTLIT) ^ (i => Syntax.Expression.Literal.apply(i.intValue()))
             | variableLiteral ^ Syntax.Expression.Reference.apply
             | NIL ^ Syntax.Expression.Nil
             | LPAR ~~ expression ~~ RPAR
