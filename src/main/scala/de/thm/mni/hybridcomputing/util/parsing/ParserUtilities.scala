@@ -4,8 +4,9 @@ import scala.annotation.targetName
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.util.parsing.combinator.Parsers
+import scala.util.parsing.combinator.ImplicitConversions
 
-trait ParserUtilities[TokenClass] extends Parsers {
+trait ParserUtilities[TokenClass] extends Parsers with ImplicitConversions {
     override type Elem = Token[TokenClass]
     
     def skipTokens: Set[TokenClass] = Set()
@@ -40,6 +41,11 @@ trait ParserUtilities[TokenClass] extends Parsers {
               })
         
         case in => self(in).map(f)
+    }
+
+    def chainr1[T](p: => Parser[T], q: => Parser[(T, T) => T]): Parser[T]
+    = p ~ rep(q ~ p) ^^ {
+        case x ~ xs => xs.foldRight(x) { case (f ~ a, b) => f(a, b) }
     }
     
     extension [U](self: Parser[U]) {
