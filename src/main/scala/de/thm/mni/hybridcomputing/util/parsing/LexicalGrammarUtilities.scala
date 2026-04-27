@@ -59,4 +59,6 @@ trait LexicalGrammarUtilities[T] extends RegexParsers {
     def eof_token: T
     
     final def eof: Token[T] = new Token[T](eof_token, None, "")
+
+    def getTokenReader(file: SourceFile): TokenReader[T] = TokenReader(file, file.reader, this)
 }

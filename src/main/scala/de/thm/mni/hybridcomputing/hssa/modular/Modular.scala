@@ -67,7 +67,7 @@ object Modular {
                 val file = next.toAbsolutePath
 
                 if (!programs.exists(_.program.position.file.path.exists(_ == file))) {
-                    val program = parse(hssa.parsing.Lexing.lex(SourceFile.fromFile(file)))
+                    val program = parse(hssa.parsing.Lexing.LexicalGrammar.getTokenReader(SourceFile.fromFile(file)))
 
                     programs.addOne(program)
 
@@ -100,7 +100,7 @@ object Modular {
 
     class Chains(language: hssa.Language) {
         def parse(root_file: Path): Syntax.ProgramWithImports = {
-            Parsing(language).parse(hssa.parsing.Lexing.lex(SourceFile.fromFile(root_file)))
+            Parsing(language).parse(hssa.parsing.Lexing.LexicalGrammar.getTokenReader(SourceFile.fromFile(root_file)))
         }
 
         def parseProject(root_file: Path): Syntax.Program = {

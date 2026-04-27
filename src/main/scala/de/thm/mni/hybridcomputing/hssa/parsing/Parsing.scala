@@ -2,7 +2,7 @@ package de.thm.mni.hybridcomputing.hssa.parsing
 
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Expression, Program}
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.Tokens
+import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.{LexicalGrammar, Tokens}
 import de.thm.mni.hybridcomputing.hssa.{Language, Syntax}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing
@@ -14,7 +14,7 @@ import scala.util.parsing.input.Reader
 case class Parsing(language: Language = Language.Canon) {
     val grammar = new Parsing.Grammar(language)
     
-    def parseLiteral(string: String): Value = Interpretation(language).evaluate(this.grammar.expression(Lexing.lex(SourceFile.fromString(string))).get, Interpretation.ValueContext(None))
+    def parseLiteral(string: String): Value = Interpretation(language).evaluate(this.grammar.expression(LexicalGrammar.getTokenReader(SourceFile.fromString(string))).get, Interpretation.ValueContext(None))
     
     def parse(token_reader: Parsing.TokenReader): Program = {
         this.grammar.program(token_reader) match {
@@ -29,7 +29,7 @@ case class Parsing(language: Language = Language.Canon) {
     }
     
     def parseBlock(input: String): Syntax.Block = {
-        this.grammar.block(Lexing.lex(SourceFile.fromString(input))).get
+        this.grammar.block(Lexing.LexicalGrammar.getTokenReader(SourceFile.fromString(input))).get
     }
 }
 

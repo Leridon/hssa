@@ -39,7 +39,7 @@ object LocalConstantPropagation extends Transformer.WithContext.BlockTransformer
         def staticValue(context: BindingTree.Block): Value = self match
             case Expression.Literal(value) => Value.Int(value)
             case Expression.Variable(name) =>
-                val Some(BindingTree.GlobalBuiltinVariable(_, _, builtin)) = context.lookup(name.name)
+                val BindingTree.GlobalBuiltinVariable(_, _, builtin) = context.lookup(name.name).get
                 
                 builtin.value
             case Expression.Pair(a, b) => Value.Pair(a.staticValue(context), b.staticValue(context))

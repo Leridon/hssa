@@ -197,6 +197,4 @@ object Lexing {
               ">" ^^^ symbol(GREATERTHAN) |
               "=" ^^^ symbol(EQUAL)
     }
-    
-    def lex(file: SourceFile): TokenReader[Tokens.TokenClass] = TokenReader(file, file.reader, LexicalGrammar)
 }

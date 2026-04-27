@@ -2,7 +2,7 @@ package de.thm.mni.hybridcomputing.cli.functions
 
 import de.thm.mni.hybridcomputing.cli.{CliChain, Evaluation}
 import de.thm.mni.hybridcomputing.hssa
-import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation
+import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
 import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
 import de.thm.mni.hybridcomputing.hssa.{BindingTree, Language, TypeChecking, Wellformedness}
 import de.thm.mni.hybridcomputing.util.reversibility.Direction.FORWARDS
@@ -61,7 +61,7 @@ object HSSAFunctions {
                         )._1)
                     case None =>
                         CliChain.Value.HSSA(hssa.parsing.Parsing(lang).parse(
-                            hssa.parsing.Lexing.lex(f.asSourceFile)
+                            hssa.parsing.Lexing.LexicalGrammar.getTokenReader(f.asSourceFile)
                         ))
                 }
             

@@ -62,7 +62,7 @@ object Lexing {
         
         import Tokens.TokenClass.*
         
-        def eof_token = EOF
+        def eof_token: Tokens.TokenClass = EOF
         
         def token: Parser[TokenValue] =
             "[a-zA-Z_.][a-zA-Z_0-9.]*".r ^^ {
@@ -90,6 +90,4 @@ object Lexing {
               "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
               "'.'".r ^^ (l => symbol(INTLIT, l.charAt(1).toInt))
     }
-    
-    def lex(file: SourceFile): TokenReader[Tokens.TokenClass] = TokenReader(file, file.reader, LexicalGrammar)
 }
