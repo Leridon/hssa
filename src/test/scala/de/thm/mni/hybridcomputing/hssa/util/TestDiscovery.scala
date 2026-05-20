@@ -55,7 +55,7 @@ object TestDiscovery {
     case class ProgramTestCase(file: Path) extends TestCase {
         lazy val source_file: SourceFile = SourceFile.fromFile(file)
         lazy val expectations: ExpectationSummary = {
-            val start_comments = Lexing.lex(source_file).readAll().takeWhile(t => TokenClass.whitespace.contains(t.typ))
+            val start_comments = Lexing.LexicalGrammar.getTokenReader(source_file).readAll().takeWhile(t => TokenClass.whitespace.contains(t.typ))
             
             val expectations = start_comments.flatMap(comment => ProgramExpecation.parse(comment.lexeme))
             
@@ -66,7 +66,7 @@ object TestDiscovery {
             
             ExpectationSummary(expectations ++ defaults.toList)
         }
-        lazy val program_with_imports = Modular.Parsing(Language.Canon).parse(Lexing.lex(source_file))
+        lazy val program_with_imports = Modular.Parsing(Language.Canon).parse(Lexing.LexicalGrammar.getTokenReader(source_file))
         lazy val (modular_program, parsing_errors) = Modular.Parsing(Language.Canon).parseProject(file.toAbsolutePath)
         lazy val linked = Modular.link(modular_program)
         lazy val binding_tree = BindingTree.init(linked)

@@ -1,9 +1,9 @@
 package de.thm.mni.hybridcomputing.hssa
 
+import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Syntax.Program
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
 import de.thm.mni.hybridcomputing.hssa.modular.Modular
-import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.lex
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.util.TestDiscovery
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
@@ -65,7 +65,7 @@ class InterpretationTests extends AnyWordSpec with Matchers {
     }
     
     "Self-Interpretation" should {
-        val self_interpreter = Parsing(Language.Canon).parse(lex(SourceFile.fromFile(Paths.get("programs/hssa/selfinterpreter.hssa"))))
+        val self_interpreter = Parsing(Language.Canon).parse(hssa.parsing.Lexing.LexicalGrammar.getTokenReader(SourceFile.fromFile(Paths.get("programs/hssa/selfinterpreter.hssa"))))
         
         TestDiscovery.all_relation_tests.foreach(test => {
             

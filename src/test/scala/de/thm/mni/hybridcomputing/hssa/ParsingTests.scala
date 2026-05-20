@@ -5,10 +5,10 @@ import de.thm.mni.hybridcomputing.hssa.parsing.Lexing
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 import org.scalatest.matchers.should.Matchers.shouldEqual
 
-class ParsingTests extends org.scalatest.flatspec.AnyFlatSpec{
+class ParsingTests extends org.scalatest.flatspec.AnyFlatSpec {
     
     def parse(input: String): Syntax.ProgramWithImports = {
-        Parsing(Language.Canon).parse(Lexing.lex(SourceFile.fromString(input)))
+        Parsing(Language.Canon).parse(Lexing.LexicalGrammar.getTokenReader(SourceFile.fromString(input)))
     }
     
     "Parsing" should "work for empty programs" in {
