@@ -4,37 +4,50 @@ import de.thm.mni.hybridcomputing.roopl
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.AbortDueToErrors
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.matchers.should.Matchers.{equal, shouldEqual, shouldNot}
+import org.scalatest.flatspec.AnyFlatSpec
+import org.scalatest.matchers.should.Matchers.*
 
 import java.nio.file.Paths
-import scala.language.postfixOps
 
-class WellformednessTests extends org.scalatest.flatspec.AnyFlatSpec {
-    def check(path: String): Seq[LanguageError] = {
+class WellformednessTests extends AnyFlatSpec {
+
+    private val testDir = "programs/roopl/tests"
+
+    private case class TestFile(name: String, shouldAccept: Boolean)
+
+    private val testFiles = Seq(
+        TestFile("inherited_field.roopl", true),
+        TestFile("parameterless_call.roopl", false),
+        TestFile("undefined_type_field.roopl", false),
+        TestFile("undefined_type_local_variable.roopl", false),
+    )
+
+    private def check(path: String): Seq[LanguageError] =
         try {
             val file = SourceFile.fromFile(Paths.get(path))
-            val program = roopl.parsing.Parsing.parse(roopl.parsing.Lexing.LexicalGrammar.getTokenReader(file))
+
+            val program =
+                roopl.parsing.Parsing.parse(
+                    roopl.parsing.Lexing.LexicalGrammar.getTokenReader(file)
+                )
 
             val cg = roopl.wellformedness.ClassGraph.check(program)
 
             roopl.wellformedness.Wellformedness.check(cg)
 
-            Seq()
+            Seq.empty
         } catch {
             case e: AbortDueToErrors => e.errors
         }
-    }
 
-    "Roopl Wellformedness" should "accept inherited_field.roopl" in {
-        check("programs/roopl/tests/inherited_field.roopl").length shouldEqual 0
-    }
+    for (TestFile(name, shouldAccept) <- testFiles) {
+        it should s"${if (shouldAccept) "accept" else "reject"} $name" in {
+            val errors = check(s"$testDir/$name")
 
-    it should "reject parameterless_call.roopl" in {
-        check("programs/roopl/tests/parameterless_call.roopl").length shouldNot equal(0)
-    }
-
-    it should "reject undefined_type.roopl" in {
-        check("programs/roopl/tests/undefined_type.roopl").length shouldNot equal(0)
+            if (shouldAccept)
+                errors shouldBe empty
+            else
+                errors should not be empty
+        }
     }
 }

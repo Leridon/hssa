@@ -3,7 +3,6 @@ package de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Syntax.Program
 import de.thm.mni.hybridcomputing.hssa.interpretation.{Interpretation, Value}
-import de.thm.mni.hybridcomputing.hssa.modular.Modular
 import de.thm.mni.hybridcomputing.hssa.parsing.Parsing
 import de.thm.mni.hybridcomputing.hssa.util.TestDiscovery
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
