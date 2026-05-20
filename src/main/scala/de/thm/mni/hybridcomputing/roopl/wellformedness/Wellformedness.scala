@@ -223,18 +223,23 @@ object Wellformedness {
     private def checkCall(statement: Call | Uncall, scope: MethodScope, method: Method, callee: Option[VariableReference], parameters: Seq[Option[Variable]], errors: LanguageError.Collector): Unit = {
         val isLocalCall = callee.isEmpty
 
-        parameters.zip(method.parameters).foreach(argpair => 
-            argpair match
-                // Check that all arg variables exist
-                case (None, _) => errors.add(Errors.ArgumentDoesntExist(statement))
-                case (Some(arg: TypedVariable), parameter: TypedVariable) =>
-                    // Check that all arg variables type is equal to or a subtype of the expected parameter
-                    if !arg.typ.isA(parameter.typ) then errors.add(Errors.BadTyping(parameter.typ, arg.typ, statement))
-                    // Check that fields are not passed to local method
-                    if isLocalCall && scope.clazz.fields.contains(arg) then errors.add(Errors.FieldLocalCallArg(arg, statement))
-                // Variables can't be UntypedVariables anymore
-                case _ => ???
-        )
+        if(parameters.length != method.parameters.length) {
+            errors.add(Errors.ArgumentCountMismatch(statement, method))
+            return
+        }
+
+        parameters.zip(method.parameters).foreach {
+            // Check that all arg variables exist
+            case (None, _) => errors.add(Errors.ArgumentDoesntExist(statement))
+            case (Some(arg: TypedVariable), parameter: TypedVariable) =>
+                // Check that all arg variables type is equal to or a subtype of the expected parameter
+                if !arg.typ.isA(parameter.typ) then errors.add(Errors.BadTyping(parameter.typ, arg.typ, statement))
+                // Check that fields are not passed to local method
+                if isLocalCall && scope.clazz.fields.contains(arg) then errors.add(Errors.FieldLocalCallArg(arg, statement))
+            // Variables can't be UntypedVariables anymore
+            case _ => ???
+        }
+        
         // Check that all arg variables are different
         if parameters.filter(_.isDefined).map(_.get).distinct.length != parameters.length then
             errors.add(Errors.NonUniqueArgs(statement))
@@ -377,5 +382,6 @@ object Wellformedness {
         case class ArgumentDoesntExist(usage: Statement) extends RooplError(Error, s"argument does not exist.", usage.position)
         case class NonUniqueArgs(usage: Statement) extends RooplError(Error, s"arguments passed to method must be unique.", usage.position)
         case class FieldLocalCallArg(variable: Variable, usage: Statement) extends RooplError(Error, s"variable ${variable.name} passed to local method is a field of this class. This violates reversibility.", usage.position)
+        case class ArgumentCountMismatch(call: AnyCall, method: Method) extends RooplError(Error, s"argument count mismatch: Expected ${method.parameters.length} arguments, but got ${call.args.length}.", call.position)
     }
 }

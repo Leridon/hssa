@@ -1,0 +1,22 @@
+class S
+  int f1
+  method a1()
+    skip
+
+  method a2(int x)
+    skip
+
+class T inherits S
+  int f2
+  method a2(int x)
+    f1+=1
+
+class Program
+    S t
+
+    method main()
+      new S t
+
+      call t::a1()
+      call t::a2()      // Should be ill-formed
+      delete S t

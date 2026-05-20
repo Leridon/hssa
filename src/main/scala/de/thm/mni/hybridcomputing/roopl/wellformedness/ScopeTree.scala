@@ -5,7 +5,8 @@ import de.thm.mni.hybridcomputing.util.MultiMap.*
 import de.thm.mni.hybridcomputing.roopl.Syntax
 import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 import de.thm.mni.hybridcomputing.roopl.Syntax.VariableIdentifier
-import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing.{Type, NonIntType}
+import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.ScopeTreeStatement
+import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing.{NonIntType, Type}
 import de.thm.mni.hybridcomputing.util.parsing.Positioned
 
 object ScopeTree {
@@ -227,8 +228,13 @@ object ScopeTree {
     case class Delete(syntaxType: Syntax.ObjectType, name: VariableReference) extends ScopeTreeStatement
     case class Copy(syntaxType: Syntax.ObjectType, from: VariableReference, to: VariableReference) extends ScopeTreeStatement
     case class Uncopy(syntaxType: Syntax.ObjectType, from: VariableReference, to: VariableReference) extends ScopeTreeStatement
-    case class Call(callee: Option[VariableReference], method: Option[Method], args: Seq[Option[Variable]]) extends ScopeTreeStatement
-    case class Uncall(callee: Option[VariableReference], method: Option[Method], args: Seq[Option[Variable]]) extends ScopeTreeStatement
+    sealed trait AnyCall extends ScopeTreeStatement{
+        def callee: Option[VariableReference]
+        def method: Option[Method]
+        def args: Seq[Option[Variable]]
+    }
+    case class Call(override val callee: Option[VariableReference], override val method: Option[Method], override val args: Seq[Option[Variable]]) extends AnyCall
+    case class Uncall(override val callee: Option[VariableReference], override val method: Option[Method], override val args: Seq[Option[Variable]]) extends AnyCall
 
     sealed abstract class Expression extends Positioned
     object Expression {
