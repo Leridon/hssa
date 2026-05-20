@@ -1,0 +1,15 @@
+class Hero
+  int power
+  method eat(int i)
+    power += i
+
+  method fly()
+    power -= 1
+
+class Superhero inherits Hero
+  method eat(int i)
+    power += i
+
+class Program
+    method main()
+        skip

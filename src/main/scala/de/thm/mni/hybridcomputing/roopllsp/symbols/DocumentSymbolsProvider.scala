@@ -18,7 +18,7 @@ object DocumentSymbolsProvider {
     
     for (cl <- program.classes) {
       val classMembers : util.List[DocumentSymbol] = new util.ArrayList[DocumentSymbol]()
-      for (field <- cl.fields) {
+      for (field <- cl.all_fields) {
         classMembers.add(DocumentSymbol(field.name.name, SymbolKind.Field, Helper.posToRange(field.definition), 
           Helper.posToRange(field.name.position)))
       }

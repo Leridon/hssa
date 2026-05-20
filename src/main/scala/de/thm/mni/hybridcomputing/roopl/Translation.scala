@@ -23,7 +23,6 @@ import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Method
 import de.thm.mni.hybridcomputing.hssa.Syntax.Statement
 import de.thm.mni.hybridcomputing.hssa.util.BlockBuilder
 import de.thm.mni.hybridcomputing.roopl.wellformedness.Translatable
-import de.thm.mni.hybridcomputing.roopl.wellformedness.Translatable.TypedVariable
 import de.thm.mni.hybridcomputing.roopl.wellformedness.Translatable.Types
 
 object Translation {
@@ -161,17 +160,17 @@ object Translation {
                 friend := add ref := 1
              */
             
-            val initFields = method.parent.fields.zipWithIndex.map((field, index) => 
+            val initFields = method.parent.all_fields.zipWithIndex.map((field, index) =>
                 field :== ("add", thisRef) := index + 1
             ).prepended((mmem, thisRef) :== ("mmem.read", _this) := mmem)
 
-            method.parent.fields.foreach(relation.locals.push)
+            method.parent.all_fields.foreach(relation.locals.push)
             relation.blockBuilder.adds(initFields)
 
             method.translatableBody.foreach(generateStatement)
 
             relation.blockBuilder.adds(invert(initFields))
-            method.parent.fields.foreach(_ => relation.locals.pop())
+            method.parent.all_fields.foreach(_ => relation.locals.pop())
             
             relation.blockBuilder.finish(->("end") := (mmem, 0))
             relation.builder.compile()
@@ -215,7 +214,7 @@ object Translation {
 
             // Allocate #fields + 1 slots (vtable) in memory for the new object
             block.adds(
-                (mmem, anonObj) :== ("mmem.allocate", clazz.fields.size + 1) := mmem,
+                (mmem, anonObj) :== ("mmem.allocate", clazz.all_fields.size + 1) := mmem,
                 table :== ("dup", vtable(clazz)) := (),
                 (mmem, 0) :== ("mmem.readwrite", anonObj) := (mmem, table)
             )
@@ -530,7 +529,7 @@ object Translation {
                 case Some(index) => indexedAddress(ref.variable, index)
         }
 
-        private def indexedAddress(array: TypedVariable, index: Translatable.Expression): (Seq[Assignment], String) = {
+        private def indexedAddress(array: Variable, index: Translatable.Expression): (Seq[Assignment], String) = {
             val indexVal = "_index"
             val address = relation.nextAddrVar()
             val (compute, tempVar) = generateExpression(index)

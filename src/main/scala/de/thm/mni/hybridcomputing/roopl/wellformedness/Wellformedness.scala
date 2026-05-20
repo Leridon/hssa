@@ -7,7 +7,6 @@ import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity.{Error, War
 import de.thm.mni.hybridcomputing.roopl.Syntax
 import de.thm.mni.hybridcomputing.util.parsing.Positioned
 import de.thm.mni.hybridcomputing.roopl.Syntax.VariableIdentifier
-import de.thm.mni.hybridcomputing.roopl.wellformedness.Translatable.TypedVariable
 import de.thm.mni.hybridcomputing.roopl.wellformedness.Translatable.BadStatement
 
 object Wellformedness {
@@ -24,16 +23,17 @@ object Wellformedness {
         scopes.classes.foreach(c => Wellformedness.check(c, collector))
         collector.raiseIfNonEmpty()
 
-        scopes.classes.foreach(_.inheritFields())
 
         scopes
     }
 
     private def check(context: Class, errors: LanguageError.Collector): Unit = {
         // No field overwrite
-        context.fields.foreach(field =>
+        context.own_fields.foreach(field =>
             context.superClasses().foreach(s =>
-                if s.fields.exists(_.name == field.name) then errors.add(Errors.FieldOverwrite(s.name, field))))
+                if s.own_fields.exists(_.name == field.name) then {
+                    errors.add(Errors.FieldOverwrite(s.name, field))
+                }))
 
         context.methods.foreach(check(_, errors))
     }
@@ -52,7 +52,7 @@ object Wellformedness {
         statement match
             case block: Block => 
                 block.translatableBody = block.initialBody.map(check(_, block, errors))
-                val varType = block.variable.asInstanceOf[TypedVariable].typ
+                val varType = block.variable.typ
                 expectExpressionType(varType, block.varCompute, scope, errors) match
                     case None => ()
                     case Some(exp) => block.translatableCompute = exp
@@ -205,7 +205,7 @@ object Wellformedness {
         checkCall(statement, scope, method, statement.callee, statement.args, errors)
         
         // ??? Todo fix flatMap and get
-        Translatable.Call(statement.callee.flatMap(mapVarRef), method, statement.args.map(_.get.asInstanceOf[TypedVariable]))
+        Translatable.Call(statement.callee.flatMap(mapVarRef), method, statement.args.map(_.get))
     }
 
     private def check(statement: Uncall, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
@@ -217,7 +217,7 @@ object Wellformedness {
         checkCall(statement, scope, method, statement.callee, statement.args, errors)
 
         // ??? Todo fix flatMap and get
-        Translatable.Uncall(statement.callee.flatMap(mapVarRef), method, statement.args.map(_.get.asInstanceOf[TypedVariable]))
+        Translatable.Uncall(statement.callee.flatMap(mapVarRef), method, statement.args.map(_.get))
     }
 
     private def checkCall(statement: Call | Uncall, scope: MethodScope, method: Method, callee: Option[VariableReference], parameters: Seq[Option[Variable]], errors: LanguageError.Collector): Unit = {
@@ -231,15 +231,15 @@ object Wellformedness {
         parameters.zip(method.parameters).foreach {
             // Check that all arg variables exist
             case (None, _) => errors.add(Errors.ArgumentDoesntExist(statement))
-            case (Some(arg: TypedVariable), parameter: TypedVariable) =>
+            case (Some(arg), parameter) =>
                 // Check that all arg variables type is equal to or a subtype of the expected parameter
                 if !arg.typ.isA(parameter.typ) then errors.add(Errors.BadTyping(parameter.typ, arg.typ, statement))
                 // Check that fields are not passed to local method
-                if isLocalCall && scope.clazz.fields.contains(arg) then errors.add(Errors.FieldLocalCallArg(arg, statement))
+                if isLocalCall && scope.clazz.own_fields.contains(arg) then errors.add(Errors.FieldLocalCallArg(arg, statement))
             // Variables can't be UntypedVariables anymore
             case _ => ???
         }
-        
+
         // Check that all arg variables are different
         if parameters.filter(_.isDefined).map(_.get).distinct.length != parameters.length then
             errors.add(Errors.NonUniqueArgs(statement))
@@ -252,8 +252,8 @@ object Wellformedness {
             errors.add(Errors.BadMethodSignature(method.name, superMethod.parent.name))
             return
         
-        method.parameters.zipWithIndex.map((param, index) => (param.asInstanceOf[TypedVariable], index)).foreach((param, index) => 
-            val superParam = superMethod.parameters(index).asInstanceOf[TypedVariable]
+        method.parameters.zipWithIndex.map((param, index) => (param, index)).foreach((param, index) =>
+            val superParam = superMethod.parameters(index)
             if param.name != superParam.name then
                 errors.add(Errors.BadMethodSignature(method.name, superMethod.parent.name))
             // If the types are not equal param.typ must be a generalization of superParam.typ, due to contravariance rules
@@ -308,7 +308,7 @@ object Wellformedness {
 
     private def mapVarRef(reference: VariableReference): Option[Translatable.VariableReference] = {
         reference.variable match
-            case Some(variable: TypedVariable) =>
+            case Some(variable) =>
                 reference.index match 
                     case None => Some(Translatable.VariableReference(variable, None))
                     case Some(index) => mapExpression(index) match

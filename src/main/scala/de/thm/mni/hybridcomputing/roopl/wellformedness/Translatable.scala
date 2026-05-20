@@ -10,12 +10,10 @@ import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Statement
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Variable
 
 object Translatable {
-    case class TypedVariable(override val name: VariableIdentifier, override val owner: Scope, override val definition: SourcePosition, typ: Typing.Type) extends Variable(name, owner, definition)
-
     type StatementNode = WellformedStatement | Block
 
     // If variable is None, an error will be thrown during wellformedness checking
-    case class VariableReference(variable: TypedVariable, index: Option[Expression])
+    case class VariableReference(variable: Variable, index: Option[Expression])
 
     // Semantic conversion of statements, this simplifies further evaluation because the Syntax objects are not well suited for semantic analysis
     sealed abstract class WellformedStatement extends Statement

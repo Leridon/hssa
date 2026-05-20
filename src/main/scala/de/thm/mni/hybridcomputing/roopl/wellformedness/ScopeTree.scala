@@ -9,10 +9,14 @@ import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.ScopeTreeStatem
 import de.thm.mni.hybridcomputing.roopl.wellformedness.Typing.{NonIntType, Type}
 import de.thm.mni.hybridcomputing.util.parsing.Positioned
 
+import scala.compiletime.uninitialized
+
 object ScopeTree {
     trait Scope {
         def program: Program
+
         def lookupVariable(name: VariableIdentifier): Option[Variable]
+
         def clazz: Class
     }
 
@@ -20,10 +24,13 @@ object ScopeTree {
         def method: Method
     }
 
-    abstract class Variable(val name: VariableIdentifier, val owner: Scope, val definition: SourcePosition)
-    // We keep the syntax tree type as well as the semantic type as this heavily simplifies usage of our data structures
-    case class UntypedVariable(override val name: VariableIdentifier, override val definition: SourcePosition, override val owner: Scope, typ: Syntax.DataType) extends Variable(name, owner, definition)
+    class Variable(val name: VariableIdentifier, val owner: Scope, val definition: SourcePosition, val typ_expression: Syntax.DataType) {
+        private var _type: Option[Typing.Type] = None
 
+        def isTyped: Boolean = _type.isDefined
+        def setType(typ: Typing.Type): Unit = _type = Some(typ)
+        def typ: Typing.Type = _type.get
+    }
 
     class Program(val classProgram: ClassGraph.Program) {
         val classes: Seq[Class] = classProgram.classes.valueSet().toSeq.map(c => new Class(this, c))
@@ -34,9 +41,10 @@ object ScopeTree {
     class Class(val parent: Program, val graphClass: ClassGraph.Class) extends Scope {
         val name: Syntax.ClassIdentifier = graphClass.name
 
-        var fields: Seq[Variable] = graphClass.fields.valueSet().toSeq.map(f => UntypedVariable(f.name, f.position, this, f.typ))
+        val own_fields: Seq[Variable] = graphClass.own_fields.valueSet().toSeq.map(f => Variable(f.name, this, f.position, f.typ))
+        lazy val inherited_fields: Seq[Variable] = immediateSuperClass().map(_.all_fields).getOrElse(Seq())
+        lazy val all_fields: Seq[Variable] = inherited_fields ++ own_fields
         val methods: Seq[Method] = graphClass.methods.valueSet().toSeq.map(m => new Method(this, m))
-        var fieldsMerged = false
         var allMethods: Seq[Method] = Seq()
 
         def inheritMethods(): Unit = {
@@ -60,35 +68,30 @@ object ScopeTree {
             allMethods.find(_.name == name)
         }
 
+        def immediateSuperClass(): Option[Class] = graphClass.superClass().flatMap(c => parent.classes.find(cl => cl.name == c.name))
+
         def superClasses(): Seq[Class] = {
-            val superClass: Option[Class] = graphClass.superClass().flatMap(_._2).flatMap(c => parent.classes.find(cl => cl.name == c.name))
+            val superClass: Option[Class] = immediateSuperClass()
             superClass match
                 case None => Seq()
                 case Some(clazz) => clazz +: clazz.superClasses()
         }
 
-        // To be called after wellformedness check. This makes inherited fields available during translation
-        def inheritFields(): Unit = {
-            if superClasses().isEmpty || fieldsMerged then
-                return
-            fieldsMerged = true
-            superClasses().head.inheritFields()
-            fields = superClasses().head.fields ++ fields
-        }
-
         override def program: Program = parent
+
         override def clazz: Class = this
+
         override def lookupVariable(name: VariableIdentifier): Option[Variable] =
-            fields.find(_.name == name).orElse(superClasses().map(_.lookupVariable(name)).find(_.isDefined).flatMap(identity))
+            own_fields.find(_.name == name).orElse(superClasses().map(_.lookupVariable(name)).find(_.isDefined).flatMap(identity))
     }
 
     class Method(val parent: Class, val graphMethod: ClassGraph.Method) extends MethodScope {
         val name: Syntax.MethodIdentifier = graphMethod.name
-        
+
         val parameterOrder = graphMethod.syntax.parameters.map(_.name).zipWithIndex.toMap
-        var parameters: Seq[Variable] = graphMethod.parameters.valueSet().toSeq
-            .map(p => UntypedVariable(p.name, p.position, this, p.typ))
-            .sortBy(v => parameterOrder.getOrElse(v.name, Int.MaxValue))
+        val parameters: Seq[Variable] = graphMethod.parameters.valueSet().toSeq
+          .map(p => Variable(p.name, this, p.position, p.typ))
+          .sortBy(v => parameterOrder.getOrElse(v.name, Int.MaxValue))
         var translatableBody: Seq[Translatable.StatementNode] = Seq()
         // Because statement may reference classes and methods, the initialBody can only be built after the rest of the tree has been initialized
         lazy val initialBody: Seq[StatementNode] = buildStatementNodes(graphMethod.syntax.body, this)
@@ -97,8 +100,11 @@ object ScopeTree {
         def superMethod(): Option[Method] = parent.superClasses().find(c => c.methods.exists(m => m.name == this.name)).flatMap(_.methods.find(_.name == this.name))
 
         override def program: Program = parent.program
+
         override def clazz: Class = parent
+
         override def method: Method = this
+
         override def lookupVariable(name: VariableIdentifier): Option[Variable] =
             parameters.find(_.name == name).orElse(parent.lookupVariable(name))
     }
@@ -109,14 +115,16 @@ object ScopeTree {
                 val varCompute: Expression,
                 val varUncompute: Expression,
                 val statement: Syntax.Statement) extends MethodScope {
-        var variable: Variable = UntypedVariable(varName, varName.position, this, varType)
+        var variable: Variable = Variable(varName, this, varName.position, varType)
         var translatableBody: Seq[Translatable.StatementNode] = Seq()
         var translatableCompute: Translatable.Expression = null
         var translatableUncompute: Translatable.Expression = null
         lazy val initialBody: Seq[StatementNode] = buildStatementNodes(statement, this)
 
         override def program: Program = parent.program
+
         override def clazz: Class = parent.clazz
+
         override def method: Method = parent.method
 
         override def lookupVariable(name: VariableIdentifier): Option[Variable] = {
@@ -140,14 +148,14 @@ object ScopeTree {
             case Syntax.Statement.ObjectBlock(typ, name, statement) =>
                 // Since object blocks are only syntactic sugar we can get rid of them here by transforming them like a local block
                 Block(scope, Syntax.DataType.Class.apply(typ),
-                                    name,
-                                    Expression.Nil,
-                                    Expression.Nil,
-                                    Syntax.Statement.Block(Seq(
-                                        Syntax.Statement.New(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(name)),
-                                        statement,
-                                        Syntax.Statement.Delete(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(name))
-                                    )).setPosition(statement.position))
+                    name,
+                    Expression.Nil,
+                    Expression.Nil,
+                    Syntax.Statement.Block(Seq(
+                        Syntax.Statement.New(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(name)),
+                        statement,
+                        Syntax.Statement.Delete(Syntax.ObjectType.Class(typ), Syntax.VariableReference.Variable(name))
+                    )).setPosition(statement.position))
             case Syntax.Statement.LocalBlock(typ, name, compute, statement, uncompute) =>
                 Block(scope, typ, name, buildExpression(compute, scope), buildExpression(uncompute, scope), statement)
             case Syntax.Statement.Assignment(assignee, op, value) =>
@@ -228,9 +236,11 @@ object ScopeTree {
     case class Delete(syntaxType: Syntax.ObjectType, name: VariableReference) extends ScopeTreeStatement
     case class Copy(syntaxType: Syntax.ObjectType, from: VariableReference, to: VariableReference) extends ScopeTreeStatement
     case class Uncopy(syntaxType: Syntax.ObjectType, from: VariableReference, to: VariableReference) extends ScopeTreeStatement
-    sealed trait AnyCall extends ScopeTreeStatement{
+    sealed trait AnyCall extends ScopeTreeStatement {
         def callee: Option[VariableReference]
+
         def method: Option[Method]
+
         def args: Seq[Option[Variable]]
     }
     case class Call(override val callee: Option[VariableReference], override val method: Option[Method], override val args: Seq[Option[Variable]]) extends AnyCall

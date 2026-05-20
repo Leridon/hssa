@@ -19,7 +19,7 @@ object ClassGraph {
                     if !main.parameters.isEmpty then
                         errors.add(BadMain(main.syntax.parameters))
                 case head :: tail =>
-                    tail.foreach(c => 
+                    tail.foreach(c =>
                         errors.add(MultipleMains(head.clazz.name, c.mainMethod.syntax))
                     )
                 case _ => errors.add(MissingMain())
@@ -27,14 +27,17 @@ object ClassGraph {
             program.classes.valueSet().foreach(check(_, errors))
         }
         def check(context: Class, errors: LanguageError.Collector): Unit = {
-            context.superClass() match
-                case None => // Ignore
-                // No cyclic inheritance
-                case Some(name, Some(value)) => checkCyclicInheritance(context, value, errors)
-                // Baseclass must exist
-                case Some(name, None) => errors.add(MissingClass(name))
+            if (context.syntax.inherits.isDefined) {
+                context.superClass() match
+                    case Some(value) => checkCyclicInheritance(context, value, errors)
+                    // Baseclass must exist
+                    case None => errors.add(MissingClass(context.syntax.inherits.get))
+            }
+
             // No duplicate fields or methods
-            context.fields.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateFieldName(k, c, context.name))))
+            context.own_fields.foreach(e => e._2.tail.foreach(c => {
+                errors.add(DuplicateFieldName(e._1, c, context.name))
+            }))
             context.methods.foreach((k,v) => v.tail.foreach(c => errors.add(DuplicateMethodName(k, c.syntax, context.name))))
         }
         private def checkCyclicInheritance(context: Class, base: Class, errors: LanguageError.Collector): Unit = {
@@ -47,20 +50,20 @@ object ClassGraph {
                     next = return
                 case Some(value) =>
                     chain.append(value)
-                    next = value.superClass().flatMap(_._2)
+                    next = value.superClass()
                 case None => return
         }
     }
     def check(program: Syntax.Program): Program = {
         val graph = Program(program)
         val collector = LanguageError.Collector()
-        
+
         Wellformedness.check(graph, collector)
         collector.raiseIfNonEmpty()
 
         graph
     }
-    
+
     // ClassGraph structure
     class Program(val syntax: Syntax.Program) {
         val classes: MultiMap[Syntax.ClassIdentifier, Class] = MultiMap(
@@ -73,13 +76,12 @@ object ClassGraph {
         val methods: MultiMap[Syntax.MethodIdentifier, Method] = MultiMap(
             syntax.methodDefinitions.map(m => m.name -> new Method(this, m))*
         )
-        // Outer option is None if class doesn't inherit
-        // Inner is None if inherited class doesn't exist
-        def superClass(): Option[(Syntax.ClassIdentifier, Option[Class])] = {
-            syntax.inherits.map(inherit => inherit -> program.classes.getFirst(inherit))
+
+        def superClass(): Option[Class] = {
+            syntax.inherits.flatMap(inherit => program.classes.getFirst(inherit))
         }
 
-        val fields: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = MultiMap(
+        val own_fields: MultiMap[Syntax.VariableIdentifier, Syntax.VariableDefinition] = MultiMap(
             syntax.variableDefinitions.map(v => v.name -> v)*
         )
 

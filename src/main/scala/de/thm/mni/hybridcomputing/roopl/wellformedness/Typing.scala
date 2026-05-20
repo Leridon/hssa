@@ -51,7 +51,7 @@ object Typing {
 
     def typeOf(reference: ScopeTree.VariableReference, scope: Scope): Option[Type] = {
         reference.variable match
-            case Some(variable: Translatable.TypedVariable) => reference.index match
+            case Some(variable) => reference.index match
                 case Some(index) => (variable.typ, typeOf(index, scope)) match
                     case (t: ArrayType, Some(Integer)) => Some(baseType(t))
                     case _ => None
@@ -64,9 +64,9 @@ object Typing {
     // Otherwise every following check would have to type check the variables again
     def determineVariableTypes(program: ScopeTree.Program, errors: LanguageError.Collector): Unit = {
         program.classes.foreach(c =>
-            c.fields = c.fields.map(f => deriveType(program, f, errors))
+            c.own_fields.foreach(f => deriveType(program, f, errors))
             c.methods.foreach(m =>
-                m.parameters = m.parameters.map(p => deriveType(program, p, errors))
+                m.parameters.foreach(p => deriveType(program, p, errors))
                 m.initialBody.foreach(determineVariableTypes(_, errors))
             )
         )
@@ -81,7 +81,7 @@ object Typing {
     private def determineVariableTypes(sb: ScopeTree.StatementNode, errors: LanguageError.Collector): Unit = {
         sb match
             case block: ScopeTree.Block =>
-                block.variable = deriveType(block.program, block.variable, errors)
+                deriveType(block.program, block.variable, errors)
                 block.initialBody.foreach(determineVariableTypes(_, errors))
             case ScopeTree.Conditional(test, thenStatement, elseStatement, assertion) =>
                 thenStatement.foreach(determineVariableTypes(_, errors))
@@ -92,27 +92,26 @@ object Typing {
             case _ => ()
     }
 
-    private def deriveType(program: ScopeTree.Program, variable: ScopeTree.Variable, errors: LanguageError.Collector): Translatable.TypedVariable = {
-        variable match
-            case t: Translatable.TypedVariable => t
-            case ut: ScopeTree.UntypedVariable =>
-                val resultType: Option[Type] = ut.typ match
-                    case Syntax.DataType.Integer() => Some(Integer)
-                    case Syntax.DataType.IntegerArray() => Some(IntegerArray(null))
-                    case Syntax.DataType.Class(name) => classFromName(name, program).map(Class(_)) match
-                        case Some(typ) => Some(typ)
-                        case None =>
-                            errors.add(MissingType(ut))
-                            None
-                    case Syntax.DataType.ClassArray(name) => classFromName(name, program).map(ClassArray(_, null)) match
-                        case Some(typ) => Some(typ)
-                        case None =>
-                            errors.add(MissingType(ut))
-                            None
-                
-                resultType match
-                    case None => null
-                    case Some(typ) => Translatable.TypedVariable(variable.name, variable.owner, variable.definition, typ)
+    private def deriveType(program: ScopeTree.Program, variable: ScopeTree.Variable, errors: LanguageError.Collector): Unit = {
+        if(variable.isTyped) return
+
+        val resultType: Option[Type] = variable.typ_expression match
+            case Syntax.DataType.Integer() => Some(Integer)
+            case Syntax.DataType.IntegerArray() => Some(IntegerArray(null))
+            case Syntax.DataType.Class(name) => classFromName(name, program).map(Class(_)) match
+                case Some(typ) => Some(typ)
+                case None =>
+                    errors.add(MissingType(variable))
+                    None
+            case Syntax.DataType.ClassArray(name) => classFromName(name, program).map(ClassArray(_, null)) match
+                case Some(typ) => Some(typ)
+                case None =>
+                    errors.add(MissingType(variable))
+                    None
+
+        if (resultType.isDefined){
+            variable.setType(resultType.get)
+        }
     }
 
     private def baseType(arrayType: ArrayType): Type = {
@@ -122,5 +121,5 @@ object Typing {
     }
 
     // Type errors
-    case class MissingType(variable: ScopeTree.UntypedVariable) extends RooplError(Error, s"specified type ${variable.typ.toString()} does not exist.", variable.definition)
+    case class MissingType(variable: ScopeTree.Variable) extends RooplError(Error, s"specified type ${variable.typ_expression.toString()} does not exist.", variable.definition)
 }
