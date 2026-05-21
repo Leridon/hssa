@@ -41,16 +41,27 @@ object Wellformedness {
     private def check(method: Method, errors: LanguageError.Collector): Unit = {
         // Override methods must take the same parameters (contravariant typing)
         method.superMethod() match
-                case Some(superMethod) => checkSignature(superMethod, method, errors)
-                case None => () // No override
+            case Some(superMethod) => checkSignature(superMethod, method, errors)
+            case None => () // No override
 
         method.translatableBody = method.initialBody.map(check(_, method, errors))
+    }
+
+    private def check(reference: VariableReference, scope: MethodScope, errors: LanguageError.Collector): Option[Translatable.VariableReference] = {
+        reference.variable match
+            case Some(variable) =>
+                reference.index match
+                    case None => Some(Translatable.VariableReference(variable, None))
+                    case Some(index) => mapExpression(index) match
+                        case None => None
+                        case Some(indexExpression) => Some(Translatable.VariableReference(variable, Some(indexExpression)))
+            case _ => None
     }
 
     // ScopeTree statements are checked and afterwards converted into Translatable statements
     private def check(statement: ScopeTree.StatementNode, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
         statement match
-            case block: Block => 
+            case block: Block =>
                 block.translatableBody = block.initialBody.map(check(_, block, errors))
                 val varType = block.variable.typ
                 expectExpressionType(varType, block.varCompute, scope, errors) match
@@ -97,11 +108,12 @@ object Wellformedness {
     }
 
     private def check(statement: Assignment, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
+
         statement.assignee.variable match
             case Some(variable) if variableInExpression(statement.assignee, statement.value, scope) => errors.add(Errors.IrreversibleAssignment(variable, statement))
             case None => errors.add(Errors.VariableDoesntExist(statement.assignee.name, statement))
             case _ => () // Lookup succeeded
-        
+
         val assignmentTyping: Option[(Type, Type)] = for {
             x <- Typing.typeOf(statement.assignee, scope)
             y <- Typing.typeOf(statement.value, scope)
@@ -114,7 +126,7 @@ object Wellformedness {
             case Some(assigneeType, expressionType) if !expressionType.isA(assigneeType) =>
                 errors.add(Errors.BadTyping(assigneeType, expressionType, statement))
             case _ => ()
-        
+
         val assignee = mapVarRef(statement.assignee)
         val value = mapExpression(statement.value)
 
@@ -195,35 +207,24 @@ object Wellformedness {
             case _ => BadStatement()
     }
 
-    private def check(statement: Call, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
+    private def check(statement: Call | Uncall, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
         // Check that method exists
         val method: Method = statement.method match
             case None =>
                 errors.add(Errors.MethodDoesntExist(statement))
                 return BadStatement()
             case Some(method) => method
-        checkCall(statement, scope, method, statement.callee, statement.args, errors)
-        
-        // ??? Todo fix flatMap and get
-        Translatable.Call(statement.callee.flatMap(mapVarRef), method, statement.args.map(_.get))
-    }
 
-    private def check(statement: Uncall, scope: MethodScope, errors: LanguageError.Collector): Translatable.StatementNode = {
-        val method: Method = statement.method match
-            case None =>
-                errors.add(Errors.MethodDoesntExist(statement))
-                return BadStatement()
-            case Some(method) => method
-        checkCall(statement, scope, method, statement.callee, statement.args, errors)
-
-        // ??? Todo fix flatMap and get
-        Translatable.Uncall(statement.callee.flatMap(mapVarRef), method, statement.args.map(_.get))
+        errors.in(checkCall(statement, scope, method, statement.callee, statement.args, errors)) match {
+            case Some(_) => Translatable.Call(statement.callee.flatMap(mapVarRef), method, statement.args.map(_.get))
+            case None => BadStatement()
+        }
     }
 
     private def checkCall(statement: Call | Uncall, scope: MethodScope, method: Method, callee: Option[VariableReference], parameters: Seq[Option[Variable]], errors: LanguageError.Collector): Unit = {
         val isLocalCall = callee.isEmpty
 
-        if(parameters.length != method.parameters.length) {
+        if (parameters.length != method.parameters.length) {
             errors.add(Errors.ArgumentCountMismatch(statement, method))
             return
         }
@@ -241,7 +242,7 @@ object Wellformedness {
         }
 
         // Check that all arg variables are different
-        if parameters.filter(_.isDefined).map(_.get).distinct.length != parameters.length then
+        if parameters.filter(_.isDefined).map(_.get).distinct.length != parameters.count(_.isDefined) then
             errors.add(Errors.NonUniqueArgs(statement))
     }
 
@@ -251,7 +252,7 @@ object Wellformedness {
         if superMethod.parameters.length != method.parameters.length then
             errors.add(Errors.BadMethodSignature(method.name, superMethod.parent.name))
             return
-        
+
         method.parameters.zipWithIndex.map((param, index) => (param, index)).foreach((param, index) =>
             val superParam = superMethod.parameters(index)
             if param.name != superParam.name then
@@ -291,7 +292,7 @@ object Wellformedness {
     private def mapExpression(expression: Expression): Option[Translatable.Expression] = {
         expression match
             case Expression.Literal(value) => Some(Translatable.Expression.Literal(value))
-            case Expression.Reference(ref) => 
+            case Expression.Reference(ref) =>
                 mapVarRef(ref) match
                     case None => None
                     case Some(varRef) => Some(Translatable.Expression.Reference(varRef))
@@ -309,7 +310,7 @@ object Wellformedness {
     private def mapVarRef(reference: VariableReference): Option[Translatable.VariableReference] = {
         reference.variable match
             case Some(variable) =>
-                reference.index match 
+                reference.index match
                     case None => Some(Translatable.VariableReference(variable, None))
                     case Some(index) => mapExpression(index) match
                         case None => None
