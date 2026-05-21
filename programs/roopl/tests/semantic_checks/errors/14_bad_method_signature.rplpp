@@ -1,0 +1,14 @@
+// Error: BadMethodSignature — override changes parameter count
+// Expected: roopl.check reports "does not match signature of overridden method"
+
+class Parent
+  method f()
+    skip
+
+class Child inherits Parent
+  method f(int x)
+    skip
+
+class Program
+  method main()
+    skip

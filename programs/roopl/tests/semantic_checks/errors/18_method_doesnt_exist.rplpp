@@ -1,0 +1,12 @@
+// Error: MethodDoesntExist — no method missing on type T
+// Expected: roopl.check reports "method does not exist."
+
+class T
+  method f()
+    skip
+
+class Program
+  T t
+  method main()
+    new T t
+    call t::missing()

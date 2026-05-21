@@ -1,0 +1,6 @@
+// Error: BadMain — main must not have parameters
+// Expected: roopl.check reports "main method must not declare any parameters."
+
+class Program
+  method main(int x)
+    skip

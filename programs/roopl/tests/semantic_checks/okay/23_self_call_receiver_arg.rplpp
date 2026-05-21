@@ -1,0 +1,28 @@
+// Unchecked: SelfCallReceiverArg — callee and object parameter alias (call n::harm(n))
+// Expected: roopl.check OK; hssa exec completes (no Reversibility violation for this program)
+// Call arguments must be variables (e.g. setV(x), not setV(5)). No obj.field syntax — use call other::inc().
+
+class Node
+  int v
+
+  method setV(int x)
+    v ^= x
+
+  method inc()
+    v += 1
+
+  method harm(Node other)
+    delete Node other
+
+class Program
+  Node n
+  int x
+
+  method main()
+    new Node n
+    x+=5
+    call n::setV(x)
+    call n::harm(n)
+    uncall n::harm(n)
+    uncall n::setV(x)
+    delete Node n

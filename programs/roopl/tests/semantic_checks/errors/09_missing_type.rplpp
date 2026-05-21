@@ -1,0 +1,12 @@
+// Error: MissingType — field type Typo does not exist (class is S)
+// Expected: roopl.check reports "specified type Typo does not exist."
+
+class S
+  int x
+  method f()
+    skip
+
+class Program
+  Typo obj
+  method main()
+    skip

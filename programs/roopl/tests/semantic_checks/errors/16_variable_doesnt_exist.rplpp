@@ -1,0 +1,8 @@
+// Error: VariableDoesntExist — ghost is not in scope (assignee of +=)
+// Expected: roopl.check reports "referenced variable ghost is not in scope."
+// Note: may also report ImpossibleTyping on the RHS until analysis stops early.
+
+class Program
+  int x
+  method main()
+    ghost += 1

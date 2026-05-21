@@ -1,0 +1,10 @@
+class S
+  int x
+  method f()
+    skip
+
+class Program
+  s obj
+
+  method main()
+    new S obj

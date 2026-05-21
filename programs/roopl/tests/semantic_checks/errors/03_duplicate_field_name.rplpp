@@ -1,0 +1,12 @@
+// Error: DuplicateFieldName — field x declared twice in one class
+// Expected: roopl.check reports "field x is already defined in class Box"
+
+class Box
+  int x
+  int x
+  method m()
+    skip
+
+class Program
+  method main()
+    skip

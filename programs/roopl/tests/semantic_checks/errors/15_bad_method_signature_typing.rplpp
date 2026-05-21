@@ -1,0 +1,14 @@
+// Error: BadMethodSignatureTyping — contravariance violated (subtype param in override)
+// Expected: roopl.check reports "cannot override type ... due to contravariance rules"
+
+class Animal
+  method greet(Animal other)
+    skip
+
+class Cat inherits Animal
+  method greet(Cat other)
+    skip
+
+class Program
+  method main()
+    skip

@@ -1,0 +1,12 @@
+// Error: ArgumentDoesntExist — argument ghost is not in scope
+// Expected: roopl.check reports "argument does not exist."
+
+class Box
+  method f(int x)
+    skip
+
+class Program
+  Box b
+  method main()
+    new Box b
+    call b::f(ghost)

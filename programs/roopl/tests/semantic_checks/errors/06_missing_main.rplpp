@@ -1,0 +1,6 @@
+// Error: MissingMain — no class defines method main()
+// Expected: roopl.check reports "main method needs to be defined."
+
+class OnlyHelper
+  method helper()
+    skip

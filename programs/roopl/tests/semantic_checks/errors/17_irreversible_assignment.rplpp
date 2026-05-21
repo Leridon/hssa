@@ -1,0 +1,7 @@
+// Error: IrreversibleAssignment — assignee appears on right-hand side
+// Expected: roopl.check reports "irreversible assignment of variable x"
+
+class Program
+  int x
+  method main()
+    x += x

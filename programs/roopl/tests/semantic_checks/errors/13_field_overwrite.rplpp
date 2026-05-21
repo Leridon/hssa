@@ -1,0 +1,16 @@
+// Error: FieldOverwrite — subclass redefines field from superclass
+// Expected: roopl.check reports "field x is already defined in class Parent"
+
+class Parent
+  int x
+  method m()
+    skip
+
+class Child inherits Parent
+  int x
+  method m()
+    skip
+
+class Program
+  method main()
+    skip

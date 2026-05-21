@@ -1,0 +1,18 @@
+// Error: ImpossibleTyping — addition on object references has no valid type
+// Expected: roopl.check reports "unable to determine type."
+
+class Cat
+  method m()
+    skip
+
+class Program
+  Cat a
+  Cat b
+  method main()
+    new Cat a
+    new Cat b
+    if a + b then
+      skip
+    else
+      skip
+    fi 1
