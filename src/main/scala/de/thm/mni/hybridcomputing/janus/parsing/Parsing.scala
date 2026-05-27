@@ -53,10 +53,10 @@ object Parsing {
 
         def parameter_kind: P[Syntax.ParameterKind] = opt(VAL) ^ (_.map(_ => Syntax.ParameterKind.VALUE).getOrElse(Syntax.ParameterKind.REFERENCE))
 
-        def parameter: P[Syntax.Parameter] = parameter_kind ~~ variable_declaration ^ Syntax.Parameter
+        def parameter: P[Syntax.Parameter] = parameter_kind ~~ variable_declaration ^ Syntax.Parameter.apply
 
         def procedure: P[Syntax.Procedure] = posi {
-            PROCEDURE ~~ ident ~~ LPAR ~~ repsep(variable_declaration, COMMA) ~~ RPAR ~~ rep(parameter) ~~ rep(statement) ^ Syntax.Procedure.apply
+            PROCEDURE ~~ ident ~~ LPAR ~~ repsep(parameter, COMMA) ~~ RPAR ~~ rep(variable_declaration) ~~ rep(statement) ^ Syntax.Procedure.apply
         }
 
         def variable_declaration: P[Syntax.VariableDeclaration] = posi {

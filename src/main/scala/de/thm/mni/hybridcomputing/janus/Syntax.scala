@@ -11,7 +11,7 @@ object Syntax {
 
     case class Program(procedures: Seq[Procedure]) extends Node
 
-    case class Procedure(name: Identifier, variables: Seq[VariableDeclaration], parameters: Seq[Parameter], statements: Seq[Statement]) extends Node
+    case class Procedure(name: Identifier, parameters: Seq[Parameter], variables: Seq[VariableDeclaration], statements: Seq[Statement]) extends Node
 
     case class Parameter(kind: ParameterKind, variable: VariableDeclaration) extends Node
 
