@@ -108,6 +108,9 @@ object Lexing {
                 case LINECOMMENT => "LINECOMMENT"
                 case BLOCKCOMMENT => "BLOCKCOMMENT"
                 case EOF => "EOF"
+                case INTLIT => "INTLIT"
+                case VAL => "VAL"
+                case PROCEDURE => "PROCEDURE"
         }
     }
     
@@ -122,7 +125,7 @@ object Lexing {
         def token: Parser[TokenValue] =
             "[a-zA-Z][a-zA-Z_0-9']*".r ^^ {
                 case "int" => symbol(INTEGER)
-                case "procedure" => symbol(INTEGER)
+                case "procedure" => symbol(PROCEDURE)
                 case "if" => symbol(IF)
                 case "then" => symbol(THEN)
                 case "else" => symbol(ELSE)
@@ -138,6 +141,7 @@ object Lexing {
                 case "uncall" => symbol(UNCALL)
                 case "skip" => symbol(SKIP)
                 case "nil" => symbol(NIL)
+                case "stack" => symbol(STACK)
                 case l => symbol(IDENT, l)
             } |
               //"""(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))+""".r ^^^ symbol(WHITESPACE) |
