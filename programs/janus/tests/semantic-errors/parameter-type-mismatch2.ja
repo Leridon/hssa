@@ -1,0 +1,18 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// parameter-type-mismatch2.ja:
+//      Arguments passed to a procedure must have the same type as the
+//      parameters the procedure is declared with.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int i
+
+    call wrongTypeStack(i)
+
+procedure wrongTypeStack(stack s)
+    skip

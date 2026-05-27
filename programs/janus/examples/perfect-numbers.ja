@@ -1,0 +1,73 @@
+////////////////////////////////////////////////////////////////////////
+// perfect-numbers.ja:
+//      Determines whether a number is perfect.
+//
+//      This was originally part of a programming assignment
+//      as part of the CS2333 "Functional Programming" course.
+//
+// 17. Jul. 2020
+////////////////////////////////////////////////////////////////////////
+
+
+procedure main()
+    int n
+
+    read(n)
+
+    local stack divisors = nil
+    call divisors(n, divisors)
+
+        local int sum = 0
+        call sum(divisors, sum)
+
+        if sum != n then
+            call printNot()
+        fi sum != n
+        call printPerfect()
+
+        uncall sum(divisors, sum)
+        delocal int sum = 0
+
+    uncall divisors(n, divisors)
+    delocal stack divisors = nil
+
+procedure divisors(int n, stack divisors)
+    local int i = n
+    from i = n do
+        i -= 1
+
+        if n % i = 0 then
+            push(i, divisors)
+            i += top(divisors)
+        fi n % i = 0
+
+    until i = 1
+    delocal int i = 1
+
+procedure sum(stack s, int sum)
+    if empty(s) else
+        local int n = 0
+        pop(n, s)
+
+        sum += n
+        call sum(s, sum)
+
+        push(n, s)
+        delocal int n = 0
+    fi empty(s)
+
+procedure printNot()
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'o' writec(char) delocal int char = 'o'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = ' ' writec(char) delocal int char = ' '
+
+procedure printPerfect()
+    local int char = 'p' writec(char) delocal int char = 'p'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = 'f' writec(char) delocal int char = 'f'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = 'c' writec(char) delocal int char = 'c'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = '\n' writec(char) delocal int char = '\n'

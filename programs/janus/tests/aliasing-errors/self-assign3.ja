@@ -1,0 +1,17 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// self-assign3.ja:
+//      An integer on the left-hand side is not allowed as an index
+//      in the right-hand side.
+//
+// N. Deworetzki, 26. May. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int index
+    int array[2]
+
+    array[0] += 2
+    index -= array[index]

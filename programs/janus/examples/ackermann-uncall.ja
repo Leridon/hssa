@@ -1,0 +1,44 @@
+////////////////////////////////////////////////////////////////////////
+// ackermann-uncall.ja:
+//      An implementation of the ackermann function.
+//      Intermediate results are un-computed.
+//
+// N. Deworetzki, 21. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure ackermann(int n, int m, int result)
+    if      n = 0
+    then    result += m + 1
+
+    else if m = 0
+    then    local   int one = 1
+            local   int n1  = n - 1
+            call ackermann(n1, one, result)
+            delocal int n1  = n - 1
+            delocal int one = 1
+
+    else    local   int n1 = n - 1
+            local   int m1 = m - 1
+            local   int tr = 0
+
+            call   ackermann(n, m1, tr)
+            call   ackermann(n1, tr, result)
+            uncall ackermann(n, m1, tr) // The intermediate result is "un-computed".
+
+            delocal int tr = 0
+            delocal int m1 = m - 1
+            delocal int n1 = n - 1
+
+    fi      m = 0
+    fi      n = 0
+
+
+procedure main()
+    int n
+    int m
+    int result
+
+    read(n)
+    read(m)
+    call ackermann(n, m, result)
+    write(result)

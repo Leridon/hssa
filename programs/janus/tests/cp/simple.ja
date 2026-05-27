@@ -1,0 +1,10 @@
+
+procedure main()
+
+    local int i = 3
+        uncall inc(i)
+    delocal int i = 2
+
+
+procedure inc(int n)
+    n += 1

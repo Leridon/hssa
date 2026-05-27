@@ -1,0 +1,38 @@
+////////////////////////////////////////////////////////////////////////
+// recursion.ja:
+//      Tests if parameters are correctly passed in a recursive
+//      procedure. This program should output 285.
+//
+// N. Deworetzki, 24. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int array[10]
+    int result
+
+    array[0] +=  0
+    array[1] +=  1
+    array[2] +=  4
+    array[3] +=  9
+    array[4] += 16
+    array[5] += 25
+    array[6] += 36
+    array[7] += 49
+    array[8] += 64
+    array[9] += 81
+
+
+    local int length = 10
+        call addArrayRecursive(result, array, length)
+    delocal int length = 10
+    write(result)
+
+procedure addArrayRecursive(int result, int arr[10], int i)
+    if i = 0 then
+        skip // End of recursion
+    else
+        i -= 1
+        result += arr[i]
+        call addArrayRecursive(result, arr, i)
+        i += 1
+    fi i = 0

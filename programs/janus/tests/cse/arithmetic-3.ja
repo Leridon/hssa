@@ -1,0 +1,18 @@
+// Created 05.02.2021
+// Expected results:
+// x = 244
+// y = 244
+
+procedure main()
+    int x
+    int y
+
+    x += 244
+
+    call dependentDestructors(x, y)
+
+
+procedure dependentDestructors(int a, int x)
+    a += 13 * x + 2 * x
+    x += a
+

@@ -1,0 +1,20 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether a compiled program correctly
+// behaves at runtime.
+//
+// loop-entry-3.ja:
+//      The entry condition of a reversible loop is evaluated upon
+//      each repetition and invalid values are reported correctly.
+//
+// N. Deworetzki, 15. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    call f()
+
+procedure f()
+    local   int n = 0
+    from    n = 5 do
+        skip
+    until   n = 0
+    delocal int n = 5

@@ -1,0 +1,16 @@
+
+procedure main()
+    int result
+
+    call condition(result)
+
+procedure condition(int n)
+    local int m = 0
+    if (n = 0) then
+        m += n
+    else
+        m += 20
+    fi (n = 0)
+
+    n ^= m
+    delocal int m = n

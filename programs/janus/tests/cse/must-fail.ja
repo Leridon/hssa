@@ -1,0 +1,9 @@
+// Tests whether constant propagation preserves error conditions.
+// This program should crash at runtime.
+
+procedure main()
+    int n
+
+    local stack s = nil
+    push(n, s)
+    delocal stack s = nil

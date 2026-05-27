@@ -1,0 +1,19 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether a compiled program correctly
+// behaves at runtime.
+//
+// division-by-zero.ja:
+//      A division by zero is correctly reported as an runtime error.
+//
+// N. Deworetzki, 15. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int zero
+
+    uncall f(zero)
+
+procedure f(int zero)
+    local   int n = 5 / zero
+    skip
+    delocal int n = 1

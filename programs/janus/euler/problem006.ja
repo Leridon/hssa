@@ -1,0 +1,46 @@
+// Problem 6 – Sum square difference
+// The sum of the squares of the first ten natural numbers is, $1^2 + 2^2 + \ldots + 10^2 = 385$
+// The square of the sum of the first ten natural numbers is, $(1 + 2 + \ldots + 10)^2 = 3025$
+// Hence the difference between the sum of the squares of the first ten natural numbers and the square of the sum is $3052 - 385 = 2640$.
+// Find the difference between the sum of the squares of the first one hundred natural numbers and the square of the sum.
+
+procedure main()
+    int squaredSum
+    int summedSquares
+
+    local int bound = 100
+        call squaredSum(bound, squaredSum)
+        call summedSquares(bound, summedSquares)
+    delocal int bound = 100
+
+    local int result = squaredSum - summedSquares
+        write(result)
+    delocal int result = squaredSum - summedSquares
+
+procedure sumNumbers(int n, int sum)
+    local int i = 1
+    from i = 1 do
+        sum += i
+    loop
+        i += 1
+    until i = n
+    delocal int i = n
+
+procedure squaredSum(int n, int result)
+    local int sum = 0
+        call sumNumbers(n, sum)
+
+        result += sum * sum
+
+        uncall sumNumbers(n, sum)    
+    delocal int sum = 0
+
+
+procedure summedSquares(int n, int result)
+    local int i = 1
+    from i = 1 do
+        result += i * i
+    loop
+        i += 1
+    until i = n
+    delocal int i = n

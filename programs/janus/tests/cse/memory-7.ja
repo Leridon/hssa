@@ -1,0 +1,32 @@
+// Created 09.06.2021
+// Expected results:
+// A = [0, 0]
+// n = 64
+// m = 13
+
+
+procedure main()
+    int A[2]
+    int n int m
+
+    n += 1
+    A[1] <=> n
+
+    call c(n, A)
+
+    A[1] <=> m
+
+
+procedure a(int n, int s[2])
+    skip
+
+procedure b(int n, int s[2])
+    n += s[1] * 2 + s[1] * 2
+    call a(n, s)
+    n += s[1] * 2 + s[1] * 2
+    s[1] += n
+
+procedure c(int n, int s[2])
+    n += s[1] * 2 + s[1] * 2
+    call b(n, s)
+    n += s[1] * 2 + s[1] * 2

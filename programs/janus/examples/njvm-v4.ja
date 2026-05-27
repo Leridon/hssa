@@ -1,0 +1,674 @@
+////////////////////////////////////////////////////////////////////////
+// njvm-v4.ja:
+//      Ninja Virtual Machine (Version 4). An implementation of the
+//      NJVM supporting all instructions of version 4.
+//      https://homepages.thm.de/~hg53/ksp-ws1920/index.html
+//
+//      At startup the program to be executed has to be provided
+//      via stdin in the "Ninja Virtual Machine Binary Format".
+//      The VM will execute the program after it has been fully
+//      read and additional inputs can be provided.
+//
+// 27. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    stack trace        // Stack holding garbage values to ensure injectivity.
+    stack instructions // Memory holding the instructions.
+
+    stack runstack  // Stack memory (Local Variables, Stack Frames, etc.)
+    stack sda       // Static Data Area (Global Variables)
+
+    int ip          // Register holding instruction pointer.
+    int frameSize   // Equivalent to frame pointer register.
+    int ret         // Register holding return value.
+
+    int error       // Used as a parameter to detect errors.
+    int version
+    version += 4
+
+    // Read executable from stdin.
+    call readExecutable(instructions, sda, version, error)
+    if error > 0 then
+        call errorEOF()
+    fi error > 0
+
+    local int instr = 0
+    local int opcode = 0
+    local int immediate = 0
+
+    // Main execution loop.
+    call printStart()
+    from empty(trace) do
+        call fetch(instructions, ip, instr)
+        call parseInstruction(instr, opcode, immediate)
+
+    loop
+        ip += 1
+        call executeInstruction(trace, ip, frameSize, ret, opcode, immediate, runstack, sda)
+
+        uncall parseInstruction(instr, opcode, immediate)
+        push(instr, trace) // Since the executed instruction manipulates ip at will, it is not easy to place instr back into memory.
+    until opcode = 0 // Halt
+    call printStop()
+
+    // Cleanup
+    uncall parseInstruction(instr, opcode, immediate)
+    push(instr, trace)
+
+    delocal int immediate = 0
+    delocal int opcode = 0
+    delocal int instr = 0
+
+
+// Executes an instruction.
+//  <trace>     A stack tracing garbage values from non-injective computations.
+//  <ip>        The instruction pointer register.
+//  <frameSize> The "frame pointer" register holding the offset from the stack top to the bounds of
+//              the active stack frame.
+//  <ret>       The return register holding the return value.
+//  <opcode>    The opcode to execute.
+//  <immediate> The immediate value of the executed instruction.
+//  <runstack>  The runtime stack holding the current calculation state.
+//  <sda>       The static data area.
+procedure executeInstruction(stack trace, int ip, int frameSize, int ret, int opcode, int immediate, stack runstack, stack sda)
+    local int op1 = 0
+    local int op2 = 0
+    local int result = 0
+
+    if opcode = 1 then // pushc <const>
+        local int constant = immediate
+        push(constant, runstack)
+        delocal int constant = 0
+
+        frameSize += 1
+
+    else if opcode >= 2 && opcode <= 6 then
+        pop(op2, runstack)
+        pop(op1, runstack)
+
+        if opcode = 2 then // add
+            result += op1 + op2
+        else if opcode = 3 then // sub
+            result += op1 - op2
+        else if opcode = 4 then // mul
+            result += op1 * op2
+        else if opcode = 5 then // div
+            result += op1 / op2
+        else if opcode = 5 then // mod
+            result += op1 % op2
+        fi opcode = 6
+        fi opcode = 5
+        fi opcode = 4
+        fi opcode = 3
+        fi opcode = 2
+
+        push(op1, trace)
+        push(op2, trace)
+        push(result, runstack)
+
+        frameSize -= 1
+
+    else if opcode = 7 then // rdint
+        read(result)
+        push(result, runstack)
+
+        frameSize += 1
+
+    else if opcode = 8 then // wrint
+        pop(result, runstack)
+        write(result)
+        push(result, trace)
+
+        frameSize -= 1
+
+    else if opcode = 9 then // rdchr
+        readc(result)
+        if result = -1 then
+            call errorEOF()
+        fi result = -1
+        push(result, runstack)
+
+        frameSize += 1
+
+    else if opcode = 10 then // wrchr
+        pop(result, runstack)
+        writec(result)
+        push(result, trace)
+
+        frameSize -= 1
+
+    else if opcode = 11 then // pushg <n>
+        call fetch(sda, immediate, result)
+        push(result, runstack)
+
+        frameSize += 1
+
+    else if opcode = 12 then // popg <n>
+        pop(result, runstack)
+        call update(sda, immediate, result)
+        push(result, trace)
+
+        frameSize -= 1
+
+    else if opcode = 13 then // asf <n>
+        push(frameSize, runstack)
+
+        if immediate > 0 then
+            local int zero = 0
+            from frameSize = 0 do
+                frameSize += 1
+                push(zero, runstack) // push <immediate> zeroes.
+            until frameSize = immediate
+            delocal int zero = 0
+        fi immediate > 0
+
+        frameSize -= 1
+
+    else if opcode = 14 then // rsf
+        frameSize += 1
+
+        if frameSize > 0 then
+            local int tmp = 0
+            local int i = 0
+            from i = 0 do
+                i += 1
+                pop(tmp, runstack) // Pop frame from stack.
+                push(tmp, trace)
+            until i = frameSize
+            delocal int i = frameSize
+            delocal int tmp = 0
+        fi frameSize > 0
+        // Set frameSize to an valid value.
+        push(frameSize, trace)
+        pop(frameSize, runstack)
+
+    else if opcode = 15 then // pushl <n>
+        local int offset = frameSize - immediate
+        call fetch(runstack, offset, result)
+        push(result, runstack)
+        delocal int offset = frameSize - immediate
+
+        frameSize += 1
+
+    else if opcode = 16 then // popl <n>
+        frameSize -= 1
+
+        local int offset = frameSize - immediate
+        pop(op1, runstack)
+        call update(runstack, offset, op1)
+        delocal int offset = frameSize - immediate
+
+        push(op1, trace)
+
+    else if opcode >= 17 && opcode <= 22 then
+        pop(op2, runstack)
+        pop(op1, runstack)
+
+        if opcode = 17 then // eq
+            if op1 = op2 then
+                result += 1
+            fi op1 = op2
+
+        else if opcode = 18 then // ne
+            if op1 != op2 then
+                result += 1
+            fi op1 != op2
+
+        else if opcode = 19 then // lt
+            if op1 < op2 then
+                result += 1
+            fi op1 < op2
+
+        else if opcode = 20 then // le
+            if op1 <= op2 then
+                result += 1
+            fi op1 <= op2
+
+        else if opcode = 21 then // gt
+            if op1 > op2 then
+                result += 1
+            fi op1 > op2
+
+        else if opcode = 22 then // ge
+            if op1 >= op2 then
+                result += 1
+            fi op1 >= op2
+
+        fi opcode = 22
+        fi opcode = 21
+        fi opcode = 20
+        fi opcode = 19
+        fi opcode = 18
+        fi opcode = 17
+
+        push(op1, trace)
+        push(op2, trace)
+        push(result, runstack)
+
+        frameSize -= 1
+
+    else if opcode = 23 then // jmp <target>
+        push(ip, trace)
+        ip += immediate
+
+    else if opcode = 24 then // brf <target>
+        pop(op1, runstack)
+        if op1 = 0 then
+            push(ip, trace)
+            ip += immediate
+        fi op1 = 0
+        push(op1, trace)
+
+        frameSize -= 1
+
+    else if opcode = 25 then // brt <target>
+        pop(op1, runstack)
+        if op1 = 1 then
+            push(ip, trace)
+            ip += immediate
+        fi op1 = 1
+        push(op1, trace)
+
+        frameSize -= 1
+
+    else if opcode = 26 then // call <target>
+        push(ip, runstack)
+        ip += immediate
+
+        frameSize += 1
+
+    else if opcode = 27 then // ret
+        push(ip, trace)
+        pop(ip, runstack)
+
+        frameSize -= 1
+
+    else if opcode = 28 then // drop  <n>
+        local int tmp = 0
+        local int i = 0
+
+        from i = 0 do
+            i += 1
+            pop(tmp, runstack)
+            push(tmp, trace)
+        until i = immediate
+
+        delocal int i = immediate
+        delocal int tmp = 0
+
+        frameSize -= immediate
+
+    else if opcode = 29 then // pushr
+        push(ret, runstack)
+
+        frameSize += 1
+
+    else if opcode = 30 then // popr
+        pop(ret, runstack)
+
+        frameSize -= 1
+
+    else if opcode = 31 then // dup
+        local int dup = top(runstack)
+        push(dup, runstack)
+        delocal int dup = 0
+
+        frameSize += 1
+
+    fi opcode = 31
+    fi opcode = 30
+    fi opcode = 29
+    fi opcode = 28
+    fi opcode = 27
+    fi opcode = 26
+    fi opcode = 25
+    fi opcode = 24
+    fi opcode = 23
+    fi opcode >= 17 && opcode <= 22
+    fi opcode = 16
+    fi opcode = 15
+    fi opcode = 14
+    fi opcode = 13
+    fi opcode = 12
+    fi opcode = 11
+    fi opcode = 10
+    fi opcode = 9
+    fi opcode = 8
+    fi opcode = 7
+    fi opcode >= 2 && opcode <= 6
+    fi opcode = 1
+
+    delocal int result = 0
+    delocal int op2 = 0
+    delocal int op1 = 0
+
+
+// Parses an instruction, splitting it into opcode and immediate value.
+//  <instr>     The instruction to parse. This parameter is zero afterwards.
+//  <opcode>    The opcode represented by the instruction.
+//  <immediate> The immediate value represented by the instruction.
+procedure parseInstruction(int instr, int opcode, int immediate)
+    immediate += instr & 16777215
+    instr -= immediate
+    if (immediate & 8388608) = 8388608 then
+        local int signExtended = immediate | -16777216
+        immediate <=> signExtended
+        delocal int signExtended = immediate & 16777215
+    fi immediate < 0
+    opcode += instr / 16777215
+    instr -= opcode
+
+
+// Reads a complete NJVM executable file in the NJBF format into memory.
+//  <instruction> The memory where instructions are placed. It holds the instructions with the first instruction
+//                at the top of the stack afterwards.
+//  <sda>         The static data area, which is initialized from the information present in the binary file.
+//  <version>     The version of the binary file that is supported by this program. This parameter remains unchanged.
+//  <error>       An indicator for errors.
+procedure readExecutable(stack instructions, stack sda, int version, int error)
+    // Validate header "NJBF" in executable file.
+    local int header = 0 readc(header)
+        if header != 'N' then call errorHeader() fi header != 'N'
+        delocal int header = 'N'
+    local int header = 0 readc(header)
+        if header != 'J' then call errorHeader() fi header != 'J'
+        delocal int header = 'J'
+    local int header = 0 readc(header)
+        if header != 'B' then call errorHeader() fi header != 'B'
+        delocal int header = 'B'
+    local int header = 0 readc(header)
+        if header != 'F' then call errorHeader() fi header != 'F'
+        delocal int header = 'F'
+
+    // Read and validate file version.
+    local int fileVersion = 0
+        call read4Bytes(fileVersion, error)
+        if fileVersion != version then call errorHeader() fi fileVersion != version
+    delocal int fileVersion = version
+
+    // Read how many instructions are inside the file.
+    local int instructionCount = 0
+    call read4Bytes(instructionCount, error)
+
+        // Read how many static variables are required and fill the sda with that many zeroes.
+        local int sdaSize = 0
+        call read4Bytes(sdaSize, error)
+        call initSda(sda, sdaSize)
+        delocal int sdaSize = 0
+
+        // Read all instructions until end is reached.
+        local int readInstruction = 0
+        from empty(instructions) do
+            instructionCount -= 1
+            call read4Bytes(readInstruction, error)
+            push(readInstruction, instructions)
+        until instructionCount = 0
+        delocal int readInstruction = 0
+
+        call reverse(instructions)
+    delocal int instructionCount = 0
+
+
+// Places <sdaSize> zeroes on the <sda>.
+// <sda>     The stack, where zeroes are pushed on. Holds <sdaSize> zeroes afterwards.
+// <sdaSize> The amount of zeroes to push. Is zero afterwards.
+procedure initSda(stack sda, int sdaSize)
+    if sdaSize = 0 then
+        skip
+    else
+        local int zero = 0
+        from empty(sda) do
+            sdaSize -= 1
+            push(zero, sda)
+        until sdaSize = 0
+        delocal int zero = 0
+    fi empty(sda)
+
+
+// Fetches a value from within the stack.
+//  <s>      The stack from which a value is fetched. The original stack will be restored.
+//  <index>  The index counting from the stack top, where the wanted element is. This parameter remains unchanged.
+//  <result> This parameter holds the result after execution.
+procedure fetch(stack s, int index, int result)
+    if index = 0 then
+        result += top(s)
+    else
+        local stack buffer = nil
+            call move(s, buffer, index)
+            result += top(s)
+            uncall move(s, buffer, index)
+        delocal stack buffer = nil
+    fi index = 0
+
+
+// Update a value in the stack.
+//  <s>     The stack to update. One element is replaced.
+//  <index> The index of the update. It remains unchanged.
+//  <value> The value to update. Holds the previous value afterwards.
+procedure update(stack s, int index, int value)
+    local int tmp = 0
+    if index = 0 then
+        pop(tmp, s)
+        push(value, s)
+    else
+        local stack buffer = nil
+            call move(s, buffer, index)
+            pop(tmp, s)
+            push(value, s)
+            uncall move(s, buffer, index)
+        delocal stack buffer = nil
+    fi index = 0
+    tmp <=> value
+    delocal int tmp = 0
+
+
+// Moves <count> elements from <sfrom> to <sto>.
+//  <sfrom> The source stack where elements are removed from.
+//  <sto>   The target stack where elements are placed on.
+//  <count> The amount of elements to move. This parameter remains unchanged.
+procedure move(stack sfrom, stack sto, int count)
+    local int tmp = 0
+    local int moved = 0
+        from moved = 0 do
+            pop(tmp, sfrom)
+            push(tmp, sto)
+            moved += 1
+        until moved = count
+    delocal int moved = count
+    delocal int tmp = 0
+
+
+// Reverses a stack in linear runtime on the heap.
+//  <s> The stack to reverse. This parameter holds the reversed stack after execution.
+procedure reverse(stack s)
+    local int tmp = 0
+    local stack copy = nil
+    local stack rev_copy = nil
+    from empty(copy) do
+        pop(tmp, s)
+        push(tmp, copy)
+    until empty(s)
+    from empty(rev_copy) do
+        pop(tmp, copy)
+        push(tmp, rev_copy)
+    until empty(copy)
+    from empty(s) do
+        pop(tmp, rev_copy)
+        push(tmp, s)
+    until empty(rev_copy)
+    delocal stack rev_copy = nil
+    delocal stack copy = nil
+    delocal int tmp = 0
+
+
+// Shift a number left by <amount> bits.
+//  <n>      The number to shift. This parameter holds the result after execution.
+//  <amount> How many bits to shift. This parameter remains unchanged.
+procedure shiftLeft(int n, int amount)
+    local int i = 0
+    from i = 0 do
+        i += 1
+        local int nTimesTwo = n * 2
+        n <=> nTimesTwo
+        delocal int nTimesTwo = n / 2
+    until i = amount
+    delocal int i = amount
+
+
+// Reads 4 bytes from stdin. This procedure is used to read the input file.
+procedure read4Bytes(int input, int eof)
+    local int four = 4
+    call readBytes(input, eof, four)
+    delocal int four = 4
+
+// Reads n bytes from stdin.
+procedure readBytes(int input, int eof, int bytesLeft)
+    if bytesLeft > 0 then
+        local int in = 0
+        bytesLeft -= 1
+
+        readc(in)
+        if in >= 0 then
+            call readBytes(input, eof, bytesLeft)
+            local int byteSize = 8
+            call shiftLeft(input, byteSize)
+            delocal int byteSize = 8
+            input += in
+            in -= input & 255
+
+        else
+            eof += 1
+            in -= 1
+        fi eof = 0
+
+        bytesLeft += 1
+        delocal int in = 0
+    fi bytesLeft > 0
+
+
+// Print: Ninja Virtual Machine started
+procedure printStart()
+    local int char = 'N' writec(char) delocal int char = 'N'
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'j' writec(char) delocal int char = 'j'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'V' writec(char) delocal int char = 'V'
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = 'u' writec(char) delocal int char = 'u'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'M' writec(char) delocal int char = 'M'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'c' writec(char) delocal int char = 'c'
+    local int char = 'h' writec(char) delocal int char = 'h'
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 's' writec(char) delocal int char = 's'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = 'd' writec(char) delocal int char = 'd'
+    local int char = '\n' writec(char) delocal int char = '\n'
+
+
+// Print: Ninja Virtual Machine stopped
+procedure printStop()
+    local int char = 'N' writec(char) delocal int char = 'N'
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'j' writec(char) delocal int char = 'j'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'V' writec(char) delocal int char = 'V'
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = 'u' writec(char) delocal int char = 'u'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'M' writec(char) delocal int char = 'M'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'c' writec(char) delocal int char = 'c'
+    local int char = 'h' writec(char) delocal int char = 'h'
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 's' writec(char) delocal int char = 's'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = 'o' writec(char) delocal int char = 'o'
+    local int char = 'p' writec(char) delocal int char = 'p'
+    local int char = 'p' writec(char) delocal int char = 'p'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = 'd' writec(char) delocal int char = 'd'
+    local int char = '\n' writec(char) delocal int char = '\n'
+
+
+// Print and exit: "Error: Invalid input file!"
+procedure errorHeader()
+    call prefixError()
+    local int char = 'I' writec(char) delocal int char = 'I'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'v' writec(char) delocal int char = 'v'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'd' writec(char) delocal int char = 'd'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'p' writec(char) delocal int char = 'p'
+    local int char = 'u' writec(char) delocal int char = 'u'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'f' writec(char) delocal int char = 'f'
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = '!' writec(char) delocal int char = '!'
+    local int char = '\n' writec(char) delocal int char = 0
+
+
+// Print and exit: "Error: Unexpected EOF!"
+procedure errorEOF()
+    call prefixError()
+    local int char = 'U' writec(char) delocal int char = 'U'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = 'x' writec(char) delocal int char = 'x'
+    local int char = 'p' writec(char) delocal int char = 'p'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = 'c' writec(char) delocal int char = 'c'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = 'd' writec(char) delocal int char = 'd'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'E' writec(char) delocal int char = 'E'
+    local int char = 'O' writec(char) delocal int char = 'O'
+    local int char = 'F' writec(char) delocal int char = 'F'
+    local int char = '!' writec(char) delocal int char = '!'
+    local int char = '\n' writec(char) delocal int char = 0
+
+
+// Print: "Error: "
+// Shared between other error procedures.
+procedure prefixError()
+    local int char = 'E' writec(char) delocal int char = 'E'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = 'o' writec(char) delocal int char = 'o'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = ':' writec(char) delocal int char = ':'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = '\n' writec(char) delocal int char = '\n'

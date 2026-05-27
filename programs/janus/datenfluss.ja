@@ -1,0 +1,84 @@
+procedure f(int x, int y)
+    local int z = 0
+        if x = 0 then y += 1
+        fi x = 0
+        z += x + y
+    delocal int z = 1
+
+/* procedure f - rückwärts
+
+IN: {x_7, y_8}
+begin f(x_7, y_8)
+OUT: {x_7, y_8}
+IN: {x_7, y_8}
+z_8 := 0 ^ (1 ^ 0)
+OUT: {x_7, y_8}
+IN: {x_7, y_8}
+z_7 := z_8 - (x_7 + y_8)
+OUT: {y_8, x_7}
+IN: {y_8, x_7}
+x_7 == 0 -> Lf_7(z_7, y_8, x_7)Lf_8
+OUT: {y_8, x_7}
+
+IN: {y_4, x_1}
+    Lf_7(z_1, y_4, x_1) <-
+OUT: {y_4, x_1}
+IN: {y_4, x_1}
+    y_1 := y_4 - (1 ^ 0)
+OUT: {y_1, x_1}
+IN: {y_1, x_1}
+    -> Lf_5(y_1, z_1, x_1)
+OUT: {y_1, x_1}
+
+
+IN: {y_0, x_0}
+    Lf_5(y_0, z_0, x_0)Lf_6 <- x_0 == 0
+OUT: {y_0, x_0}
+IN: {y_0, x_0}
+    0 := z_0 ^ (0 ^ 0)
+OUT: {y_0, x_0}
+IN: {y_0, x_0}
+    end f(x_0, y_0)
+OUT: {}
+*/
+
+
+
+/* procedure f - vorwärts
+IN: {y_0, x_0}
+begin f(x_0, y_0)
+OUT: {y_0, x_0}
+IN: {y_0, x_0}
+z_0 := 0 ^ (0 ^ 0)
+OUT: {y_0, x_0}
+IN: {y_0, x_0} = (OUT - DEF) U USE
+x_0 == 0 -> Lf_5(y_0, z_0, x_0)Lf_6
+OUT: {y_0, x_0}
+
+IN: {y_1, x_1}
+Lf_5(y_1, z_1, x_1) <-
+OUT: {y_1, x_1}
+IN: {y_1, x_1} = (OUT - DEF) U USE
+y_4 := y_1 + (1 ^ 0) USE = {y_1}, DEF = {y_4}
+OUT: { y_4, x_1 }
+IN: { y_4, x_1 }
+-> Lf_7(z_1, y_4, x_1)
+OUT: { y_4, x_1 }
+
+
+IN: {x_7, y_8} = (OUT - DEF) U USE
+    Lf_7(z_7, y_8, x_7)Lf_8 <- x_7 == 0 DEF = {}, USE = {x_7}
+OUT: {x_7, y_8}
+IN: {x_7, y_8}
+    z_8 := z_7 + (x_7 + y_8)
+OUT: {x_7, y_8}
+IN: {x_7, y_8}
+    0 := z_8 ^ (1 ^ 0)
+OUT: {x_7, y_8}
+IN: {x_7, y_8}
+    end f(x_7, y_8)
+OUT: {}
+*/
+
+procedure main()
+    skip

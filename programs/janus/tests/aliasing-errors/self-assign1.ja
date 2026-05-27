@@ -1,0 +1,15 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// self-assign1.ja:
+//      The assigned expression is not allowed to contain the target
+//      of the assignment.
+//
+// N. Deworetzki, 31. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int notAllowed
+
+    notAllowed -= notAllowed

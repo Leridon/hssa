@@ -1,0 +1,35 @@
+////////////////////////////////////////////////////////////////////////
+// squared-sum.ja:
+//      Calculates the square of the sum of the numbers
+//      from 1 to 10 (inclusive).
+// Expected result:
+//  sum = 3025
+//
+// N. Deworetzki, 17. Dec. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int sum
+
+    local int n = 10
+    call squaredSum(n, sum)
+    delocal int n = 10
+
+
+procedure sumNumbers(int n, int sum)
+    local int i = 1
+    from i = 1 do
+        sum += i
+    loop
+        i += 1
+    until i = n
+    delocal int i = n
+
+procedure squaredSum(int n, int result)
+    local int sum = 0
+        call sumNumbers(n, sum)
+
+        result += sum * sum
+
+        uncall sumNumbers(n, sum)
+    delocal int sum = 0

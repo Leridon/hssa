@@ -1,0 +1,31 @@
+// procedure main()
+//   local int k=0
+//   local int l=0
+//   if (k>0)
+//     then k+=1
+//   else k+=2
+//   fi (k>0)
+//   delocal int l=0
+//   delocal int k=2
+
+
+begin main()                    //l1=def => l1 nicht live
+k_0 := 0 ^ (0 ^ 0)
+l_0 := 0 ^ (0 ^ 0)
+Ta_0 := 0 ^ (k_0 > 0)
+Ta_0 != 0 -> Lmain_0_1(Ta_0, k_0, l_0)Lmain_0_2 // l0=fin
+Lmain_0_1(Ta_1, k_1, l_1) <-    // l1=fin
+0 := Ta_1 ^ (k_1 > 0)
+k_2 := k_1 + (1 ^ 0)
+Tb_0 := 0 ^ (k_2 > 0)
+-> Lmain_0_3(Tb_0, k_2, l_1)    // l1=fin
+Lmain_0_2(Ta_2, k_3, l_2) <-    // l2=fin
+0 := Ta_2 ^ (k_3 > 0)
+k_4 := k_3 + (2 ^ 0)
+Tb_1 := 0 ^ (k_4 > 0)
+-> Lmain_0_4(Tb_1, k_4, l_2)       // l2=fin
+Lmain_0_3(Tb_2, k_5, l_3)Lmain_0_4 <- Tb_2 != 0
+0 := Tb_2 ^ (k_5 > 0)
+0 := l_3 ^ (0 ^ 0)                // l3=fin
+0 := k_5 ^ (2 ^ 0)
+end main()

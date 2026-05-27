@@ -1,0 +1,21 @@
+// Created 05.02.2021
+// Expected results:
+// x = 3
+// y = 12
+
+procedure main()
+    int x
+    int y
+
+    x += 3
+    y += 12
+
+    call multiSwap(x, y)
+
+procedure multiSwap(int a, int b)
+    a <=> b
+    a <=> b
+    a <=> b
+    a <=> b
+    a <=> b
+    a <=> b

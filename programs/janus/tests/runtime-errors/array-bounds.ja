@@ -1,0 +1,36 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether a compiled program correctly
+// behaves at runtime.
+//
+// array-bounds.ja:
+//      Array bounds are checked at runtime and an illegal
+//      access is reported correctly.
+//
+// N. Deworetzki, 15. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int array20[20]
+    int s
+
+    call fill_array20(array20)
+    call f(array20, s)
+
+procedure fill_array20(int array20[20])
+    local   int n = 0
+    local   int i = 0
+    from i = 0 do
+        array20[i] += n
+        i += 1
+        n += 1
+    until i = 20
+    delocal int i = 20
+    delocal int n = 20
+
+procedure f(int array20[20], int s)
+    local   int i = 0
+    from  i = 0 do
+        s += array20[i]
+        i += 1
+    until i = 30
+    delocal int i = 30

@@ -1,0 +1,9 @@
+// A simple test file to test whether multi-line comments are correctly ignored.
+
+/* A simple multi-line comment. */
+
+/* Now it actually spans
+multiple lines */
+
+/* Is it possible to use * in here? */
+/* It should be possible, to also use / in here or // */

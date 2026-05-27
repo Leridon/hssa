@@ -1,0 +1,17 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// type-required-bool4.ja:
+//      The until-condition of a loop must be boolean.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int notABoolean
+
+    from 5 < 7
+    do skip
+    loop skip
+    until notABoolean

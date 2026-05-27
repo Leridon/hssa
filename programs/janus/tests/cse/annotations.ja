@@ -1,0 +1,16 @@
+// Created 05.02.2021
+// Expected results:
+
+procedure main()
+    int n int m int a int b int A[20]
+
+    a += 2
+    b += 3
+    A[a * b] -= 2
+
+    local stack s = nil
+    n += a * b + a * b + A[a * b]
+    n -= a * A[a * b] + a * A[a * b]
+    push(n, s)
+    pop(n, s)
+    delocal stack s = nil
