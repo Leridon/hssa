@@ -37,7 +37,7 @@ object Syntax {
     case class Skip() extends Statement
     case class Block(list: Seq[Statement]) extends Statement
 
-    case class VariableDeclaration(typ: TypeExpression, name: Identifier) extends Node
+    case class VariableDeclaration(typ: TypeExpression, name: Identifier, array_size: Option[Integer]) extends Node
 
     sealed trait Expression extends Node
     case class Literal(value: Int) extends Expression

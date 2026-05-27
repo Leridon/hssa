@@ -60,11 +60,11 @@ object Parsing {
         }
 
         def variable_declaration: P[Syntax.VariableDeclaration] = posi {
-            dataType ~~ ident ^ Syntax.VariableDeclaration.apply
+            dataType ~~ ident ~~ opt(LBRACK ~~ intlit ~~ RBRACK)^ Syntax.VariableDeclaration.apply
         }
 
         def dataType: P[Syntax.TypeExpression] = posi {
-            (INTEGER ^ Syntax.IntTypeExpression.apply | STACK ^ Syntax.StackTypeExpression.apply) ~~ rep(LBRACK ~~ intlit ~~ RBRACK) ^ {
+            (INTEGER ^ Syntax.IntTypeExpression.apply | STACK ^ Syntax.StackTypeExpression.apply) ~~ opt(LBRACK ~~ intlit ~~ RBRACK) ^ {
                 case base ~ sizes => sizes.foldLeft(base)((l, r) => Syntax.ArrayTypeExpression(l, r))
             }
         }
