@@ -7,7 +7,7 @@ object Syntax {
     case class Application(name: String, args: Seq[Argument]) extends Command
 
 
-    trait Argument
+    trait Argument extends Interpretation.Value
     case class NamedArgument(name: String, value: SimpleArgumentValue) extends Argument
 
     sealed trait SimpleArgumentValue extends Argument

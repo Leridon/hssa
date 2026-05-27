@@ -1,6 +1,6 @@
 package de.thm.mni.hybridcomputing.cli.buildscript
 
-import de.thm.mni.hybridcomputing.cli.buildscript.integrations.{BuildScriptEssentials, BuildScriptFileIntegration, BuildScriptHSSAIntegration, BuildScriptRooplIntegration}
+import de.thm.mni.hybridcomputing.cli.buildscript.integrations.{BuildScriptEssentials, BuildScriptFileIntegration, BuildScriptHSSAIntegration, BuildScriptRooplIntegration, JanusBuildScriptIntegration}
 import org.jline.reader.{EndOfFileException, LineReader, LineReaderBuilder, UserInterruptException}
 import org.jline.terminal.TerminalBuilder
 
@@ -23,7 +23,8 @@ object Repl:
             BuildScriptEssentials,
             BuildScriptFileIntegration,
             BuildScriptHSSAIntegration,
-            BuildScriptRooplIntegration
+            BuildScriptRooplIntegration,
+            JanusBuildScriptIntegration
         )
 
         while running do

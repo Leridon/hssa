@@ -52,39 +52,34 @@ object Interpretation {
                           positioned: Seq[Value]
                         ) {
         def expectString(name: String): String = named.get(name).map({
-            case ChainValue(function) => LanguageError(Severity.Error, s"Expected string argument for name ${name}").raise()
-            case StringValue(value) => value
+            case Syntax.ChainArgument(function) => LanguageError(Severity.Error, s"Expected string argument for name ${name}").raise()
+            case Syntax.StringArgument(value) => value
         }).getOrElse(LanguageError(Severity.Error, s"Expected argument for name $name").raise())
 
         def optionalPositionedString(): Option[String] = {
             positioned.headOption.map({
-                case StringValue(value) => value
+                case Syntax.StringArgument(value) => value
             })
         }
 
         def expectPositionedString(pos: Int = 0, default: Option[String] = None): String = {
             positioned.lift(pos).map({
-                case StringValue(value) => value
+                case Syntax.StringArgument(value) => value
                 case _ => LanguageError(Severity.Error, s"Expected string argument for position $pos").raise()
             }).orElse(default).getOrElse(LanguageError(Severity.Error, s"Expected argument for position $pos").raise())
         }
 
         def expectPositionedChain(pos: Int = 0): Syntax.Command = {
             positioned.lift(pos).map({
-                case ChainValue(function) => function
-                case StringValue(value) => LanguageError(Severity.Error, s"Expected chain argument for position $pos, but got String").raise()
+                case Syntax.ChainArgument(function) => function
+                case Syntax.StringArgument(value) => LanguageError(Severity.Error, s"Expected chain argument for position $pos, but got String").raise()
             }).getOrElse(LanguageError(Severity.Error, s"Expected argument for position $pos").raise())
         }
     }
 
-    sealed trait ArgumentValue
-    case class ChainValue(function: Syntax.Command) extends ArgumentValue
-    case class StringValue(value: String) extends Value
-
-
     case class Environment(
-                       environment: Map[String, Value]
-                     ) {
+                            environment: Map[String, Value]
+                          ) {
         def bind(name: String, value: Value): Environment = this.copy(environment + (name -> value))
 
         def lookup(name: String): Option[Value] = environment.get(name)
@@ -111,18 +106,27 @@ object Interpretation {
         def empty: State = State(Environment(Map()), Value.Unit)
     }
 
+    def doArgs(arguments: Seq[Syntax.Argument]): Arguments = {
+        Arguments(
+            arguments.collect({case a: Syntax.NamedArgument => a}).map(a => a.name -> a.value).toMap,
+            arguments.collect({case a: Syntax.SimpleArgumentValue => a}),
+        )
+    }
+
     def evaluate(state: State, command: Syntax.Command): State = {
         command match {
             case Syntax.Composition(first, second) =>
                 evaluate(evaluate(state, first), second)
-            case Syntax.Application(name, args) => state.environment.lookup(name) match {
-                case Some(Value.Closure(command, state)) => evaluate(state, command)
-                case Some(Value.Function(f)) =>
+            case Syntax.Application(name, args) =>
+                val structured_args = doArgs(args)
 
-                    f(Arguments(Map(), Seq()))(state)
-                case Some(value) => state.withValue(value)
-                case None => ???
-            }
+                state.environment.lookup(name) match {
+                    case Some(Value.Closure(command, state)) => evaluate(state, command)
+                    case Some(Value.Function(f)) => f(structured_args)(state)
+                    case Some(value) => state.withValue(value)
+                    case None =>
+                        new LanguageError(LanguageError.Severity.Error, s"Buildscript: ${name} is not defined").raise()
+                }
         }
     }
 }
