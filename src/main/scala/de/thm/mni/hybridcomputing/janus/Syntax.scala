@@ -27,15 +27,19 @@ object Syntax {
     case class ArrayAccess(array: VariableReference, index: Expression) extends VariableReference
 
     case class Assignment(variable: VariableReference, op: AssignmentOperator, value: Expression) extends Statement
-    case class Conditional(test: Expression, thenStatement: Statement, elseStatement: Option[Statement], assertion: Expression) extends Statement
+    case class Conditional(test: Expression, thenStatement: Option[Statement], elseStatement: Option[Statement], assertion: Expression) extends Statement
     case class Loop(assertion: Expression, doStatement: Option[Statement], loopStatement: Option[Statement], test: Expression) extends Statement
-    case class Push(stack: Identifier, value: Identifier) extends Statement
-    case class Pop(stack: Identifier, value: Identifier) extends Statement
+    case class Push(stack: VariableReference, value: VariableReference) extends Statement
+    case class Pop(stack: VariableReference, value: VariableReference) extends Statement
     case class Swap(left: VariableReference, right: VariableReference) extends Statement
     case class LocalDelocal(variable: VariableDeclaration, compute: Expression, body: Statement, variable_2: VariableDeclaration, uncompute: Expression) extends Statement
     case class Call(direction: Direction, target: Identifier, args: Seq[VariableReference]) extends Statement
     case class Skip() extends Statement
     case class Block(list: Seq[Statement]) extends Statement
+    case class Write(arg: VariableReference) extends Statement
+    case class Read(arg: VariableReference) extends Statement
+    case class WriteC(arg: VariableReference) extends Statement
+    case class ReadC(arg: VariableReference) extends Statement
 
     case class VariableDeclaration(typ: TypeExpression, name: Identifier, array_size: Option[Integer]) extends Node
 

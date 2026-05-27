@@ -58,6 +58,14 @@ object Lexing {
             case WHITESPACE
             case LINECOMMENT
             case BLOCKCOMMENT
+            case READ
+            case WRITE
+            case READC
+            case WRITEC
+            case EMPTY
+            case PUSH
+            case POP
+            case TOP
             case EOF
             
             override def toString(): String = this match
@@ -111,6 +119,14 @@ object Lexing {
                 case INTLIT => "INTLIT"
                 case VAL => "VAL"
                 case PROCEDURE => "PROCEDURE"
+                case READ => "READ"
+                case WRITE => "WRITE"
+                case READC => "READ"
+                case WRITEC => "WRITE"
+                case EMPTY => "EMPTY"
+                case PUSH => "PUSH"
+                case POP => "POP"
+                case TOP => "TOP"
         }
     }
     
@@ -130,7 +146,7 @@ object Lexing {
                 case "then" => symbol(THEN)
                 case "else" => symbol(ELSE)
                 case "fi" => symbol(FI)
-                case "val" => symbol(VAL)
+                case "byval" => symbol(VAL)
                 case "from" => symbol(FROM)
                 case "do" => symbol(DO)
                 case "loop" => symbol(LOOP)
@@ -142,6 +158,14 @@ object Lexing {
                 case "skip" => symbol(SKIP)
                 case "nil" => symbol(NIL)
                 case "stack" => symbol(STACK)
+                case "read" => symbol(READ)
+                case "write" => symbol(WRITE)
+                case "readc" => symbol(READC)
+                case "writec" => symbol(WRITEC)
+                case "empty" => symbol(EMPTY)
+                case "push" => symbol(PUSH)
+                case "pop" => symbol(POP)
+                case "top" => symbol(TOP)
                 case l => symbol(IDENT, l)
             } |
               //"""(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))+""".r ^^^ symbol(WHITESPACE) |
@@ -158,7 +182,13 @@ object Lexing {
               "-=" ^^^ symbol(ASGN_SUB) |
               "^=" ^^^ symbol(ASGN_XOR) |
               "<=>" ^^^ symbol(SWAP) |
-              "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
+              "(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
+              "'.'".r ^^ (l => symbol(INTLIT, l.charAt(1).toInt)) |
+              "'\\\\.'".r ^^ (l => symbol(INTLIT, l.charAt(2) match {
+                  case 'n' => '\n'.toInt
+                  case 'r' => '\r'.toInt
+                  case 't' => '\t'.toInt
+              })) |
               "+" ^^^ symbol(ADD) |
               "-" ^^^ symbol(SUB) |
               "^" ^^^ symbol(XOR) |

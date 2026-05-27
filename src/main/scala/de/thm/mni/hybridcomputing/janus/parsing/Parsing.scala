@@ -46,6 +46,7 @@ object Parsing {
         }
 
         def intlit: P[Integer] = valueToken[Integer](INTLIT)
+        | SUB ~~ valueToken[Integer](INTLIT) ^ (v => - v)
 
         def program: P[Syntax.Program] = posi {
             phrase(rep(procedure) ^^ (definitions => Syntax.Program(definitions)))
@@ -74,11 +75,17 @@ object Parsing {
         def statement: P[Syntax.Statement] = posi {
             variable_reference ~~ assignmentOperator ~~! expression ^^ Syntax.Assignment.apply
               | variable_reference ~~ SWAP ~~! variable_reference ^^ Syntax.Swap.apply
-              | IF ~~! expression ~~ THEN ~~ block ~~ opt(ELSE ~~ block) ~~ FI ~~ expression ^^ Syntax.Conditional.apply
+              | IF ~~! expression ~~ opt(THEN ~~ block) ~~ opt(ELSE ~~ block) ~~ FI ~~ expression ^^ Syntax.Conditional.apply
               | FROM ~~! expression ~~ opt(DO ~~ block) ~~ opt(LOOP ~~ block) ~~ UNTIL ~~ expression ^^ Syntax.Loop.apply
               | LOCAL ~~! variable_declaration ~~ EQUAL ~ expression ~~ block ~~ DELOCAL ~~ variable_declaration ~~ EQUAL ~~ expression ^ Syntax.LocalDelocal.apply
               | (CALL ^^^ Direction.FORWARDS | UNCALL ^^^ Direction.BACKWARDS) ~~! ident ~~ LPAR ~~ repsep(variable_reference, COMMA) ~~ RPAR ^^ Syntax.Call.apply
               | SKIP ^ Syntax.Skip.apply
+              | WRITE ~~ LPAR ~~ variable_reference ~~ RPAR ^ Syntax.Write.apply
+              | READ ~~ LPAR ~~ variable_reference ~~ RPAR ^ Syntax.Read.apply
+              | WRITEC ~~ LPAR ~~ variable_reference ~~ RPAR ^ Syntax.WriteC.apply
+              | READC ~~ LPAR ~~ variable_reference ~~ RPAR ^ Syntax.ReadC.apply
+              | PUSH ~~ LPAR ~~ variable_reference ~~ COMMA ~~ variable_reference ~~ RPAR ^ Syntax.Push.apply
+              | POP ~~ LPAR ~~ variable_reference ~~ COMMA ~~ variable_reference ~~ RPAR ^ Syntax.Pop.apply
               | (in => Failure(s"Expected statement but got ${in.first}", in))
         }
 
@@ -178,10 +185,12 @@ object Parsing {
 
 
         def simple_expression: P[Syntax.Expression] =
-            valueToken[Integer](INTLIT) ^ (i => Syntax.Literal.apply(i.intValue()))
+            intlit ^ (i => Syntax.Literal.apply(i.intValue()))
               | variable_reference
               | NIL ^ Syntax.Nil.apply
               | LPAR ~~ expression ~~ RPAR
+              | EMPTY ~~ LPAR ~~ ident ~~ RPAR ^ Syntax.Empty.apply
+              | TOP ~~ LPAR ~~ ident ~~ RPAR ^ Syntax.Top.apply
               | (in => Failure(s"Expected simple expression but got ${in.first} at ${in.pos}", in))
 
         def variable_reference: P[Syntax.VariableReference] = posi {
