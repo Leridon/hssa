@@ -27,8 +27,8 @@ object Syntax {
     case class ArrayAccess(array: VariableReference, index: Expression) extends VariableReference
 
     case class Assignment(variable: VariableReference, op: AssignmentOperator, value: Expression) extends Statement
-    case class Conditional(test: Expression, thenStatement: Statement, elseStatement: Statement, assertion: Expression) extends Statement
-    case class Loop(assertion: Expression, doStatement: Statement, loopStatement: Statement, test: Expression) extends Statement
+    case class Conditional(test: Expression, thenStatement: Statement, elseStatement: Option[Statement], assertion: Expression) extends Statement
+    case class Loop(assertion: Expression, doStatement: Option[Statement], loopStatement: Option[Statement], test: Expression) extends Statement
     case class Push(stack: Identifier, value: Identifier) extends Statement
     case class Pop(stack: Identifier, value: Identifier) extends Statement
     case class Swap(left: VariableReference, right: VariableReference) extends Statement

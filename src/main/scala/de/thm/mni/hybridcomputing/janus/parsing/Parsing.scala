@@ -60,7 +60,7 @@ object Parsing {
         }
 
         def variable_declaration: P[Syntax.VariableDeclaration] = posi {
-            dataType ~~ ident ~~ opt(LBRACK ~~ intlit ~~ RBRACK)^ Syntax.VariableDeclaration.apply
+            dataType ~~ ident ~~ opt(LBRACK ~~ intlit ~~ RBRACK) ^ Syntax.VariableDeclaration.apply
         }
 
         def dataType: P[Syntax.TypeExpression] = posi {
@@ -74,8 +74,8 @@ object Parsing {
         def statement: P[Syntax.Statement] = posi {
             variable_reference ~~ assignmentOperator ~~! expression ^^ Syntax.Assignment.apply
               | variable_reference ~~ SWAP ~~! variable_reference ^^ Syntax.Swap.apply
-              | IF ~~! expression ~~ THEN ~~ block ~~ ELSE ~~ block ~~ FI ~~ expression ^^ Syntax.Conditional.apply
-              | FROM ~~! expression ~~ DO ~~ block ~~ LOOP ~~ block ~~ UNTIL ~~ expression ^^ Syntax.Loop.apply
+              | IF ~~! expression ~~ THEN ~~ block ~~ opt(ELSE ~~ block) ~~ FI ~~ expression ^^ Syntax.Conditional.apply
+              | FROM ~~! expression ~~ opt(DO ~~ block) ~~ opt(LOOP ~~ block) ~~ UNTIL ~~ expression ^^ Syntax.Loop.apply
               | LOCAL ~~! variable_declaration ~~ EQUAL ~ expression ~~ block ~~ DELOCAL ~~ variable_declaration ~~ EQUAL ~~ expression ^ Syntax.LocalDelocal.apply
               | (CALL ^^^ Direction.FORWARDS | UNCALL ^^^ Direction.BACKWARDS) ~~! ident ~~ LPAR ~~ repsep(variable_reference, COMMA) ~~ RPAR ^^ Syntax.Call.apply
               | SKIP ^ Syntax.Skip.apply
