@@ -47,7 +47,7 @@ object ScopeTreeCrawler {
   
   private def handleClass(classDef : ScopeTree.Class, identifiers : IdentMapWrapper): Unit = {
     identifiers.add(classDef.name.position, SymbolReference(classDef.name.position, true))
-    for (field <- classDef.fields) {
+    for (field <- classDef.all_fields) {
       checkVariable(field, identifiers)
       identifiers.add(field.name.position, SymbolReference(field.name.position, true))
     }
@@ -173,22 +173,22 @@ object ScopeTreeCrawler {
   }
   
   private def checkVariable(variable : ScopeTree.Variable, identifiers : IdentMapWrapper): Unit = {
-     variable match
-      case untypedVar: ScopeTree.UntypedVariable => handleDataType(untypedVar.typ, identifiers)
-      case typedVar: Translatable.TypedVariable =>
-        typedVar.typ match
-          case nonInt : NonIntType =>
-            nonInt match
-              case NilType => 
-              case intArray : Typing.IntegerArray => 
-              case classArray : Typing.ClassArray => 
-                identifiers.add(Helper.sliceSubSourcePosL(variable.definition, variable.name.position),
-                  SymbolReference(classArray.typ.name.position, false))
-              case cl : Typing.Class => 
-                identifiers.add(Helper.sliceSubSourcePosL(variable.definition, variable.name.position), 
-                  SymbolReference(cl.typ.name.position, false))
-          case Typing.Integer =>
-      case _ => 
+    if(variable.isTyped) {
+      variable.typ match
+        case nonInt: NonIntType =>
+          nonInt match
+            case NilType =>
+            case intArray: Typing.IntegerArray =>
+            case classArray: Typing.ClassArray =>
+              identifiers.add(Helper.sliceSubSourcePosL(variable.definition, variable.name.position),
+                SymbolReference(classArray.typ.name.position, false))
+            case cl: Typing.Class =>
+              identifiers.add(Helper.sliceSubSourcePosL(variable.definition, variable.name.position),
+                SymbolReference(cl.typ.name.position, false))
+        case Typing.Integer =>
+    } else {
+      handleDataType(variable.typ_expression, identifiers)
+    }
   }
   
   private def lookupType(dataType: Syntax.ClassIdentifier): SourcePosition = {

@@ -1,0 +1,12 @@
+// Error: BadArgumentCount — f expects one argument, call passes none
+// Expected: roopl.check reports "method f expects 1 argument(s), got 0."
+
+class Box
+  method f(int x)
+    skip
+
+class Program
+  Box b
+  method main()
+    new Box b
+    call b::f()

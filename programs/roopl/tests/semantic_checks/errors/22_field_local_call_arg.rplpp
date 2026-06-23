@@ -1,0 +1,9 @@
+// Error: FieldLocalCallArg — field passed to local (non-dispatch) method
+// Expected: roopl.check reports "passed to local method is a field of this class"
+
+class Box
+  int x
+  method bump(int v)
+    v += 1
+  method main()
+    call bump(x)

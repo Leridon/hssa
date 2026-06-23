@@ -1,0 +1,5 @@
+class Program
+    method main()
+        local S t = nil
+            skip
+        delocal S t = nil

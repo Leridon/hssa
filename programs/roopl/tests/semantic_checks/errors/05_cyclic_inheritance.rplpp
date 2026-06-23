@@ -1,0 +1,14 @@
+// Error: CyclicInheritance — A inherits B inherits A
+// Expected: roopl.check reports "inherits in a cycle" (e.g. A -> B -> A)
+
+class A inherits B
+  method ma()
+    skip
+
+class B inherits A
+  method mb()
+    skip
+
+class Program
+  method main()
+    skip

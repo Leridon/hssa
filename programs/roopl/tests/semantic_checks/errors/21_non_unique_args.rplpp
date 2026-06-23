@@ -1,0 +1,13 @@
+// Error: NonUniqueArgs — same variable passed twice
+// Expected: roopl.check reports "arguments passed to method must be unique."
+
+class Box
+  method f(int x, int y)
+    skip
+
+class Program
+  Box b
+  int a
+  method main()
+    new Box b
+    call b::f(a, a)

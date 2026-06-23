@@ -1,0 +1,10 @@
+// Error: MultipleMains — main() in more than one class
+// Expected: roopl.check reports "main method is already defined in class"
+
+class Program
+  method main()
+    skip
+
+class Other
+  method main()
+    skip

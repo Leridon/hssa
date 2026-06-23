@@ -1,0 +1,12 @@
+// Error: DuplicateMethodName — method m declared twice in one class
+// Expected: roopl.check reports "method m is already defined in class Box"
+
+class Box
+  method m()
+    skip
+  method m()
+    skip
+
+class Program
+  method main()
+    skip

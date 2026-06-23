@@ -1,0 +1,10 @@
+// Error: MissingClass — superclass Unknown is not defined
+// Expected: roopl.check reports "class Unknown is referenced but not defined."
+
+class Child inherits Unknown
+  method m()
+    skip
+
+class Program
+  method main()
+    skip

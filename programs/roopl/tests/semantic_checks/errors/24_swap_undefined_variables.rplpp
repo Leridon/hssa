@@ -1,0 +1,6 @@
+// Error: DuplicateClassName — class Foo defined twice
+// Expected: roopl.check reports "class Foo is already defined."
+
+class Program
+  method main()
+    a <=> b

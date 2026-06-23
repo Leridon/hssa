@@ -60,6 +60,13 @@ object LanguageError {
         }
         
         def get(): List[LanguageError] = buffer.toList
+
+        def in[T](f: => T): Option[T] = {
+            val previous = this.buffer.count(_.severity == Severity.Error)
+            val result = f
+
+            Option.when(this.buffer.count(_.severity == Severity.Error) == previous)(result)
+        }
     }
     
     enum Severity:

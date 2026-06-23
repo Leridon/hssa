@@ -1,0 +1,12 @@
+// Error: BadAssign — object-typed variable on left of integer assignment
+// Expected: roopl.check reports "expected integer variable on left side of assignment"
+
+class Cat
+  method m()
+    skip
+
+class Program
+  Cat c
+  method main()
+    new Cat c
+    c += 1

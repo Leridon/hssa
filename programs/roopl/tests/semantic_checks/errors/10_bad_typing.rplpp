@@ -1,0 +1,7 @@
+// Error: BadTyping — nil cannot satisfy integer type in assignment
+// Expected: roopl.check reports "expected type to satisfy Integer, got NilType"
+
+class Program
+  int i
+  method main()
+    i += nil
