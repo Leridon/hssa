@@ -4,10 +4,13 @@ import scala.annotation.targetName
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.util.parsing.combinator.Parsers
+import scala.util.parsing.combinator.ImplicitConversions
 
-trait ParserUtilities[TokenClass] extends Parsers {
+trait ParserUtilities[TokenClass] extends Parsers with ImplicitConversions {
     override type Elem = Token[TokenClass]
-    
+
+    protected type P[T] = this.Parser[T]
+
     def skipTokens: Set[TokenClass] = Set()
     
     def skip: IgnoredParser = {

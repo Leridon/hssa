@@ -1,54 +1,54 @@
 package de.thm.mni.hybridcomputing.hssa.util
 
-import RelationBuilder.LabelUsage
-import RelationBuilder.LabelUsage.Position
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
 import de.thm.mni.hybridcomputing.hssa.Syntax.{Relation, Statement}
-import de.thm.mni.hybridcomputing.hssa.interpretation.Interpretation.BlockIndex
+import de.thm.mni.hybridcomputing.hssa.util.RelationBuilder.LabelUsage
+import de.thm.mni.hybridcomputing.hssa.util.RelationBuilder.LabelUsage.Position
 import de.thm.mni.hybridcomputing.hssa.{Syntax, util}
+import de.thm.mni.hybridcomputing.util.UniqueNameGenerator
 
 import scala.collection.mutable.ListBuffer
 import scala.util.chaining.*
-import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.*
-import de.thm.mni.hybridcomputing.util.UniqueNameGenerator
 
 class RelationBuilder(
                        var name: String,
                        var parameter: Syntax.Expression
                      ) {
     private val _blocks: ListBuffer[RelationBuilder.BlockBuilder] = new ListBuffer[RelationBuilder.BlockBuilder]
-    
+
     def blocks: Seq[RelationBuilder.BlockBuilder] = _blocks.toSeq
-    
+
     def this(relation: Syntax.Relation) = {
         this(relation.name.name, relation.parameter)
-        
+
         relation.blocks.foreach(b => this.add(b))
     }
-    
+
     def getByEntryLabel(label: String): RelationBuilder.BlockBuilder = _blocks.find(b => b.entry.labels.contains(label)).get
+
     def getByExitLabel(label: String): RelationBuilder.BlockBuilder = _blocks.find(b => b.exit.labels.contains(label)).get
-    
+
     def getAllByEntryLabel(label: String): Seq[RelationBuilder.BlockBuilder] = _blocks.filter(b => b.entry.labels.contains(label)).toSeq
+
     def getAllByExitLabel(label: String): Seq[RelationBuilder.BlockBuilder] = _blocks.filter(b => b.exit.labels.contains(label)).toSeq
-    
+
     def labels: Set[String] = this._blocks.flatMap(b => b.entry.labels ++ b.exit.labels).toSet.map(_.name)
-    
+
     def remove(block: RelationBuilder.BlockBuilder): Unit = {
         this._blocks.remove(this._blocks.indexOf(block))
     }
-    
+
     def add(block: Syntax.Block): RelationBuilder.BlockBuilder = {
         RelationBuilder.BlockBuilder(this, block).tap(this._blocks.addOne)
     }
-    
+
     def compile(): Syntax.Relation = Syntax.Relation(name, parameter, this._blocks.map(_.block()).toSeq) // TODO: Do a topological sort on the blocks
-    
+
     def filterBlocksInPlace(f: Syntax.Block => Boolean): Unit = this._blocks.filterInPlace(b => f(b.block()))
-    
+
     val label_generator: UniqueNameGenerator = new UniqueNameGenerator("")
       .withExternalReservation(name => this.allLabelUsages.exists(_.label == name))
-    
+
     def allLabelUsages: List[RelationBuilder.LabelUsage] = {
         def getUsages(block: RelationBuilder.BlockBuilder, stm: Statement): List[RelationBuilder.LabelUsage] = {
             stm match
@@ -56,10 +56,10 @@ class RelationBuilder(
                 case Syntax.Entry(_, labels) => labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(block, i, LabelUsage.Position.ENTRY, l.name) }).toList
                 case _ => Nil
         }
-        
+
         this._blocks.toList.flatMap(b => getUsages(b, b.entry) ++ getUsages(b, b.exit))
     }
-    
+
     def updateLabels(f: RelationBuilder.LabelUsage => String): Unit = {
         this._blocks.foreach(_.updateLabels(f))
     }
@@ -68,28 +68,40 @@ class RelationBuilder(
 object RelationBuilder {
     class BlockBuilder(val parent: RelationBuilder, init: Syntax.Block) {
         private var _entry: Syntax.Entry = init.entry
-        private var _assignments = new ListBuffer[Syntax.Assignment].tap(_.addAll(init.assignments))
+        private val _assignments = new ListBuffer[Syntax.Assignment].tap(_.addAll(init.assignments))
         private var _exit: Syntax.Exit = init.exit
-        
+
+        private val variable_generator = new UniqueNameGenerator()
+          .withExternalReservation(s => _entry.output.variables.exists(v => v.name.name == s))
+          .withExternalReservation(s => _exit.input.variables.exists(v => v.name.name == s))
+          .withExternalReservation(s => _assignments.exists(a => a.input.variables.exists(v => v.name.name == s)))
+          .withExternalReservation(s => _assignments.exists(a => a.output.variables.exists(v => v.name.name == s)))
+
         def updateLabels(f: RelationBuilder.LabelUsage => String): Unit = {
             _entry = Syntax.Entry(_entry.output, _entry.labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(this, i, LabelUsage.Position.ENTRY, l.name) }).map(u => f(u)))
             _exit = Syntax.Exit(_exit.labels.zipWithIndex.map({ case (l, i) => RelationBuilder.LabelUsage(this, i, LabelUsage.Position.EXIT, l.name) }).map(u => f(u)), _exit.input)
         }
-        
+
+        def freshVariable(prefix: String): String = {
+            this.variable_generator.next(prefix)
+        }
+
         def block(): Syntax.Block = Syntax.Block(entry, this.assignment, exit)
-        
+
         def entry: Syntax.Entry = _entry
+
         def assignment: Seq[Syntax.Assignment] = _assignments.toSeq
+
         def exit: Syntax.Exit = _exit
     }
-    
+
     case class LabelUsage(
                            block: BlockBuilder,
                            pos: Int,
                            role: LabelUsage.Position,
                            label: String
                          ) {
-        
+
         override def equals(obj: Any): Boolean = {
             obj match {
                 case other: LabelUsage =>
@@ -97,13 +109,13 @@ object RelationBuilder {
                       pos == other.pos &&
                       role == other.role &&
                       label == other.label
-                
+
                 case _ => false
             }
         }
-        
+
     }
-    
+
     object LabelUsage {
         enum Position {
             case ENTRY
