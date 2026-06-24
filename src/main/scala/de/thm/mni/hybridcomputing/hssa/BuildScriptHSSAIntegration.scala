@@ -11,6 +11,8 @@ import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
 import scala.collection.mutable.ListBuffer
 
 object BuildScriptHSSAIntegration extends BuildScriptIntegration {
+    override def name: String = "HSSA"
+
     case class HSSA(program: hssa.Syntax.Program) extends Value
     case class ModularHSSA(program: Modular.Syntax.Program) extends Value
 

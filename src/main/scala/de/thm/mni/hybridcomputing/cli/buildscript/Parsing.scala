@@ -49,15 +49,15 @@ object Parsing {
         def chain: Parser[Syntax.Command] = chainl1(fun, composition_operator ^^^ Syntax.Composition.apply)
 
         def simple_arg: Parser[Syntax.SimpleArgumentValue] =
-            LCURL ~~ chain ~~ RCURL ^^ (c => Syntax.ChainArgument(c))
-              | string ^^ (s => Syntax.StringArgument(s))
+            LCURL ~~ chain ~~ RCURL ^ (c => Syntax.ChainArgument(c))
+              | string ^ (s => Syntax.StringArgument(s))
 
         def arg: Parser[Syntax.Argument] =
-            string ~~ EQUAL ~~ simple_arg ^^ { case s ~ arg => Syntax.NamedArgument(s, arg) }
+            string ~~ EQUAL ~~ simple_arg ^ { case s ~ arg => Syntax.NamedArgument(s, arg) }
               | simple_arg
 
         protected def string: Parser[String] = valueToken[String](STRING)
 
-        def fun: Parser[Syntax.Application] = string ~~ rep(arg) ^^ { case s ~ args => Syntax.Application(s, args) }
+        def fun: Parser[Syntax.Application] = string ~~ rep(arg) ^ { case s ~ args => Syntax.Application(s, args) }
     }
 }

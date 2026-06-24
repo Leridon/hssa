@@ -8,6 +8,8 @@ import java.nio.file.Path
 
 object BuildScriptFileIntegration extends BuildScriptIntegration {
 
+    override def name: String = "Files"
+
     case class File(
                      path: Option[Path],
                      name: Option[String],

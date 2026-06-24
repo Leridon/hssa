@@ -61,11 +61,22 @@ object Interpretation {
 
 
     case class Environment(
-                       environment: Map[String, Value]
-                     ) {
-        def bind(name: String, value: Value): Environment = this.copy(environment + (name -> value))
+                            environment: Map[String, Environment.Entry]
+                          ) {
 
-        def lookup(name: String): Option[Value] = environment.get(name)
+        def bind(name: String, value: Value, mutable: Boolean): Environment = {
+            val existing_is_immutable = environment.get(name).exists(_.mutable)
+
+            if (existing_is_immutable) BuildScriptError.ReboundImmutableName(name).raise()
+
+            this.copy(environment + (name -> Environment.Entry(value, mutable)))
+        }
+
+        def lookup(name: String): Option[Value] = environment.get(name).map(_.value)
+    }
+
+    object Environment {
+        case class Entry(value: Value, mutable: Boolean)
     }
 
 
@@ -74,13 +85,9 @@ object Interpretation {
                       current_value: Value
                     ) {
 
-        def bind(name: String, value: Value): State = this.copy(environment = environment.bind(name, value))
+        def bind(name: String, value: Value, mutable: Boolean): State = this.copy(environment = environment.bind(name, value, mutable))
 
         def withValue(value: Value): State = this.copy(current_value = value)
-
-        def withIntegrations(integrations: BuildScriptIntegration*): State = {
-            integrations.foldLeft(this)((s, integration) => integration.commands.foldLeft(s)((s, cmd) => s.bind(cmd._1, Value.Function(cmd._2))))
-        }
 
         def mapValue(f: PartialFunction[Value, Value]): State = this.withValue(f.apply(current_value))
     }
@@ -88,7 +95,7 @@ object Interpretation {
     object State {
         def init(customization: Customization): State = {
             customization.integrations.flatMap(_.commands).foldLeft(empty)((s, cmd) =>
-                s.bind(cmd._1, Value.Function(cmd._2))
+                s.bind(cmd._1, Value.Function(cmd._2), false)
             )
         }
 
@@ -99,13 +106,14 @@ object Interpretation {
         command match {
             case Syntax.Composition(first, second) =>
                 evaluate(evaluate(state, first), second)
-            case Syntax.Application(name, args) => state.environment.lookup(name) match {
+            case app@Syntax.Application(name, args) => state.environment.lookup(name) match {
                 case Some(Value.Closure(command, state)) => evaluate(state, command)
                 case Some(Value.Function(f)) =>
 
                     f(Arguments(Map(), Seq()))(state)
                 case Some(value) => state.withValue(value)
-                case None => ???
+                case None =>
+                    BuildScriptError.UndefinedName(name).setPosition(app.position).raise()
             }
         }
     }

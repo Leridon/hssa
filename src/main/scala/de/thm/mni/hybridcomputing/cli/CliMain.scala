@@ -29,10 +29,7 @@ object CliMain:
                 buildscript.Interpretation.evaluate(start_state, build_script)
             } catch {
                 case e: AbortDueToErrors =>
-                    e.errors.foreach(e => {
-                        println(e)
-                        println()
-                    })
+                    e.printAll()
             }
         }
     }
