@@ -1,5 +1,6 @@
 package de.thm.mni.hybridcomputing.cli.buildscript
 
+import de.thm.mni.hybridcomputing.cli.buildscript.Parsing.Grammar
 import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, ParserUtilities, SourceFile, TokenReader}
 
 
@@ -37,6 +38,12 @@ object Parsing {
 
         import TokenTypes.*
 
+        override type StartSymbolType = Syntax.Command
+
+        override def startSymbolParser: Grammar.P[Syntax.Command] = chain
+
+        override def defaultLexer: LexicalGrammarUtilities[TokenTypes] = LexicalGrammar
+
         def composition_operator: Parser[Any] = rep1(SEPARATOR | LINEBREAK)
 
         def chain: Parser[Syntax.Command] = chainl1(fun, composition_operator ^^^ Syntax.Composition.apply)
@@ -52,17 +59,5 @@ object Parsing {
         protected def string: Parser[String] = valueToken[String](STRING)
 
         def fun: Parser[Syntax.Application] = string ~~ rep(arg) ^^ { case s ~ args => Syntax.Application(s, args) }
-    }
-
-    def parse(specification: String): Syntax.Command = {
-        val file = SourceFile.fromString(specification)
-        val token_reader = TokenReader(file, file.reader, LexicalGrammar)
-
-        Grammar.chain(token_reader) match {
-            case Grammar.Success(prog, _) => prog
-            case err =>
-                println(err)
-                ???
-        }
     }
 }

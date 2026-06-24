@@ -1,12 +1,19 @@
 package de.thm.mni.hybridcomputing.rfun
 
-import de.thm.mni.hybridcomputing.util.parsing.ParserUtilities
+import de.thm.mni.hybridcomputing.rfun.Parsing.Grammar
+import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, ParserUtilities}
 
 object Parsing {
 
     object Grammar extends ParserUtilities[Lexing.TokenClass] {
 
         import Lexing.TokenClass.*
+
+        override type StartSymbolType = Syntax.Program
+
+        override def startSymbolParser: Grammar.P[Syntax.Program] = program
+
+        override def defaultLexer: LexicalGrammarUtilities[Lexing.TokenClass] = Lexing.Grammar
 
         protected def ident: P[Syntax.Identifier] = valueToken[String](IDENT) ^ Syntax.Identifier.apply
 
@@ -30,6 +37,10 @@ object Parsing {
         def function: P[Syntax.FunctionDefinition] = posi((ident ~~ COLONCOLON ~~ typeExpr) >> { case name ~ signature =>
             rep(cases(name)) ^ (cs => Syntax.FunctionDefinition(name, signature, cs))
         })
+
+        def datatype: P[Syntax.DataTypeDefinition] = DATA ~~ ident ~~ EQUAL ~~ repsep(constructor, PIPE) ^ Syntax.DataTypeDefinition.apply
+
+        def program: P[Syntax.Program] = rep(function | datatype) ^ Syntax.Program.apply
 
     }
 }

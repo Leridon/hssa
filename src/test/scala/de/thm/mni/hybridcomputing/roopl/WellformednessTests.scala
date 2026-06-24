@@ -33,9 +33,7 @@ class WellformednessTests extends AnyFlatSpec {
             val file = SourceFile.fromFile(path)
 
             val program =
-                roopl.parsing.Parsing.parse(
-                    roopl.parsing.Lexing.LexicalGrammar.getTokenReader(file)
-                )
+                roopl.parsing.Parsing.Grammar.parse(file)
 
             val cg = roopl.wellformedness.ClassGraph.check(program)
 

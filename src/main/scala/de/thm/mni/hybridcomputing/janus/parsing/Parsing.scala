@@ -1,11 +1,9 @@
 package de.thm.mni.hybridcomputing.janus.parsing
 
 import de.thm.mni.hybridcomputing.janus.parsing.Lexing.Tokens.TokenClass
-import de.thm.mni.hybridcomputing.util.parsing.Token
+import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, ParserUtilities, SourcePosition, Token}
 import de.thm.mni.hybridcomputing.util.parsing
-import de.thm.mni.hybridcomputing.util.parsing.ParserUtilities
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
-import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 import de.thm.mni.hybridcomputing.util.reversibility.Direction
 
 import scala.util.parsing.input.Reader
@@ -17,22 +15,7 @@ object Parsing {
 
     type TokenReader = Reader[Token[Lexing.Tokens.TokenClass]]
 
-    val grammar = new Parsing.Grammar()
-
-    def parse(token_reader: Parsing.TokenReader): Syntax.Program = {
-
-        this.grammar.program(token_reader) match {
-            case grammar.Success(prog, _) => prog
-            case grammar.NoSuccess(msg, rest) =>
-                val r = rest.asInstanceOf[parsing.TokenReader[?]]
-
-                LanguageError.SyntaxError(msg).setPosition(SourcePosition(r.file, r.position, null)).raise()
-            case grammar.Failure(_, _) => ???
-            case grammar.Error(_, _) => ???
-        }
-    }
-
-    class Grammar extends ParserUtilities[Lexing.Tokens.TokenClass] with ImplicitConversions {
+    object Grammar extends ParserUtilities[Lexing.Tokens.TokenClass] with ImplicitConversions {
 
         import de.thm.mni.hybridcomputing.janus.parsing.Lexing.Tokens.TokenClass.*
         import de.thm.mni.hybridcomputing.util.parsing
@@ -40,6 +23,10 @@ object Parsing {
         private type P[T] = this.Parser[T]
 
         override def skipTokens: Set[Lexing.Tokens.TokenClass] = Set(WHITESPACE, BLOCKCOMMENT, LINECOMMENT, LINEBREAK)
+
+        override type StartSymbolType =  Syntax.Program
+        override def defaultLexer: LexicalGrammarUtilities[TokenClass] = Lexing.LexicalGrammar
+        override def startSymbolParser: Grammar.this.P[Syntax.Program] = program
 
         def ident: P[Syntax.Identifier] = posi {
             valueToken[String](IDENT) ^^ Syntax.Identifier.apply
@@ -53,7 +40,7 @@ object Parsing {
 
         def parameter_kind: P[Syntax.ParameterKind] = opt(VAL) ^ (_.map(_ => Syntax.ParameterKind.VALUE).getOrElse(Syntax.ParameterKind.REFERENCE))
 
-        def parameter: P[Syntax.Parameter] = parameter_kind ~~ variable_declaration ^ Syntax.Parameter
+        def parameter: P[Syntax.Parameter] = parameter_kind ~~ variable_declaration ^ Syntax.Parameter.apply
 
         def procedure: P[Syntax.Procedure] = posi {
             PROCEDURE ~~ ident ~~ LPAR ~~ repsep(variable_declaration, COMMA) ~~ RPAR ~~ rep(parameter) ~~ rep(statement) ^ Syntax.Procedure.apply

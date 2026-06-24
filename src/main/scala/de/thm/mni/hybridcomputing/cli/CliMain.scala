@@ -2,6 +2,7 @@ package de.thm.mni.hybridcomputing.cli
 
 import de.thm.mni.hybridcomputing.cli.buildscript.Parsing
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.AbortDueToErrors
+import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 
 object CliMain:
 
@@ -9,7 +10,7 @@ object CliMain:
         val input = args.map(a => if a.exists(_.isWhitespace) then s""""$a"""" else a).mkString(" ")
 
         try {
-            val build_script = Parsing.parse(input)
+            val build_script = Parsing.Grammar.parse(SourceFile.fromString(input))
             /*
                         val f = Evaluation.evaluate(build_script).withImplicitDump
 

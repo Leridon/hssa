@@ -8,7 +8,7 @@ import scala.util.parsing.combinator.RegexParsers
 import scala.util.parsing.input.{Position, Reader}
 
 trait LexicalGrammarUtilities[T] extends RegexParsers {
-    // Disable built-in whitespace skip
+    // Disable built-in whitespace skip of RegexParsers
     final override def skipWhitespace: Boolean = false
     final override val whiteSpace: Regex = "".r
     
@@ -21,8 +21,7 @@ trait LexicalGrammarUtilities[T] extends RegexParsers {
     
     def wrappedToken: Parser[Token[T]] = before => {
         val res = token.apply(before)
-        
-        
+
         res.map(token => {
             val after = res.next
             

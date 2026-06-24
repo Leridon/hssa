@@ -1,6 +1,7 @@
 package de.thm.mni.hybridcomputing.cli.buildscript
 
 import de.thm.mni.hybridcomputing.cli.buildscript.integrations.{BuildScriptEssentials, BuildScriptFileIntegration, BuildScriptHSSAIntegration, BuildScriptRooplIntegration}
+import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 import org.jline.reader.{EndOfFileException, LineReader, LineReaderBuilder, UserInterruptException}
 import org.jline.terminal.TerminalBuilder
 
@@ -49,6 +50,6 @@ object Repl:
                     running = false
 
     def handleInput(input: String, state: Interpretation.State): Interpretation.State =
-        val command = Parsing.parse(input)
+        val command = Parsing.Grammar.parse(SourceFile.fromString(input))
 
         Interpretation.evaluate(state, command)
