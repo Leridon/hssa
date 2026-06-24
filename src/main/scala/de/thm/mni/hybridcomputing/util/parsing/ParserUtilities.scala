@@ -2,7 +2,6 @@ package de.thm.mni.hybridcomputing.util.parsing
 
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 
-import scala.annotation.targetName
 import scala.language.implicitConversions
 import scala.reflect.ClassTag
 import scala.util.parsing.combinator.Parsers
@@ -55,7 +54,7 @@ trait ParserUtilities[TokenClass] extends Parsers with ImplicitConversions {
 
             res.map(f)
               .map({
-                  case pos: Positioned => pos.setPosition(SourcePosition(in.file, after_whitespace.position, end.position))
+                  case pos: Positioned => pos.setPosition(SourcePosition(in.input.file, after_whitespace.position, end.position))
                   case r => r
               })
               .map({
@@ -126,7 +125,7 @@ trait ParserUtilities[TokenClass] extends Parsers with ImplicitConversions {
                 case NoSuccess(msg, rest) =>
                     val r = rest.asInstanceOf[TokenReader[?]]
 
-                    LanguageError.SyntaxError(msg).setPosition(SourcePosition(r.file, r.position, null)).raise()
+                    LanguageError.SyntaxError(msg).setPosition(r.first.position).raise()
                 case Failure(_, _) => ???
                 case Error(_, _) => ???
             }

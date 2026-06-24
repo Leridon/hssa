@@ -18,18 +18,30 @@ trait LexicalGrammarUtilities[T] extends RegexParsers {
     
     def token: Parser[TokenValue]
     def whitespace: Parser[Any] = success(())
-    
+
     def wrappedToken: Parser[Token[T]] = before => {
         val res = token.apply(before)
 
         res.map(token => {
             val after = res.next
             
-            new Token[T](
+            val t = new Token[T](
                 token._1,
                 token._2,
                 before.source.subSequence(before.offset, after.offset).toString
             )
+
+            before match {
+                case r: SourceFile.SourceFileReader =>
+                    t.setPosition(SourcePosition(
+                        r.file,
+                        SourcePosition.Position(r.pos.line, r.pos.column),
+                        null
+                    ))
+                case _ =>
+            }
+
+            t
         })
     }
     
@@ -59,5 +71,5 @@ trait LexicalGrammarUtilities[T] extends RegexParsers {
     
     final def eof: Token[T] = new Token[T](eof_token, None, "")
 
-    def getTokenReader(file: SourceFile): TokenReader[T] = TokenReader(file, file.reader, this)
+    def getTokenReader(file: SourceFile): TokenReader[T] = TokenReader(file.reader, this)
 }

@@ -27,11 +27,12 @@ object Parsing {
 
         override def token: Parser[TokenValue] =
             """"(\\.|[^"\\])*"""".r ^^ (s => symbol(STRING, s.tail.init)) |
-              "[^\\s{}=,:]+".r ^^ (s => symbol(STRING, s)) |
+              "[^\\s{}=,:;]+".r ^^ (s => symbol(STRING, s)) |
               ":" ^^^ symbol(COLON) |
               "{" ^^^ symbol(LCURL) |
               "}" ^^^ symbol(RCURL) |
               "," ^^^ symbol(SEPARATOR) |
+              ";" ^^^ symbol(SEPARATOR) |
               "=" ^^^ symbol(EQUAL) |
               "\n" ^^^ symbol(SEPARATOR)
     }
