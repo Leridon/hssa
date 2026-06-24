@@ -1,0 +1,16 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// local-init-mismatch.ja2:
+//      The expression used to initialize a local variable must have
+//      the same type as the declared variable.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+
+    local int withWrongType = 0
+    skip
+    delocal int withWrongType = 6 < 18

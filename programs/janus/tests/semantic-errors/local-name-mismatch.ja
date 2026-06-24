@@ -1,0 +1,16 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// local-name-mismatch.ja:
+//      The name of the variable declared in "local" must match the name
+//      declared in "delocal"
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+
+    local int correctName = 0
+    skip
+    delocal int wrongName = 0

@@ -1,0 +1,14 @@
+
+procedure main()
+    int n
+    call f(n)
+
+procedure f(int n)
+    local int a = 13
+    local int b = 14 * a + a
+    local int c = a * b + b * b
+        n <=> c
+    delocal int c = n
+    delocal int b = 14 * a + a
+    delocal int a = 13
+

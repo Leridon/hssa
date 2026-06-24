@@ -1,0 +1,32 @@
+////////////////////////////////////////////////////////////////////////
+// memory-management.ja:
+//      Tests if stacks are correctly allocated and freed.
+//      This program should produce no output and should not have any
+//      allocated stack left after execution.
+//
+// N. Deworetzki, 10. May. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    stack s
+    int n
+    int p
+
+    from n = 0 do
+        push(p, s)
+        n += 1
+    until n = 10
+
+
+    local int repetitions = 3
+    from repetitions = 3 do
+        push(repetitions, s)
+        pop(repetitions, s)
+        repetitions -= 1
+    until repetitions = 0
+    delocal int repetitions = 0
+
+    from n = 10 do
+        pop(p, s)
+        n -= 1
+    until n = 0

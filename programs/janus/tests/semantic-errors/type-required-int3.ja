@@ -1,0 +1,16 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// type-required-int3.ja:
+//      The left-hand side and the right-hand side of assignments must
+//      be an integer, since assignments perform an arithmetic operation.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    stack lhs
+    stack rhs
+
+    lhs += rhs

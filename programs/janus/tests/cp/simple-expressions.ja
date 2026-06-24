@@ -1,0 +1,9 @@
+
+procedure main()
+    int n
+    call incrementN(n)
+
+procedure incrementN(int n)
+    local int a = 3
+    n += a * 12 + 27
+    delocal int a = 3

@@ -1,0 +1,17 @@
+
+procedure main()
+    int result
+
+    local int ten = 10
+        call sumConstants(ten, result)
+    delocal int ten = 10
+
+procedure sumConstants(int n, int result)
+    local int const = 42
+    local int i = n
+    from (i = n) do
+        result += const * const
+        i -= 1
+    until (i = 0)
+    delocal int i = 0
+    delocal int const = 42

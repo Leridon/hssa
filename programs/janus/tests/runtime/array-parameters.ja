@@ -1,0 +1,23 @@
+////////////////////////////////////////////////////////////////////////
+// array-parameters.ja:
+//      Tests if arrays are correctly passed as a parameter.
+//
+// N. Deworetzki, 24. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    stack garbage
+    int auto[40]
+
+    read(auto[13])
+    call zero(auto, garbage)
+    auto[0] += top(garbage)
+    write(auto[0])
+
+procedure zero(int i[40], stack garbage)
+    local   int bound = i[13]
+    from i[13] = bound do
+        i[13] -= 1
+    until i[13] = 0
+    push(bound, garbage)
+    delocal int bound = 0

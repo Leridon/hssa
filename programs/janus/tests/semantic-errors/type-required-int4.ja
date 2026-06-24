@@ -1,0 +1,16 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// type-required-int4.ja:
+//      The left-hand side and the right-hand side of swap statements must
+//      be an integer, since swap statements perform multiple assignments.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    stack lhs
+    stack rhs
+
+    lhs <=> rhs

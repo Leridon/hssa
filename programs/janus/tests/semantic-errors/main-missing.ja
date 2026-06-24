@@ -1,0 +1,12 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// main-missing.ja:
+//      A procedure called "main" always has to be declared.
+//
+// N. Deworetzki, 03. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure f()
+    skip

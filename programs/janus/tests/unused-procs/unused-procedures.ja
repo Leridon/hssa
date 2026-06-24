@@ -1,0 +1,20 @@
+procedure a()
+	skip
+
+
+procedure main()
+	call f()
+	uncall g()
+
+
+procedure f()
+	skip
+
+procedure g()
+	skip
+
+procedure h()
+	skip
+
+procedure i()
+	skip

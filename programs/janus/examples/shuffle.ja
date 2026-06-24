@@ -1,0 +1,60 @@
+////////////////////////////////////////////////////////////////////////
+// shuffle.ja:
+//      Accepts two lines of input and shuffles them into one.
+//
+//      This was originally part of a programming assignment
+//      as part of the CS2333 "Functional Programming" course.
+//
+// 17. Jul. 2020
+////////////////////////////////////////////////////////////////////////
+
+
+procedure main()
+    stack result
+
+    local stack line1 = nil
+    local stack line2 = nil
+        call readLine(line1)
+        call readLine(line2)
+
+        call shuffle(line1, line2, result)
+    delocal stack line2 = nil
+    delocal stack line1 = nil
+
+    call printLine(result)
+
+
+procedure printLine(stack line)
+    if empty(line) else
+        local int char = 0
+        pop(char, line)
+        
+        writec(char)
+        call printLine(line)
+
+        push(char, line)
+        delocal int char = 0
+    fi empty(line)
+
+procedure readLine(stack line)
+    local int char = 0
+    from empty(line) do
+        readc(char)
+    loop
+        push(char, line)
+    until char = '\n'
+    delocal int char = '\n'
+
+
+procedure shuffle(stack s1, stack s2, stack result)
+    local int tmp = 0
+
+    from empty(result) do
+        pop(tmp, s2)
+        push(tmp, result)
+
+        pop(tmp, s1)
+        push(tmp, result)
+    until empty(s1) || empty(s2)
+
+    delocal int tmp = 0

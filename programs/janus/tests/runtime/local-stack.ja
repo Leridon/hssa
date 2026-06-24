@@ -1,0 +1,36 @@
+////////////////////////////////////////////////////////////////////////
+// local-stack.ja:
+//      Tests if local stacks can be created, manipulated and compared.
+//      This program should produce no output.
+//
+// N. Deworetzki, 10. May. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    stack s
+    int n
+
+    from empty(s) do
+        readc(n)
+    loop
+        push(n, s)
+    until n = -1 // EOF
+    n += 1
+
+    local int count = 0
+        local stack s2 = s
+            from count = 0 do
+                pop(n, s2)
+                push(n, s)
+                count += 1
+            until empty(s2)
+        delocal stack s2 = nil
+
+        local stack s3 = nil
+            from empty(s3) do
+                pop(n, s)
+                push(n,  s3)
+                count -= 1
+            until count = 0
+        delocal stack s3 = s
+    delocal int count = 0

@@ -1,0 +1,15 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// type-required-stack4.ja:
+//      The top-expression requires its operand to be a stack.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int i
+    int notAStack
+
+    i ^= top(notAStack)

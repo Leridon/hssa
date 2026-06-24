@@ -1,0 +1,15 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors related to aliasing in an input file.
+//
+// local-illegal-expression.ja:
+//      The expression used to initialize a local variable is not
+//      allowed to contain the local variable.
+//
+// N. Deworetzki, 31. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    local   int illegal = 0
+    illegal += 4
+    delocal int illegal = illegal * 1

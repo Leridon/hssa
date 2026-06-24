@@ -1,0 +1,18 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether a compiled program correctly
+// behaves at runtime.
+//
+// delocal-mismatch-2.ja:
+//      A mismatch in the initializer values of a local-block statement
+//      is correctly detected and reported as an error.
+//
+// N. Deworetzki, 15. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    uncall f()
+
+procedure f()
+    local   int n = 0
+    skip
+    delocal int n = 5

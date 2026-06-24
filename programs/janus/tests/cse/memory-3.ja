@@ -1,0 +1,19 @@
+// Created 05.02.2021
+// Expected results:
+// A = [0, 0, 0, 1, 0, 0, 0, 0, 0, 0]
+// x = 16
+// y = 4
+
+procedure main()
+    int A[10]
+    int x
+    int y
+
+    A[3] += 1
+    y += 4
+    call memoryRead(A, x, y)
+
+
+procedure memoryRead(int A[10], int x, int y)
+    x += A[3] * y + A[3] * y
+    x += A[3] * y + A[3] * y

@@ -1,0 +1,45 @@
+////////////////////////////////////////////////////////////////////////
+// ackermann-stack.ja:
+//      An implementation of the ackermann function.
+//      Intermediate results are placed onto a garbage stack.
+//
+// N. Deworetzki, 21. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure ackermann(int n, int m, int result, stack garbage)
+    if      n = 0
+    then    result += m + 1
+
+    else if m = 0
+    then    local   int one = 1
+            local   int n1  = n - 1
+            call ackermann(n1, one, result, garbage)
+            delocal int n1  = n - 1
+            delocal int one = 1
+
+    else    local   int n1 = n - 1
+            local   int m1 = m - 1
+            local   int tr = 0
+
+            call ackermann(n, m1, tr, garbage)
+            call ackermann(n1, tr, result, garbage)
+            push(tr, garbage) // The intermediate result is pushed onto a garbage stack.
+
+            delocal int tr = 0
+            delocal int m1 = m - 1
+            delocal int n1 = n - 1
+
+    fi      m = 0
+    fi      n = 0
+
+
+procedure main()
+    int n
+    int m
+    int result
+    stack garbage
+
+    read(n)
+    read(m)
+    call ackermann(n, m, result, garbage)
+    write(result)

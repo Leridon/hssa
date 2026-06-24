@@ -1,0 +1,8 @@
+
+procedure f(int A[10], int x, int y)
+    local int z = 0
+        A[x * y] <=> z
+    delocal int z = x * y
+
+procedure main()
+    skip

@@ -14,7 +14,8 @@ libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.20" % Test,
     "commons-io" % "commons-io" % "2.22.0",
     "com.google.code.gson" % "gson" % "2.13.2",
-    "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "1.0.0"
+    "org.eclipse.lsp4j" % "org.eclipse.lsp4j" % "1.0.0",
+    "org.jline" % "jline" % "3.27.1",
 )
 
 assembly / assemblyMergeStrategy := {

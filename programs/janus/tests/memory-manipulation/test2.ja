@@ -1,0 +1,36 @@
+/////////////////////////////////////////////////////////////////////////////
+// This is a test file to verify the functionality of a dataflow anaylis.
+// In this program, the following procedures manipulate memory:
+//  - main
+//  - b
+//  - c
+//  - d
+//
+// Created: 12.01.2022
+/////////////////////////////////////////////////////////////////////////////
+
+procedure a(int arr[20])
+    call a(arr)
+    uncall a(arr)
+
+procedure b(int arr[20])
+    call b(arr)
+    call d(arr)
+
+procedure c(int arr[20])
+    uncall a(arr)
+    uncall b(arr)
+    uncall c(arr)
+    uncall d(arr)
+
+procedure d(int arr[20])
+    local int x = 0
+        arr[1] <=> x
+    delocal int x = 0
+
+procedure main ()
+    int arr[20]
+
+    call a(arr)
+    call b(arr)
+    call c(arr)

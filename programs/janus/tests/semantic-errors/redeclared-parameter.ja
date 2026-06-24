@@ -1,0 +1,16 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// redeclared-parameter.ja:
+//      Parameter names must be unique. It is not allowed to declare
+//      multiple parameters with the same name.
+//
+// N. Deworetzki, 03. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    skip
+
+procedure f(int redeclaredParameter, int redeclaredParameter)
+    skip

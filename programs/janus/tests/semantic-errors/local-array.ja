@@ -1,0 +1,16 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// local-array.ja:
+//      The declaration of arrays is not allowed in local blocks.
+//
+// N. Deworetzki, 13. May. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int array[10]
+
+    local int illegalArray[10] = array
+        skip
+    delocal int illegalArray[10] = array

@@ -1,0 +1,25 @@
+////////////////////////////////////////////////////////////////////////
+// sum.ja:
+//      Calculates the sum of natural numbers from 1 to n
+//      for a given n.
+//
+// N. Deworetzki, 01. Jul. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+  int n
+  int result
+
+  read(n)
+  call sum(n, result)
+  write(result)
+
+
+procedure sum(int n, int result)
+    local int k = 1
+    from k = 1 do
+        result += k
+    loop
+        k += 1
+    until k = n
+    delocal int k = n
