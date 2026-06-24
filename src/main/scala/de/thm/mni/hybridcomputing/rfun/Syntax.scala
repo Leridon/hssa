@@ -14,6 +14,7 @@ object Syntax {
     case class ConsPattern(head: Pattern, tail: Pattern) extends Pattern
     case class ConstructorPattern(constructor: Identifier, arguments: List[Pattern]) extends Pattern
     case class NilPattern() extends Pattern
+    case class UnitPattern() extends Pattern
 
     sealed trait Expression extends Node
 
@@ -25,6 +26,8 @@ object Syntax {
     case class ListTypeExpreesion(element_type: TypeExpression) extends TypeExpression
     case class FunTypeExpression(domain: TypeExpression, codomain: TypeExpression) extends TypeExpression
     case class BijectionTypeExpression(domain: TypeExpression, codomain: TypeExpression) extends TypeExpression
+    case class TupleTypeExpression(elements: List[TypeExpression]) extends TypeExpression
+    case class UnitTypeExpression() extends TypeExpression
 
     sealed trait Definition extends Node
 

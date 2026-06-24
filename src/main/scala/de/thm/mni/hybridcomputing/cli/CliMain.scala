@@ -3,6 +3,7 @@ package de.thm.mni.hybridcomputing.cli
 import de.thm.mni.hybridcomputing.cli.buildscript.{Parsing, Repl}
 import de.thm.mni.hybridcomputing.cli.buildscript.integrations.{BuildScriptEssentials, BuildScriptFileIntegration}
 import de.thm.mni.hybridcomputing.hssa.BuildScriptHSSAIntegration
+import de.thm.mni.hybridcomputing.rfun.BuildScriptRFunIntegration
 import de.thm.mni.hybridcomputing.roopl.BuildScriptRooplIntegration
 import de.thm.mni.hybridcomputing.util.errors.LanguageError.AbortDueToErrors
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
@@ -16,7 +17,8 @@ object CliMain:
             BuildScriptEssentials,
             BuildScriptFileIntegration,
             BuildScriptHSSAIntegration,
-            BuildScriptRooplIntegration
+            BuildScriptRooplIntegration,
+            BuildScriptRFunIntegration
         )
 
         if (args.isEmpty) Repl(customization).start()

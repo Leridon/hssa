@@ -25,22 +25,6 @@ object Lexing {
         case BLOCKCOMMENT
         case LBRACK
         case RBRACK
-
-        override def toString: String = this match
-            case IDENT => "IDENT"
-            case LPAREN => "LPAREN"
-            case RPAREN => "RPAREN"
-            case RARROW => "RARROW"
-            case COMMA => "COMMA"
-            case COLON => "COLON"
-            case LINECOMMENT => "LINECOMMENT"
-            case BLOCKCOMMENT => "BLOCKCOMMENT"
-            case WHITESPACE => "WHITESPACE"
-            case LINEBREAK => "LINEBREAK"
-            case LBRACK => "LBRACK"
-            case RBRACK => "RBRACK"
-            case EOF => "<eof>"
-            case _ => super.toString
     }
 
     object TokenClass {
