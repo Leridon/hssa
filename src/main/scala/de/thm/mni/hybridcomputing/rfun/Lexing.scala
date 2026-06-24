@@ -53,7 +53,7 @@ object Lexing {
         import TokenClass.*
 
         def token: Parser[TokenValue] =
-            "[a-zA-Z_][a-zA-Z_0-9]*".r ^^ {
+            "[a-zA-Z_'][a-zA-Z_0-9']*".r ^^ {
                 case "in" => symbol(TokenClass.IN)
                 case "data" => symbol(TokenClass.DATA)
                 case "let" => symbol(TokenClass.LET)

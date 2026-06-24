@@ -18,6 +18,18 @@ object Parsing {
 
         def constructor: P[Syntax.Constructor] = ident ~~ rep(typeExpr) ^ Syntax.Constructor.apply
 
-        def function: P[Syntax.FunctionDefinition] = ???
+        def pattern: P[Syntax.Pattern] = ???
+
+        def expression: P[Syntax.Expression] = ???
+
+        def cases(name: Syntax.Identifier): P[Syntax.Case] = ignore(ident >> { (n: Syntax.Identifier) =>
+            if (n.name == name.name) success(n)
+            else failure("Wrong function name in case")
+        }) ~~ rep(pattern) ~~ EQUAL ~~ expression ^ Syntax.Case.apply
+
+        def function: P[Syntax.FunctionDefinition] = posi((ident ~~ COLONCOLON ~~ typeExpr) >> { case name ~ signature =>
+            rep(cases(name)) ^ (cs => Syntax.FunctionDefinition(name, signature, cs))
+        })
+
     }
 }
