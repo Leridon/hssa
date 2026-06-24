@@ -1,6 +1,7 @@
 package de.thm.mni.hybridcomputing.cli.buildscript
 
 import de.thm.mni.hybridcomputing.cli.buildscript.Interpretation.{Arguments, StringValue}
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.Severity
 
 import scala.collection.mutable.ListBuffer
 import scala.reflect.ClassTag
@@ -97,8 +98,8 @@ object BuildScriptBuiltin {
         }
 
         protected def checked(v: AnyRef): T = {
-            if (ct.runtimeClass.isInstance(v)) v.asInstanceOf[T]
-            BuildScriptError.UndefinedName("").raise()
+            if (ct.runtimeClass.isInstance(v)) return v.asInstanceOf[T]
+            new BuildScriptError(Severity.Error, "Failed type check").raise()
         }
     }
 

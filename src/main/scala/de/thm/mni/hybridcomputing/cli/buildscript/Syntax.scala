@@ -11,7 +11,7 @@ object Syntax {
     case class Application(name: String, args: Seq[Argument]) extends Command
 
 
-    trait Argument extends Node
+    sealed trait Argument extends Node
     case class NamedArgument(name: String, value: SimpleArgumentValue) extends Argument
 
     sealed trait SimpleArgumentValue extends Argument

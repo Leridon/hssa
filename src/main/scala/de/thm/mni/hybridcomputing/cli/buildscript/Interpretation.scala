@@ -103,18 +103,38 @@ object Interpretation {
         def empty: State = State(Environment(Map()), Value.Unit)
     }
 
+    def eval(state: State, expression: Syntax.SimpleArgumentValue): Value = {
+        expression match {
+            case Syntax.ChainArgument(chain) => Value.Closure(chain, state)
+            case Syntax.StringArgument(value) => StringValue(value)
+            case Syntax.VariableArgument(name) => state.environment.lookup(name).getOrElse(???)
+        }
+    }
+
     def evaluate(state: State, command: Syntax.Command): State = {
         command match {
             case Syntax.Composition(first, second) =>
                 evaluate(evaluate(state, first), second)
-            case app@Syntax.Application(name, args) => state.environment.lookup(name) match {
-                case Some(Value.Closure(command, state)) => evaluate(state, command)
-                case Some(Value.Function(f)) =>
+            case app@Syntax.Application(name, args) => {
+                val (named, positioned) = args.partitionMap({
+                    case a: Syntax.NamedArgument => Left(a)
+                    case b: Syntax.SimpleArgumentValue => Right(b)
+                })
 
-                    f.eval(Arguments(Map(), Seq()))(state)
-                case Some(value) => state.withValue(value)
-                case None =>
-                    BuildScriptError.UndefinedName(name).setPosition(app.position).raise()
+
+                val processed_args = Arguments(
+                    named.map(a => a.name -> eval(state, a.value)).toMap,
+                    positioned.map(a => eval(state, a))
+                )
+
+                state.environment.lookup(name) match {
+                    case Some(Value.Closure(command, state)) => evaluate(state, command)
+                    case Some(Value.Function(f)) =>
+                        f.eval(processed_args)(state)
+                    case Some(value) => state.withValue(value)
+                    case None =>
+                        BuildScriptError.UndefinedName(name).setPosition(app.position).raise()
+                }
             }
         }
     }

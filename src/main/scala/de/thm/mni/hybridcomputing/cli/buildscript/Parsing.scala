@@ -7,6 +7,7 @@ import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, ParserU
 object Parsing {
     enum TokenTypes:
         case STRING
+        case COLON
         case LCURL
         case RCURL
         case LBRACK
@@ -26,7 +27,8 @@ object Parsing {
 
         override def token: Parser[TokenValue] =
             """"(\\.|[^"\\])*"""".r ^^ (s => symbol(STRING, s.tail.init)) |
-              "[^\\s{}=,]+".r ^^ (s => symbol(STRING, s)) |
+              "[^\\s{}=,:]+".r ^^ (s => symbol(STRING, s)) |
+              ":" ^^^ symbol(COLON) |
               "{" ^^^ symbol(LCURL) |
               "}" ^^^ symbol(RCURL) |
               "," ^^^ symbol(SEPARATOR) |
@@ -50,6 +52,7 @@ object Parsing {
 
         def simple_arg: Parser[Syntax.SimpleArgumentValue] =
             LCURL ~~ chain ~~ RCURL ^ (c => Syntax.ChainArgument(c))
+            | COLON ~~ string ^ (c => Syntax.VariableArgument(c))
               | string ^ (s => Syntax.StringArgument(s))
 
         def arg: Parser[Syntax.Argument] =

@@ -30,6 +30,8 @@ class Repl(customization: Customization):
 
         while running do
             try
+                println(state.current_value.getClass.getSimpleName)
+
                 val line = reader.readLine("hssa> ")
 
                 if line == null then
@@ -59,7 +61,6 @@ class Repl(customization: Customization):
                             } catch {
                                 case errors: AbortDueToErrors => errors.printAll()
                             }
-
             catch
                 case _: UserInterruptException =>
                     // Ctrl+C → just continue
