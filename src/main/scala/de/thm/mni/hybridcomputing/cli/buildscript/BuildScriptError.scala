@@ -11,4 +11,6 @@ class BuildScriptError(severity: LanguageError.Severity,
 object BuildScriptError {
     case class UndefinedName(name: String) extends BuildScriptError(Error, s"Identifier $name is not defined.")
     case class ReboundImmutableName(name: String) extends BuildScriptError(Error, s"Rebindinding $name, which is immutable.")
+    case class MissingArgument(message: String) extends BuildScriptError(Error, message)
+
 }

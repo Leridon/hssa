@@ -46,8 +46,8 @@ class Repl(customization: Customization):
                                 integration => {
                                     println(s"# ${integration.name}")
 
-                                    integration.commands.foreach(cmd => {
-                                        println(s"${cmd._1}")
+                                    integration.new_commands.foreach(cmd => {
+                                        println(cmd.helpString)
                                         println()
                                     })
                                 }

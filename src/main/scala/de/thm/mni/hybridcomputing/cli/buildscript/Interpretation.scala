@@ -14,8 +14,7 @@ object Interpretation {
     object Value {
         case object Unit extends Value
         case class Closure(command: Syntax.Command, state: State) extends Value
-        case class Function(f: Arguments => State => State) extends Value
-
+        case class Function(f: BuildScriptBuiltin) extends Value
 
         case class Sequence[T <: Value](seq: Seq[T]) extends Value
     }
@@ -89,13 +88,15 @@ object Interpretation {
 
         def withValue(value: Value): State = this.copy(current_value = value)
 
-        def mapValue(f: PartialFunction[Value, Value]): State = this.withValue(f.apply(current_value))
+        def mapValue(f: PartialFunction[Value, Value]): State = this.withValue(f.orElse({
+            case d => ??? // TODO: Throw InvalidInputValueError
+        }).apply(current_value))
     }
 
     object State {
         def init(customization: Customization): State = {
-            customization.integrations.flatMap(_.commands).foldLeft(empty)((s, cmd) =>
-                s.bind(cmd._1, Value.Function(cmd._2), false)
+            customization.integrations.flatMap(_.new_commands).foldLeft(empty)((s, cmd) =>
+                s.bind(cmd.name, Value.Function(cmd), false)
             )
         }
 
@@ -110,7 +111,7 @@ object Interpretation {
                 case Some(Value.Closure(command, state)) => evaluate(state, command)
                 case Some(Value.Function(f)) =>
 
-                    f(Arguments(Map(), Seq()))(state)
+                    f.eval(Arguments(Map(), Seq()))(state)
                 case Some(value) => state.withValue(value)
                 case None =>
                     BuildScriptError.UndefinedName(name).setPosition(app.position).raise()

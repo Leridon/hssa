@@ -6,4 +6,5 @@ trait BuildScriptIntegration {
     def name: String
 
     def commands: Seq[(String, Arguments => State => State)]
+    def new_commands: Seq[BuildScriptBuiltin] = Seq()
 }
