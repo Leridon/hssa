@@ -1,12 +1,13 @@
 package de.thm.mni.hybridcomputing.cli.buildscript
 
-import de.thm.mni.hybridcomputing.cli.buildscript.integrations.{BuildScriptEssentials, BuildScriptFileIntegration, BuildScriptHSSAIntegration, BuildScriptRooplIntegration}
+import de.thm.mni.hybridcomputing.util.errors.LanguageError.AbortDueToErrors
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 import org.jline.reader.{EndOfFileException, LineReader, LineReaderBuilder, UserInterruptException}
 import org.jline.terminal.TerminalBuilder
 
-object Repl:
-    def main(args: Array[String]): Unit =
+class Repl(customization: Customization):
+    
+    def start(): Unit =
         val terminal = TerminalBuilder.builder()
           .system(true)
           .build()
@@ -20,15 +21,14 @@ object Repl:
 
     def replLoop(reader: LineReader): Unit =
         var running = true
-        var state: Interpretation.State = Interpretation.State.empty.withIntegrations(
-            BuildScriptEssentials,
-            BuildScriptFileIntegration,
-            BuildScriptHSSAIntegration,
-            BuildScriptRooplIntegration
-        )
+        var state: Interpretation.State = Interpretation.State.init(customization)
+
+        println("This is the HSSA toolkit repl. Enter :q to quit or :help for help.")
 
         while running do
             try
+                println(state.current_value.getClass.getSimpleName)
+
                 val line = reader.readLine("hssa> ")
 
                 if line == null then
@@ -38,9 +38,26 @@ object Repl:
                         case "" => // ignore
                         case ":quit" | ":q" =>
                             running = false
-                        case input =>
-                            state = handleInput(input, state)
+                        case ":help" =>
+                            println("Available commands:")
 
+                            customization.integrations.foreach(
+                                integration => {
+                                    println(s"# ${integration.name}")
+
+                                    integration.new_commands.foreach(cmd => {
+                                        println(cmd.helpString)
+                                        println()
+                                    })
+                                }
+                            )
+                        case input =>
+                            try {
+                                val newState = handleInput(input, state)
+                                state = newState
+                            } catch {
+                                case errors: AbortDueToErrors => errors.printAll()
+                            }
             catch
                 case _: UserInterruptException =>
                     // Ctrl+C → just continue
@@ -53,3 +70,4 @@ object Repl:
         val command = Parsing.Grammar.parse(SourceFile.fromString(input))
 
         Interpretation.evaluate(state, command)
+

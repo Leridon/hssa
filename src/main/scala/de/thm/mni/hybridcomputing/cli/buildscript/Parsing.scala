@@ -7,6 +7,7 @@ import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, ParserU
 object Parsing {
     enum TokenTypes:
         case STRING
+        case COLON
         case LCURL
         case RCURL
         case LBRACK
@@ -26,10 +27,12 @@ object Parsing {
 
         override def token: Parser[TokenValue] =
             """"(\\.|[^"\\])*"""".r ^^ (s => symbol(STRING, s.tail.init)) |
-              "[^\\s{}=,]+".r ^^ (s => symbol(STRING, s)) |
+              "[^\\s{}=,:;]+".r ^^ (s => symbol(STRING, s)) |
+              ":" ^^^ symbol(COLON) |
               "{" ^^^ symbol(LCURL) |
               "}" ^^^ symbol(RCURL) |
               "," ^^^ symbol(SEPARATOR) |
+              ";" ^^^ symbol(SEPARATOR) |
               "=" ^^^ symbol(EQUAL) |
               "\n" ^^^ symbol(SEPARATOR)
     }
@@ -49,15 +52,16 @@ object Parsing {
         def chain: Parser[Syntax.Command] = chainl1(fun, composition_operator ^^^ Syntax.Composition.apply)
 
         def simple_arg: Parser[Syntax.SimpleArgumentValue] =
-            LCURL ~~ chain ~~ RCURL ^^ (c => Syntax.ChainArgument(c))
-              | string ^^ (s => Syntax.StringArgument(s))
+            LCURL ~~ chain ~~ RCURL ^ (c => Syntax.ChainArgument(c))
+            | COLON ~~ string ^ (c => Syntax.VariableArgument(c))
+              | string ^ (s => Syntax.StringArgument(s))
 
         def arg: Parser[Syntax.Argument] =
-            string ~~ EQUAL ~~ simple_arg ^^ { case s ~ arg => Syntax.NamedArgument(s, arg) }
+            string ~~ EQUAL ~~ simple_arg ^ { case s ~ arg => Syntax.NamedArgument(s, arg) }
               | simple_arg
 
         protected def string: Parser[String] = valueToken[String](STRING)
 
-        def fun: Parser[Syntax.Application] = string ~~ rep(arg) ^^ { case s ~ args => Syntax.Application(s, args) }
+        def fun: Parser[Syntax.Application] = string ~~ rep(arg) ^ { case s ~ args => Syntax.Application(s, args) }
     }
 }

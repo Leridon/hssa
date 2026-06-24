@@ -13,31 +13,8 @@ object Interpretation {
 
     object Value {
         case object Unit extends Value
-        case class HSSA(program: hssa.Syntax.Program) extends Value
-        case class Roopl(program: roopl.Syntax.Program) extends Value
-        case class RooplWellformed(program: roopl.wellformedness.ScopeTree.Program) extends Value
         case class Closure(command: Syntax.Command, state: State) extends Value
-        case class Function(f: Arguments => State => State) extends Value
-        case class File(
-                         path: Option[Path],
-                         name: Option[String],
-                         in_memory_content: Option[String]
-                       ) extends Value {
-
-            def asSourceFile: SourceFile = in_memory_content.map(SourceFile.fromString)
-              .orElse(path.map(SourceFile.fromFile))
-              .getOrElse(throw new RuntimeException("File has no path nor content"))
-
-            def withPath(path: Path): File = copy(path = Some(path), name = Some(path.getFileName.toString))
-        }
-
-        object File {
-            def fromPath(path: Path): File = File(Some(path), Some(path.getFileName.toString), None)
-
-            def fromContent(content: String): File = File(None, None, Some(content))
-
-            def fromContent(content: String, file_name: String): File = File(None, Some(file_name), Some(content))
-        }
+        case class Function(f: BuildScriptBuiltin) extends Value
 
         case class Sequence[T <: Value](seq: Seq[T]) extends Value
     }
@@ -83,11 +60,22 @@ object Interpretation {
 
 
     case class Environment(
-                       environment: Map[String, Value]
-                     ) {
-        def bind(name: String, value: Value): Environment = this.copy(environment + (name -> value))
+                            environment: Map[String, Environment.Entry]
+                          ) {
 
-        def lookup(name: String): Option[Value] = environment.get(name)
+        def bind(name: String, value: Value, mutable: Boolean): Environment = {
+            val existing_is_immutable = environment.get(name).exists(_.mutable)
+
+            if (existing_is_immutable) BuildScriptError.ReboundImmutableName(name).raise()
+
+            this.copy(environment + (name -> Environment.Entry(value, mutable)))
+        }
+
+        def lookup(name: String): Option[Value] = environment.get(name).map(_.value)
+    }
+
+    object Environment {
+        case class Entry(value: Value, mutable: Boolean)
     }
 
 
@@ -96,32 +84,57 @@ object Interpretation {
                       current_value: Value
                     ) {
 
-        def bind(name: String, value: Value): State = this.copy(environment = environment.bind(name, value))
+        def bind(name: String, value: Value, mutable: Boolean): State = this.copy(environment = environment.bind(name, value, mutable))
 
         def withValue(value: Value): State = this.copy(current_value = value)
 
-        def withIntegrations(integrations: BuildScriptIntegration*): State = {
-            integrations.foldLeft(this)((s, integration) => integration.commands.foldLeft(s)((s, cmd) => s.bind(cmd._1, Value.Function(cmd._2))))
-        }
-
-        def mapValue(f: PartialFunction[Value, Value]): State = this.withValue(f.apply(current_value))
+        def mapValue(f: PartialFunction[Value, Value]): State = this.withValue(f.orElse({
+            case d => ??? // TODO: Throw InvalidInputValueError
+        }).apply(current_value))
     }
 
     object State {
+        def init(customization: Customization): State = {
+            customization.integrations.flatMap(_.new_commands).foldLeft(empty)((s, cmd) =>
+                s.bind(cmd.name, Value.Function(cmd), false)
+            )
+        }
+
         def empty: State = State(Environment(Map()), Value.Unit)
+    }
+
+    def eval(state: State, expression: Syntax.SimpleArgumentValue): Value = {
+        expression match {
+            case Syntax.ChainArgument(chain) => Value.Closure(chain, state)
+            case Syntax.StringArgument(value) => StringValue(value)
+            case Syntax.VariableArgument(name) => state.environment.lookup(name).getOrElse(???)
+        }
     }
 
     def evaluate(state: State, command: Syntax.Command): State = {
         command match {
             case Syntax.Composition(first, second) =>
                 evaluate(evaluate(state, first), second)
-            case Syntax.Application(name, args) => state.environment.lookup(name) match {
-                case Some(Value.Closure(command, state)) => evaluate(state, command)
-                case Some(Value.Function(f)) =>
+            case app@Syntax.Application(name, args) => {
+                val (named, positioned) = args.partitionMap({
+                    case a: Syntax.NamedArgument => Left(a)
+                    case b: Syntax.SimpleArgumentValue => Right(b)
+                })
 
-                    f(Arguments(Map(), Seq()))(state)
-                case Some(value) => state.withValue(value)
-                case None => ???
+
+                val processed_args = Arguments(
+                    named.map(a => a.name -> eval(state, a.value)).toMap,
+                    positioned.map(a => eval(state, a))
+                )
+
+                state.environment.lookup(name) match {
+                    case Some(Value.Closure(command, state)) => evaluate(state, command)
+                    case Some(Value.Function(f)) =>
+                        f.eval(processed_args)(state)
+                    case Some(value) => state.withValue(value)
+                    case None =>
+                        BuildScriptError.UndefinedName(name).setPosition(app.position).raise()
+                }
             }
         }
     }
