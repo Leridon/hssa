@@ -13,31 +13,9 @@ object Interpretation {
 
     object Value {
         case object Unit extends Value
-        case class HSSA(program: hssa.Syntax.Program) extends Value
-        case class Roopl(program: roopl.Syntax.Program) extends Value
-        case class RooplWellformed(program: roopl.wellformedness.ScopeTree.Program) extends Value
         case class Closure(command: Syntax.Command, state: State) extends Value
         case class Function(f: Arguments => State => State) extends Value
-        case class File(
-                         path: Option[Path],
-                         name: Option[String],
-                         in_memory_content: Option[String]
-                       ) extends Value {
 
-            def asSourceFile: SourceFile = in_memory_content.map(SourceFile.fromString)
-              .orElse(path.map(SourceFile.fromFile))
-              .getOrElse(throw new RuntimeException("File has no path nor content"))
-
-            def withPath(path: Path): File = copy(path = Some(path), name = Some(path.getFileName.toString))
-        }
-
-        object File {
-            def fromPath(path: Path): File = File(Some(path), Some(path.getFileName.toString), None)
-
-            def fromContent(content: String): File = File(None, None, Some(content))
-
-            def fromContent(content: String, file_name: String): File = File(None, Some(file_name), Some(content))
-        }
 
         case class Sequence[T <: Value](seq: Seq[T]) extends Value
     }
@@ -108,6 +86,12 @@ object Interpretation {
     }
 
     object State {
+        def init(customization: Customization): State = {
+            customization.integrations.flatMap(_.commands).foldLeft(empty)((s, cmd) =>
+                s.bind(cmd._1, Value.Function(cmd._2))
+            )
+        }
+
         def empty: State = State(Environment(Map()), Value.Unit)
     }
 

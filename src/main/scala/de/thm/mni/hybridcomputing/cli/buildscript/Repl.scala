@@ -1,12 +1,15 @@
 package de.thm.mni.hybridcomputing.cli.buildscript
 
-import de.thm.mni.hybridcomputing.cli.buildscript.integrations.{BuildScriptEssentials, BuildScriptFileIntegration, BuildScriptHSSAIntegration, BuildScriptRooplIntegration}
+import de.thm.mni.hybridcomputing.cli.buildscript.integrations.{BuildScriptEssentials, BuildScriptFileIntegration}
+import de.thm.mni.hybridcomputing.hssa.BuildScriptHSSAIntegration
+import de.thm.mni.hybridcomputing.roopl.BuildScriptRooplIntegration
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 import org.jline.reader.{EndOfFileException, LineReader, LineReaderBuilder, UserInterruptException}
 import org.jline.terminal.TerminalBuilder
 
-object Repl:
-    def main(args: Array[String]): Unit =
+class Repl(customization: Customization):
+
+    def start(): Unit =
         val terminal = TerminalBuilder.builder()
           .system(true)
           .build()
@@ -20,12 +23,7 @@ object Repl:
 
     def replLoop(reader: LineReader): Unit =
         var running = true
-        var state: Interpretation.State = Interpretation.State.empty.withIntegrations(
-            BuildScriptEssentials,
-            BuildScriptFileIntegration,
-            BuildScriptHSSAIntegration,
-            BuildScriptRooplIntegration
-        )
+        var state: Interpretation.State = Interpretation.State.init(customization)
 
         while running do
             try
@@ -53,3 +51,4 @@ object Repl:
         val command = Parsing.Grammar.parse(SourceFile.fromString(input))
 
         Interpretation.evaluate(state, command)
+

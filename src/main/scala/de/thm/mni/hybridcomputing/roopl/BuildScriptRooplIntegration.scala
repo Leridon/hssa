@@ -1,14 +1,19 @@
-package de.thm.mni.hybridcomputing.cli.buildscript.integrations
+package de.thm.mni.hybridcomputing.roopl
 
+import de.thm.mni.hybridcomputing.cli.buildscript.Interpretation.Value
 import de.thm.mni.hybridcomputing.cli.buildscript.{BuildScriptIntegration, Interpretation}
 import de.thm.mni.hybridcomputing.hssa.Language
 import de.thm.mni.hybridcomputing.hssa.plugin.{Arithmetic, Information, ManagedMemory}
+import de.thm.mni.hybridcomputing.roopl
 import de.thm.mni.hybridcomputing.roopl.Translation
 import de.thm.mni.hybridcomputing.roopl.parsing.Lexing.LexicalGrammar
 import de.thm.mni.hybridcomputing.roopl.parsing.Parsing
 import de.thm.mni.hybridcomputing.roopl.wellformedness.{ClassGraph, Wellformedness}
 
 object BuildScriptRooplIntegration extends BuildScriptIntegration {
+    case class Roopl(program: roopl.Syntax.Program) extends Value
+    case class RooplWellformed(program: roopl.wellformedness.ScopeTree.Program) extends Value
+
     override def commands: Seq[(String, Interpretation.Arguments => Interpretation.State => Interpretation.State)] = Seq()
 
     /*

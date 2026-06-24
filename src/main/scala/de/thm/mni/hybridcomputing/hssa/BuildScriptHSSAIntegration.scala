@@ -1,6 +1,7 @@
-package de.thm.mni.hybridcomputing.cli.buildscript.integrations
+package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.cli.buildscript.Interpretation.Value
+import de.thm.mni.hybridcomputing.cli.buildscript.integrations.BuildScriptFileIntegration
 import de.thm.mni.hybridcomputing.cli.buildscript.{BuildScriptIntegration, Interpretation}
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.BindingTree
@@ -10,6 +11,7 @@ import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
 import scala.collection.mutable.ListBuffer
 
 object BuildScriptHSSAIntegration extends BuildScriptIntegration {
+    case class HSSA(program: hssa.Syntax.Program) extends Value
     case class ModularHSSA(program: Modular.Syntax.Program) extends Value
 
     override def commands: Seq[(String, Interpretation.Arguments => Interpretation.State => Interpretation.State)] = Seq(
@@ -19,7 +21,7 @@ object BuildScriptHSSAIntegration extends BuildScriptIntegration {
                 case p: ModularHSSA =>
 
                     Interpretation.Value.Sequence(p.program.programs.map(prog => {
-                        Interpretation.Value.File.fromContent(hssa.modular.Modular.Formatting.format(prog))
+                        BuildScriptFileIntegration.File.fromContent(hssa.modular.Modular.Formatting.format(prog))
                           .withPath(prog.position.file.path.get)
                     }))
             })

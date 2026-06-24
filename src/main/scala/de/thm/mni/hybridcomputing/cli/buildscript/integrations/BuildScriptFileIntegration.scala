@@ -2,11 +2,32 @@ package de.thm.mni.hybridcomputing.cli.buildscript.integrations
 
 import de.thm.mni.hybridcomputing.cli.buildscript.BuildScriptIntegration
 import de.thm.mni.hybridcomputing.cli.buildscript.Interpretation.{Arguments, State, Value}
+import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 
 import java.nio.file.Path
 
 object BuildScriptFileIntegration extends BuildScriptIntegration {
 
+    case class File(
+                     path: Option[Path],
+                     name: Option[String],
+                     in_memory_content: Option[String]
+                   ) extends Value {
+
+        def asSourceFile: SourceFile = in_memory_content.map(SourceFile.fromString)
+          .orElse(path.map(SourceFile.fromFile))
+          .getOrElse(throw new RuntimeException("File has no path nor content"))
+
+        def withPath(path: Path): File = copy(path = Some(path), name = Some(path.getFileName.toString))
+    }
+
+    object File {
+        def fromPath(path: Path): File = File(Some(path), Some(path.getFileName.toString), None)
+
+        def fromContent(content: String): File = File(None, None, Some(content))
+
+        def fromContent(content: String, file_name: String): File = File(None, Some(file_name), Some(content))
+    }
 
     override def commands: Seq[(String, Arguments => State => State)] = Seq(
         ("load", args => {
@@ -15,7 +36,7 @@ object BuildScriptFileIntegration extends BuildScriptIntegration {
             val p = Path.of(path)
 
             state => {
-                state.withValue(Value.File.fromPath(p))
+                state.withValue(File.fromPath(p))
             }
         })
     )
