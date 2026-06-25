@@ -97,6 +97,14 @@ object Interpretation {
         def mapValue(f: PartialFunction[Value, Value]): State = this.withValue(f.orElse({
             case d => ??? // TODO: Throw InvalidInputValueError
         }).apply(current_value))
+
+        def tapValue(f: PartialFunction[Value, Unit]): State = {
+            f.orElse({
+                case d => ??? // TODO: Throw InvalidInputValueError
+            }).apply(current_value)
+
+            this
+        }
     }
 
     object State {

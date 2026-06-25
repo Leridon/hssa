@@ -2,6 +2,7 @@ package de.thm.mni.hybridcomputing.rfun
 
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.Language
+import de.thm.mni.hybridcomputing.hssa.util.HssaDSL.*
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.string2ident
 import de.thm.mni.hybridcomputing.hssa.util.{ProgramBuilder, RelationBuilder}
 import de.thm.mni.hybridcomputing.rfun
@@ -15,29 +16,39 @@ object Translation {
     /**
      * Each pattern is a parameterless relation that maps a matchee to either (1, matchee) if it does not match, or (0, (a, b, c...)) if it matches, where a, b, c, ... are the bound variables.
      */
-    def translatePattern(pattern: rfun.Syntax.Pattern): hssa.Syntax.Relation = {
+    def translatePattern(builder: ProgramBuilder, pattern: rfun.Syntax.Pattern): hssa.Syntax.Relation = {
+        val rel = builder.newRelation(
+            builder.relation_name_generator.next("pattern"), ()
+        )
+
+
+
+
         pattern match {
             case Syntax.TuplePattern(elements) =>
                 // Reduce to list pattern.
                 // (a, b, c) => a : b : c : []
-                ???
+
+
             case Syntax.VariablePattern(name) =>
                 // Always succeed pattern. x => (1, x)
-                ???
+
+                rel.add(block(
+                    ("m", 0) :=<-("begin"),
+                    ->("end") := ((1, "m"), 0)
+                ))
             case Syntax.NilPattern() =>
                 // Reduce to constructor pattern with builtin constructor id 0 and () arguments
-                ???
             case Syntax.ConsPattern(head, tail) =>
                 // Reduce to constructor pattern with builtin constructor id 1 with (head, tail) arguments
-                ???
             case Syntax.ConstructorPattern(constructor, arguments) => {
                 // check if type id matches constructor id
                 // No  => No match
                 // Yes => Match tuple pattern
-                ???
             }
         }
 
+        rel.compile()
     }
 
     def extractRightHandPattern(exp: Syntax.Expression): Syntax.Pattern = {
@@ -70,8 +81,8 @@ object Translation {
                     val in_pattern = Syntax.TuplePattern(head.parameters)
                     val out_pattern = Syntax.TuplePattern(head.parameters.init :+ extractRightHandPattern(head.body))
 
-                    val translated_in_pattern = translatePattern(in_pattern)
-                    val translated_out_pattern = translatePattern(out_pattern)
+                    val translated_in_pattern = translatePattern(program_builder, in_pattern)
+                    val translated_out_pattern = translatePattern(program_builder, out_pattern)
 
                     builder.add(
                         block(
@@ -94,13 +105,20 @@ object Translation {
                             ->(out_label) := ("result", 0)
                         )
                     )
-                case Nil => ???
+                case Nil =>
             }
-
-
         }
 
-        ???
+        val in_label = builder.label_generator.next("L")
+        val out_label = builder.label_generator.next("L")
+
+        //TODO: Entry block
+
+        helper(function.cases, in_label, out_label)
+
+        //TODO: Exit block
+
+        builder.compile()
     }
 
     /**

@@ -5,6 +5,6 @@ import de.thm.mni.hybridcomputing.cli.buildscript.Interpretation.{Arguments, Sta
 trait BuildScriptIntegration {
     def name: String
 
-    def commands: Seq[(String, Arguments => State => State)]
+    def commands: Seq[(String, Arguments => State => State)] = Seq()
     def new_commands: Seq[BuildScriptBuiltin] = Seq()
 }

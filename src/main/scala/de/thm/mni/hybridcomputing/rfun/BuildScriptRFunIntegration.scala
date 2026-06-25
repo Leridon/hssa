@@ -5,6 +5,7 @@ import de.thm.mni.hybridcomputing.cli.buildscript
 import de.thm.mni.hybridcomputing.cli.buildscript.Type
 import de.thm.mni.hybridcomputing.cli.buildscript.integrations.BuildScriptFileIntegration
 import de.thm.mni.hybridcomputing.cli.buildscript.integrations.BuildScriptFileIntegration.{File, FileType}
+import de.thm.mni.hybridcomputing.hssa.BuildScriptHSSAIntegration
 
 object BuildScriptRFunIntegration extends BuildScriptIntegration {
     override def name: String = "RFun"
@@ -29,19 +30,25 @@ object BuildScriptRFunIntegration extends BuildScriptIntegration {
         }
     }
 
-    override def new_commands: Seq[BuildScriptBuiltin] = Seq(
-        Parse
-    )
+    object Translate extends BuildScriptBuiltin {
+        override def name: String = "rfun.translate"
 
-    override def commands: Seq[(String, Interpretation.Arguments => Interpretation.State => Interpretation.State)] = Seq(
-        ("rfun.parse", args => state => {
+        this.specification.signature(RFunType, BuildScriptHSSAIntegration.HSSAType, "Translate the given RFun program to HSSA.")
 
-            state.current_value match {
-                case file: BuildScriptFileIntegration.File =>
-                    state.withValue(RFunProgram(Parsing.Grammar.parse(file.asSourceFile)))
+        override def eval(args: Interpretation.Arguments): Interpretation.State => Interpretation.State = {
+
+            state => {
+                state.mapValue({
+                    case RFunProgram(prog) =>
+                        BuildScriptHSSAIntegration.HSSA.fromSimple(
+                            Translation.translateProgram(prog)
+                        )
+                })
             }
+        }
+    }
 
-            state
-        })
+    override def new_commands: Seq[BuildScriptBuiltin] = Seq(
+        Parse, Translate
     )
 }
