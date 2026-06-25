@@ -71,7 +71,7 @@ object Lexing {
                 case l => symbol(IDENT, l)
             } |
               "\\n".r ^^^ symbol(LINEBREAK) |
-              "\\s+".r ^^^ symbol(WHITESPACE) |
+              "[ \\t\\r]+".r ^^^ symbol(WHITESPACE) |
               """//.*""".r ^^^ symbol(LINECOMMENT) |
               """/\*[^*]*\*+(?:[^/*][^*]*\*+)*/""".r ^^^ symbol(BLOCKCOMMENT) |
               "->" ^^^ symbol(RARROW) |

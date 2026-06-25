@@ -1,6 +1,5 @@
 package de.thm.mni.hybridcomputing.rfun
 
-import de.thm.mni.hybridcomputing.rfun.Parsing.Grammar
 import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, ParserUtilities}
 import de.thm.mni.hybridcomputing.util.reversibility.Direction
 
@@ -22,7 +21,7 @@ object Parsing {
 
         protected def ident: P[Syntax.Identifier] = valueToken[String](IDENT) ^ Syntax.Identifier.apply
 
-        def line_end: IgnoredParser = ignore(LINEBREAK | phrase(success(())))
+        def line_end: IgnoredParser = ignore(LINEBREAK)
 
         def typeExpr: P[Syntax.TypeExpression] = {
             typeExpr2 ~~ opt((BIJARROW ^^^ true | RARROW ^^^ false) ~~ typeExpr) ^ {
@@ -42,7 +41,7 @@ object Parsing {
             }
 
         def dataType: P[Syntax.DataTypeDefinition] =
-            DATA ~~! ident ~~ EQUAL ~~ repsep(constructor, PIPE) ~~ line_end ^ Syntax.DataTypeDefinition.apply
+            DATA ~~! ident ~~ EQUAL ~~ repsep(constructor, PIPE)  ^ Syntax.DataTypeDefinition.apply
 
         def constructor: P[Syntax.Constructor] = ident ~~ rep(typeExpr) ^ Syntax.Constructor.apply
 
@@ -66,24 +65,22 @@ object Parsing {
         }) ~~ rep(pattern) ^ Syntax.Assign.apply
 
         def expression: P[Syntax.Expression] = pattern
-          | LET ~~! rep1(assign ~~ ignore(opt(line_end))) ~~ IN ~~ pattern ^ Syntax.LetExpression.apply
+          | LET ~~! rep1(assign ~~ line_end) ~~ IN ~~ pattern ^ Syntax.LetExpression.apply
 
         def cases(name: Syntax.Identifier): P[Syntax.Case] = (ident ~~ pattern >> {
             case n ~ first_pattern =>
                 if (n.name == name.name) success(first_pattern)
                 else
                     failure("Wrong function name in case")
-        }) ~~! rep(pattern) ~~ EQUAL ~~ ignore(opt(line_end)) ~~ expression ~~ line_end ^ {
+        }) ~~! rep(pattern) ~~ EQUAL ~~ ignore(opt(line_end)) ~~ expression  ^ {
             case first_pattern ~ more_patterns ~ expr => Syntax.Case(first_pattern :: more_patterns, expr)
         }
 
         def function: P[Syntax.FunctionDefinition] = ident ~~ COLONCOLON ~~ typeExpr ~~ line_end >> { case name ~ signature =>
-            rep(cases(name)) ^ (cs => Syntax.FunctionDefinition(name, signature, cs))
+            rep1sep(cases(name), line_end) ^ (cs => Syntax.FunctionDefinition(name, signature, cs))
         }
 
-        def datatype: P[Syntax.DataTypeDefinition] = DATA ~~ ident ~~ EQUAL ~~ repsep(constructor, PIPE) ^ Syntax.DataTypeDefinition.apply
-
-        def program: P[Syntax.Program] = rep((function | datatype) ~~ ignore(rep(line_end))) ^ Syntax.Program.apply
+        def program: P[Syntax.Program] = repsep(function | dataType, rep1(line_end)) ^ Syntax.Program.apply
 
     }
 }

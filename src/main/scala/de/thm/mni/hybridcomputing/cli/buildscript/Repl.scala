@@ -6,7 +6,7 @@ import org.jline.reader.{EndOfFileException, LineReader, LineReaderBuilder, User
 import org.jline.terminal.TerminalBuilder
 
 class Repl(customization: Customization):
-    
+
     def start(): Unit =
         val terminal = TerminalBuilder.builder()
           .system(true)
@@ -27,7 +27,7 @@ class Repl(customization: Customization):
 
         while running do
             try
-                println(state.current_value.getClass.getSimpleName)
+                println(state.current_value.shortString)
 
                 val line = reader.readLine("hssa> ")
 

@@ -23,9 +23,6 @@ object BuildScriptRFunIntegration extends BuildScriptIntegration {
             state => {
                 state.mapValue({
                     case f: File =>
-                        Lexing.Grammar.getTokenReader(f.asSourceFile)
-                          .readAll().map(_.asStringWithPosition).foreach(println)
-
                         RFunProgram(Parsing.Grammar.parse(f.asSourceFile))
                 })
             }

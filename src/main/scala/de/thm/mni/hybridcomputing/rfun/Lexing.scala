@@ -28,7 +28,7 @@ object Lexing {
     }
 
     object TokenClass {
-        def whitespace: Set[TokenClass] = Set(WHITESPACE, LINECOMMENT, BLOCKCOMMENT, LINEBREAK)
+        def whitespace: Set[TokenClass] = Set(WHITESPACE, LINECOMMENT, BLOCKCOMMENT)
 
         def comments: Set[TokenClass] = Set(LINECOMMENT, BLOCKCOMMENT)
     }
@@ -43,8 +43,8 @@ object Lexing {
                 case "let" => symbol(TokenClass.LET)
                 case l => symbol(IDENT, l)
             } |
-              "\\n".r ^^^ symbol(LINEBREAK) |
-              "\\s+".r ^^^ symbol(WHITESPACE) |
+              "\\r\\n|\\n|\\r".r ^^^ symbol(LINEBREAK) |
+              "[ \\t]+".r ^^^ symbol(WHITESPACE) |
               """//.*""".r ^^^ symbol(LINECOMMENT) |
               """/\*[^*]*\*+(?:[^/*][^*]*\*+)*/""".r ^^^ symbol(BLOCKCOMMENT) |
               "->" ^^^ symbol(RARROW) |

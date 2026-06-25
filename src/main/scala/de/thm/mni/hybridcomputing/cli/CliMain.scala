@@ -28,7 +28,9 @@ object CliMain:
 
                 val build_script = Parsing.Grammar.parse(SourceFile.fromString(input))
 
-                buildscript.Interpretation.evaluate(start_state, build_script)
+                val res = buildscript.Interpretation.evaluate(start_state, build_script)
+
+                println(res.current_value.fullString)
             } catch {
                 case e: AbortDueToErrors =>
                     e.printAll()

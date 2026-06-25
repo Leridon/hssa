@@ -166,7 +166,7 @@ object Lexing {
             } |
               //"""(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))+""".r ^^^ symbol(WHITESPACE) |
               "\\n".r ^^^ symbol(LINEBREAK) |
-              "\\s+".r ^^^ symbol(WHITESPACE) |
+              "[ \\t\\r]+".r ^^^ symbol(WHITESPACE) |
               """//.*""".r ^^^ symbol(LINECOMMENT) |
               """/\*[^*]*\*+(?:[^/*][^*]*\*+)*/""".r ^^^ symbol(BLOCKCOMMENT) |
               "," ^^^ symbol(COMMA) |

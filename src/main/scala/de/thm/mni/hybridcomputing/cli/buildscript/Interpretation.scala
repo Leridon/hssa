@@ -9,10 +9,16 @@ import de.thm.mni.hybridcomputing.util.parsing.SourceFile
 import java.nio.file.Path
 
 object Interpretation {
-    trait Value
+    trait Value {
+        def shortString: String = this.getClass.getSimpleName
+        def fullString: String = this.toString
+    }
 
     object Value {
-        case object Unit extends Value
+        case object Unit extends Value {
+            override def shortString: String = "Unit"
+            override def fullString: String = "Unit"
+        }
         case class Closure(command: Syntax.Command, state: State) extends Value
         case class Function(f: BuildScriptBuiltin) extends Value
 
