@@ -47,36 +47,44 @@ object Parsing {
 
         def constructor: P[Syntax.Constructor] = constructor_id ~~ rep(typeExpr) ^ Syntax.Constructor.apply
 
-        def pattern: P[Syntax.Pattern] = {
-            constructor_id ~~ rep(pattern1) ^ Syntax.ConstructorPattern.apply
-              | pattern1
+        def pattern0: P[Syntax.Pattern] = {
+            pattern1 ~ opt(COLON ~~ pattern0) ^ {
+                case p ~ None => p
+                case p ~ Some(tail) => Syntax.ConsPattern(p, tail)
+            }
         }
 
         def pattern1: P[Syntax.Pattern] = {
+            constructor_id ~~ rep(pattern2) ^ Syntax.ConstructorPattern.apply
+              | pattern2
+        }
+
+        def pattern2: P[Syntax.Pattern] = {
             variable_id ^ Syntax.VariablePattern.apply
               | constructor_id ~ success(Nil) ^ Syntax.ConstructorPattern.apply
-              | LPAREN ~~ repsep(pattern, COMMA) ~~ RPAREN ^ {
+              | LBRACK ~~ RBRACK ^ (() => Syntax.NilPattern())
+              | LPAREN ~~ repsep(pattern0, COMMA) ~~ RPAREN ^ {
                 case Nil => Syntax.UnitPattern()
                 case head :: Nil => head
                 case els => Syntax.TuplePattern(els)
             }
         }
 
-        def assign: P[Syntax.Assign] = pattern ~~ EQUAL ~~ variable_id ~~ (opt(EXCLAMATION) ^^ {
+        def assign: P[Syntax.Assign] = pattern0 ~~ EQUAL ~~ variable_id ~~ (opt(EXCLAMATION) ^^ {
             case None => Direction.FORWARDS
             case Some(_) => Direction.BACKWARDS
-        }) ~~ rep1(pattern) ^ {
+        }) ~~ rep1(pattern0) ^ {
             case lhs ~ f ~ dir ~ args => Syntax.Assign(lhs, f, dir, args.init, args.last)
         }
 
         def expression: P[Syntax.LetExpression] = LET ~~! rep1(assign ~~ line_end) ~~ IN ^ Syntax.LetExpression.apply
 
-        def cases(name: Syntax.Identifier): P[Syntax.Case] = (variable_id ~~ pattern >> {
+        def cases(name: Syntax.Identifier): P[Syntax.Case] = (variable_id ~~ pattern0 >> {
             case n ~ first_pattern =>
                 if (n.name == name.name) success(first_pattern)
                 else
                     failure("Wrong function name in case")
-        }) ~~! rep(pattern) ~~ EQUAL ~~ ignore(opt(line_end)) ~~ opt(expression) ~~ pattern ^ {
+        }) ~~! rep(pattern0) ~~ EQUAL ~~ ignore(opt(line_end)) ~~ opt(expression) ~~ pattern1 ^ {
             case first_pattern ~ more_patterns ~ expr ~ out_pattern => {
                 val patterns = first_pattern :: more_patterns
                 Syntax.Case(patterns.init, patterns.last, expr, out_pattern)
