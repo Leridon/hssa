@@ -41,7 +41,7 @@ object Parsing {
             }
 
         def dataType: P[Syntax.DataTypeDefinition] =
-            DATA ~~! ident ~~ EQUAL ~~ repsep(constructor, PIPE)  ^ Syntax.DataTypeDefinition.apply
+            DATA ~~! ident ~~ EQUAL ~~ repsep(constructor, PIPE) ^ Syntax.DataTypeDefinition.apply
 
         def constructor: P[Syntax.Constructor] = ident ~~ rep(typeExpr) ^ Syntax.Constructor.apply
 
@@ -64,16 +64,18 @@ object Parsing {
             case Some(_) => Direction.BACKWARDS
         }) ~~ rep(pattern) ^ Syntax.Assign.apply
 
-        def expression: P[Syntax.Expression] = pattern
-          | LET ~~! rep1(assign ~~ line_end) ~~ IN ~~ pattern ^ Syntax.LetExpression.apply
+        def expression: P[Syntax.LetExpression] = LET ~~! rep1(assign ~~ line_end) ~~ IN ^ Syntax.LetExpression.apply
 
         def cases(name: Syntax.Identifier): P[Syntax.Case] = (ident ~~ pattern >> {
             case n ~ first_pattern =>
                 if (n.name == name.name) success(first_pattern)
                 else
                     failure("Wrong function name in case")
-        }) ~~! rep(pattern) ~~ EQUAL ~~ ignore(opt(line_end)) ~~ expression  ^ {
-            case first_pattern ~ more_patterns ~ expr => Syntax.Case(first_pattern :: more_patterns, expr)
+        }) ~~! rep(pattern) ~~ EQUAL ~~ ignore(opt(line_end)) ~~ opt(expression) ~~ pattern ^ {
+            case first_pattern ~ more_patterns ~ expr ~ out_pattern => {
+                val patterns = first_pattern :: more_patterns
+                Syntax.Case(patterns.init, patterns.last, expr, out_pattern)
+            }
         }
 
         def function: P[Syntax.FunctionDefinition] = ident ~~ COLONCOLON ~~ typeExpr ~~ line_end >> { case name ~ signature =>

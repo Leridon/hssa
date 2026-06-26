@@ -187,13 +187,6 @@ object Translation {
             rel.compile()
         }
 
-        def extractRightHandPattern(exp: Syntax.Expression): Syntax.Pattern = {
-            exp match {
-                case pattern: Syntax.Pattern => pattern
-                case Syntax.LetExpression(assigns, pattern) => pattern
-            }
-        }
-
         def parameters(typ: Syntax.TypeExpression): List[Syntax.TypeExpression] = typ match {
             case Syntax.FunTypeExpression(domain, codomain) => domain :: parameters(codomain)
             case Syntax.BijectionTypeExpression(domain, codomain) => Nil
@@ -224,8 +217,8 @@ object Translation {
                         val nomatch_label_1 = builder.label_generator.next(s"branch${index}")
                         val nomatch_label_2 = builder.label_generator.next(s"join${index}")
 
-                        val in_pattern = Syntax.TuplePattern(head.parameters)
-                        val out_pattern = Syntax.TuplePattern(head.parameters.init :+ extractRightHandPattern(head.body))
+                        val in_pattern = Syntax.TuplePattern(head.parameter_patterns :+ head.in_pattern)
+                        val out_pattern = Syntax.TuplePattern(head.parameter_patterns :+ head.out_pattern)
 
                         val translated_in_pattern = translatePattern(in_pattern)
                         val translated_out_pattern = translatePattern(out_pattern)
@@ -241,11 +234,15 @@ object Translation {
                             )
                         )
 
-                        // TODO: Implement the case body properly
-                        builder.add(block(
-                            ((), 0) := <--(match_label_1),
-                            ->(match_label_2) := ((), 0)
-                        ))
+                        head.body match {
+                            case None =>
+                                builder.add(block(
+                                    ("matches", 0) := <--(match_label_1),
+                                    ->(match_label_2) := ("matches", 0)
+                                ))
+                            case Some(Syntax.LetExpression(assigns)) =>
+
+                        }
 
                         helper(next, nomatch_label_1, nomatch_label_2, index + 1)
 
