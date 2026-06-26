@@ -42,6 +42,8 @@ class RelationBuilder(
         RelationBuilder.BlockBuilder(this, block).tap(this._blocks.addOne)
     }
 
+    def startBlock(entry: Syntax.Entry): IncrementalBlockBuilder = new IncrementalBlockBuilder(this, entry)
+
     def compile(): Syntax.Relation = Syntax.Relation(name, parameter, this._blocks.map(_.block()).toSeq) // TODO: Do a topological sort on the blocks
 
     def filterBlocksInPlace(f: Syntax.Block => Boolean): Unit = this._blocks.filterInPlace(b => f(b.block()))

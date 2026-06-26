@@ -20,6 +20,7 @@ object Parsing {
         override def defaultLexer: LexicalGrammarUtilities[Lexing.TokenClass] = Lexing.Grammar
 
         def constructor_id: Parser[Syntax.Identifier] = valueToken[String](UPPERIDENT) ^ Syntax.Identifier.apply
+
         def variable_id: Parser[Syntax.Identifier] = valueToken[String](LOWERIDENT) ^ Syntax.Identifier.apply
 
         def line_end: IgnoredParser = ignore(LINEBREAK)
@@ -64,7 +65,9 @@ object Parsing {
         def assign: P[Syntax.Assign] = pattern ~~ EQUAL ~~ variable_id ~~ (opt(EXCLAMATION) ^^ {
             case None => Direction.FORWARDS
             case Some(_) => Direction.BACKWARDS
-        }) ~~ rep(pattern) ^ Syntax.Assign.apply
+        }) ~~ rep1(pattern) ^ {
+            case lhs ~ f ~ dir ~ args => Syntax.Assign(lhs, f, dir, args.init, args.last)
+        }
 
         def expression: P[Syntax.LetExpression] = LET ~~! rep1(assign ~~ line_end) ~~ IN ^ Syntax.LetExpression.apply
 

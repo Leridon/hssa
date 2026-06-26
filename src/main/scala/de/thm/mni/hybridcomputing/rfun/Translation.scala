@@ -2,18 +2,25 @@ package de.thm.mni.hybridcomputing.rfun
 
 import de.thm.mni.hybridcomputing.hssa.Language
 import de.thm.mni.hybridcomputing.hssa.Syntax.Extensions.string2ident
-import de.thm.mni.hybridcomputing.hssa.util.ProgramBuilder
+import de.thm.mni.hybridcomputing.hssa.util.{IncrementalBlockBuilder, ProgramBuilder}
 import de.thm.mni.hybridcomputing.rfun.Syntax.Pattern
 import de.thm.mni.hybridcomputing.util.parsing.SourceFile
+import de.thm.mni.hybridcomputing.util.reversibility
+import de.thm.mni.hybridcomputing.util.reversibility.Direction
 import de.thm.mni.hybridcomputing.{hssa, rfun}
 
 import scala.annotation.tailrec
+import scala.collection.mutable.ListBuffer
 
 object Translation {
 
     import hssa.util.HssaDSL.*
 
-    def mangle(name: String): String = s"rfun.${name}"
+
+    def mangle_id(name: String): String = name.replace("'", ".")
+
+    def mangle(name: String): String = s"rfun.${mangle_id(name)}"
+
 
     sealed trait LinearPattern
 
@@ -193,6 +200,49 @@ object Translation {
             case _ => ??? // Unreachable, this is not a valid function type
         }
 
+        def boundVariables(pattern: Syntax.Pattern): Seq[Syntax.VariablePattern] = pattern match {
+            case Syntax.TuplePattern(elements) => elements.flatMap(boundVariables)
+            case v@Syntax.VariablePattern(name) => Seq(v)
+            case Syntax.ConsPattern(head, tail) => Seq(head, tail).flatMap(boundVariables)
+            case Syntax.ConstructorPattern(constructor, arguments) => arguments.flatMap(boundVariables)
+            case Syntax.NilPattern() => Seq()
+            case Syntax.UnitPattern() => Seq()
+        }
+
+        def foldWithTerminator(exps: Seq[hssa.Syntax.Expression]): hssa.Syntax.Expression = exps.foldRight(hssa.Syntax.Expression.Unit())(hssa.Syntax.Expression.Pair.apply)
+
+        def foldWithoutTerminator(exps: Seq[hssa.Syntax.Expression]): hssa.Syntax.Expression = exps.reduceRightOption(hssa.Syntax.Expression.Pair.apply).getOrElse(hssa.Syntax.Expression.Unit())
+
+        def translateExpression(block: IncrementalBlockBuilder, exp: Syntax.Pattern, consume: Boolean, direction: Direction, initial_target_variable: Option[hssa.Syntax.Expression.Variable] = None): hssa.Syntax.Expression.Variable = {
+            val pattern_f = translatePattern(exp)
+            val target_variable = initial_target_variable.getOrElse(block.freshVariable("t"))
+
+            val foldedOperands = foldWithTerminator(boundVariables(exp).reverse.map(v => hssa.Syntax.Expression.Variable(hssa.Syntax.Identifier(mangle_id(v.name.name)))))
+
+            val acc = new ListBuffer[hssa.Syntax.Assignment]
+
+            val input_arg: hssa.Syntax.Expression = if (consume) foldedOperands else {
+                val duplicate_var = block.freshVariable("t")
+                acc.addOne(
+                    duplicate_var :== ("dup", foldedOperands) := (),
+                )
+                duplicate_var
+            }
+
+            acc.addOne(
+                target_variable :== (~pattern_f.name, ()) := (0, input_arg)
+            )
+
+            block.adds(
+                direction match {
+                    case Direction.BACKWARDS => hssa.Inversion.Local.invert(acc.toSeq)
+                    case _ => acc.toSeq
+                }
+            )
+
+            target_variable
+        }
+
         /**
          * A function matches to a relation that takes all anciallaries as parameters. They are copied into local variables for matching purposes.
          */
@@ -234,15 +284,42 @@ object Translation {
                             )
                         )
 
-                        head.body match {
-                            case None =>
-                                builder.add(block(
-                                    ("matches", 0) := <--(match_label_1),
-                                    ->(match_label_2) := ("matches", 0)
-                                ))
-                            case Some(Syntax.LetExpression(assigns)) =>
+                        val in_variables = boundVariables(in_pattern).reverse.map(v => hssa.Syntax.Expression.Variable(mangle_id(v.name.name))).foldRight(hssa.Syntax.Expression.Unit())(hssa.Syntax.Expression.Pair.apply)
+                        val out_variables = boundVariables(out_pattern).reverse.map(v => hssa.Syntax.Expression.Variable(mangle_id(v.name.name))).foldRight(hssa.Syntax.Expression.Unit())(hssa.Syntax.Expression.Pair.apply)
 
-                        }
+                        val case_body = builder.startBlock((in_variables, 0) := <--(match_label_1))
+
+                        head.body.toSeq.flatMap(_.assigns).foreach(asgn => {
+
+                            // Compute values of ancillaries
+                            val par_args: Seq[hssa.Syntax.Expression.Variable] = asgn.parameter_arguments.map(arg => {
+                                translateExpression(case_body, arg, false, Direction.FORWARDS)
+                            })
+
+                            val par_arg = foldWithoutTerminator(par_args)
+
+                            val input_arg = translateExpression(case_body, asgn.consumed_argument, true, Direction.FORWARDS)
+
+                            val callee: hssa.Syntax.Expression = asgn.direction match {
+                                case reversibility.Direction.FORWARDS => mangle(asgn.function.name)
+                                case reversibility.Direction.BACKWARDS => ~mangle(asgn.function.name)
+                            }
+
+                            val temp_var = case_body.freshVariable("t")
+
+                            case_body.add(
+                                temp_var :== (callee, par_arg) := input_arg
+                            )
+
+                            // Uncompute values of ancillaries
+                            asgn.parameter_arguments.zip(par_args).map((arg, variable) => {
+                                translateExpression(case_body, arg, false, Direction.BACKWARDS, Some(variable))
+                            })
+
+                            translateExpression(case_body, asgn.pattern, true, Direction.BACKWARDS, Some(temp_var))
+                        })
+
+                        case_body.finish2(->(match_label_2) := (out_variables, 0))
 
                         helper(next, nomatch_label_1, nomatch_label_2, index + 1)
 

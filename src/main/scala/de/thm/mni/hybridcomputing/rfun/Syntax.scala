@@ -16,7 +16,7 @@ object Syntax {
     case class NilPattern() extends Pattern
     case class UnitPattern() extends Pattern
 
-    case class Assign(pattern: Pattern, function: Identifier, direction: Direction, arguments: List[Pattern]) extends Node
+    case class Assign(pattern: Pattern, function: Identifier, direction: Direction, parameter_arguments: List[Pattern], consumed_argument: Pattern) extends Node
     case class LetExpression(assigns: List[Assign]) extends Node
 
     sealed trait TypeExpression extends Node
