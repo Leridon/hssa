@@ -17,5 +17,11 @@ class ProgramBuilder(val language: Language) {
         rel
     }
 
+    def add(rel: Syntax.Relation): RelationBuilder = {
+        val r = new RelationBuilder(rel)
+        this.relations.addOne(r)
+        r
+    }
+
     def compile(): Syntax.Program = Syntax.Program(relations.toSeq.map(_.compile()), language)
 }
