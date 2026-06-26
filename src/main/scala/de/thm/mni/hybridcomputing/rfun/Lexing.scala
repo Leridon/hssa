@@ -4,7 +4,8 @@ import de.thm.mni.hybridcomputing.util.parsing.LexicalGrammarUtilities
 
 object Lexing {
     enum TokenClass {
-        case IDENT
+        case UPPERIDENT
+        case LOWERIDENT
         case LPAREN
         case RPAREN
         case RARROW
@@ -34,6 +35,7 @@ object Lexing {
     }
 
     object Grammar extends LexicalGrammarUtilities[TokenClass] {
+
         import TokenClass.*
 
         def token: Parser[TokenValue] =
@@ -41,7 +43,12 @@ object Lexing {
                 case "in" => symbol(TokenClass.IN)
                 case "data" => symbol(TokenClass.DATA)
                 case "let" => symbol(TokenClass.LET)
-                case l => symbol(IDENT, l)
+                case l =>
+                    if (l.head.isUpper) {
+                        symbol(UPPERIDENT, l)
+                    } else {
+                        symbol(LOWERIDENT, l)
+                    }
             } |
               "\\r\\n|\\n|\\r".r ^^^ symbol(LINEBREAK) |
               "[ \\t]+".r ^^^ symbol(WHITESPACE) |

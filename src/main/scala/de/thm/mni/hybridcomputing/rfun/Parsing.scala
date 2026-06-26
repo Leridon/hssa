@@ -19,7 +19,8 @@ object Parsing {
 
         override def defaultLexer: LexicalGrammarUtilities[Lexing.TokenClass] = Lexing.Grammar
 
-        protected def ident: P[Syntax.Identifier] = valueToken[String](IDENT) ^ Syntax.Identifier.apply
+        def constructor_id: Parser[Syntax.Identifier] = valueToken[String](UPPERIDENT) ^ Syntax.Identifier.apply
+        def variable_id: Parser[Syntax.Identifier] = valueToken[String](LOWERIDENT) ^ Syntax.Identifier.apply
 
         def line_end: IgnoredParser = ignore(LINEBREAK)
 
@@ -32,7 +33,7 @@ object Parsing {
         }
 
         def typeExpr2: P[Syntax.TypeExpression] =
-            ident ^ Syntax.NamedTypeExpression.apply
+            constructor_id ^ Syntax.NamedTypeExpression.apply
               | LBRACK ~~ typeExpr ~~ RBRACK ^ Syntax.ListTypeExpreesion.apply
               | LPAREN ~~ repsep(typeExpr, COMMA) ~~ RPAREN ^ {
                 case Nil => Syntax.UnitTypeExpression()
@@ -41,17 +42,18 @@ object Parsing {
             }
 
         def dataType: P[Syntax.DataTypeDefinition] =
-            DATA ~~! ident ~~ EQUAL ~~ repsep(constructor, PIPE) ^ Syntax.DataTypeDefinition.apply
+            DATA ~~! constructor_id ~~ EQUAL ~~ repsep(constructor, PIPE) ^ Syntax.DataTypeDefinition.apply
 
-        def constructor: P[Syntax.Constructor] = ident ~~ rep(typeExpr) ^ Syntax.Constructor.apply
+        def constructor: P[Syntax.Constructor] = constructor_id ~~ rep(typeExpr) ^ Syntax.Constructor.apply
 
         def pattern: P[Syntax.Pattern] = {
-            ident ~~ rep(pattern1) ^ Syntax.ConstructorPattern.apply
+            constructor_id ~~ rep(pattern1) ^ Syntax.ConstructorPattern.apply
               | pattern1
         }
 
         def pattern1: P[Syntax.Pattern] = {
-            ident ^ Syntax.VariablePattern.apply
+            variable_id ^ Syntax.VariablePattern.apply
+              | constructor_id ~ success(Nil) ^ Syntax.ConstructorPattern.apply
               | LPAREN ~~ repsep(pattern, COMMA) ~~ RPAREN ^ {
                 case Nil => Syntax.UnitPattern()
                 case head :: Nil => head
@@ -59,14 +61,14 @@ object Parsing {
             }
         }
 
-        def assign: P[Syntax.Assign] = pattern ~~ EQUAL ~~ ident ~~ (opt(EXCLAMATION) ^^ {
+        def assign: P[Syntax.Assign] = pattern ~~ EQUAL ~~ variable_id ~~ (opt(EXCLAMATION) ^^ {
             case None => Direction.FORWARDS
             case Some(_) => Direction.BACKWARDS
         }) ~~ rep(pattern) ^ Syntax.Assign.apply
 
         def expression: P[Syntax.LetExpression] = LET ~~! rep1(assign ~~ line_end) ~~ IN ^ Syntax.LetExpression.apply
 
-        def cases(name: Syntax.Identifier): P[Syntax.Case] = (ident ~~ pattern >> {
+        def cases(name: Syntax.Identifier): P[Syntax.Case] = (variable_id ~~ pattern >> {
             case n ~ first_pattern =>
                 if (n.name == name.name) success(first_pattern)
                 else
@@ -78,7 +80,7 @@ object Parsing {
             }
         }
 
-        def function: P[Syntax.FunctionDefinition] = ident ~~ COLONCOLON ~~ typeExpr ~~ line_end >> { case name ~ signature =>
+        def function: P[Syntax.FunctionDefinition] = variable_id ~~ COLONCOLON ~~ typeExpr ~~ line_end >> { case name ~ signature =>
             rep1sep(cases(name), line_end) ^ (cs => Syntax.FunctionDefinition(name, signature, cs))
         }
 
