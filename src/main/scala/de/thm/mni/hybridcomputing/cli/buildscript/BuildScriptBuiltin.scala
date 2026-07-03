@@ -20,7 +20,7 @@ abstract class BuildScriptBuiltin {
 
 object BuildScriptBuiltin {
     class CommandSpecification(val command: BuildScriptBuiltin) {
-        private val arguments = new ListBuffer[Argument[Interpretation.Value]]
+        private val arguments = new ListBuffer[Argument[?]]
 
         def help: String = {
 
@@ -44,7 +44,7 @@ object BuildScriptBuiltin {
                 res.addAll(s"\n  Signatures:\n${signature_docs}")
             }
 
-            if(arguments.nonEmpty) {
+            if (arguments.nonEmpty) {
                 val arg_docs = arguments.map({
                     case argument: PositionedArgument[_] => s"<${argument.index}: ${argument.t}>:\t ${argument.documentation}"
                     case argument: NamedArgument[_] => s"<${argument.name}: ${argument.t}>:\t ${argument.documentation}"
@@ -57,7 +57,7 @@ object BuildScriptBuiltin {
 
         }
 
-        private def addArg[T <: Argument[Interpretation.Value]](arg: T): arg.type = {
+        private def addArg(arg: Argument[?]): arg.type = {
             this.arguments.addOne(arg)
             arg
         }
@@ -67,13 +67,19 @@ object BuildScriptBuiltin {
         private var positioned_index = 0
 
         def positioned[T <: Interpretation.Value](t: Type)(implicit ct: ClassTag[T]): PositionedArgument[T] = {
-            val arg = this.addArg(new PositionedArgument[T](command, t, positioned_index))
+            val arg = this.addArg(new PositionedArgument[T](command, t, positioned_index, None))
             positioned_index += 1
             arg
         }
 
         def positionedString(implicit ct: ClassTag[StringValue]): PositionedArgument[StringValue] = {
-            val arg = this.addArg(new PositionedArgument[StringValue](command, Type.StringType, positioned_index))
+            val arg = this.addArg(new PositionedArgument[StringValue](command, Type.StringType, positioned_index, None))
+            positioned_index += 1
+            arg
+        }
+
+        def positionedString(default: String)(implicit ct: ClassTag[StringValue]): PositionedArgument[StringValue] = {
+            val arg = this.addArg(new PositionedArgument[StringValue](command, Type.StringType, positioned_index, Some(StringValue(default))))
             positioned_index += 1
             arg
         }
@@ -87,10 +93,10 @@ object BuildScriptBuiltin {
         def signature(from: Type, to: Type, explanation: String): Unit = signatures.addOne((Type.FunctionType(from, to), explanation))
     }
 
-    sealed abstract class Argument[+T <: Interpretation.Value](ct: ClassTag[T]) {
+    sealed abstract class Argument[T <: Interpretation.Value](ct: ClassTag[T]) {
         var documentation: String = ""
 
-        def resolve(args: Interpretation.Arguments): T
+        def resolve(args: Interpretation.Arguments, default: Option[T]): T
 
         def withDocumentation(docu: String): this.type = {
             this.documentation = docu
@@ -103,17 +109,24 @@ object BuildScriptBuiltin {
         }
     }
 
-    class PositionedArgument[T <: Interpretation.Value](command: BuildScriptBuiltin, val t: Type, val index: Int)(implicit ct: ClassTag[T]) extends Argument[T](ct) {
-        def resolve(args: Interpretation.Arguments): T = {
-            this.checked(args.positioned.lift(index).getOrElse(
-                BuildScriptError.MissingArgument("Missing positioned argument ").raise()
-            ))
+    class PositionedArgument[T <: Interpretation.Value](command: BuildScriptBuiltin, val t: Type, val index: Int, default: Option[T])(implicit ct: ClassTag[T]) extends Argument[T](ct) {
+        def resolve(args: Interpretation.Arguments, default2: Option[T] = None): T = {
+            this.checked(args.positioned.lift(index)
+              .orElse(default2)
+              .orElse(default)
+              .getOrElse(
+                  BuildScriptError.MissingArgument("Missing positioned argument ").raise()
+              ))
         }
     }
 
     class NamedArgument[T <: Interpretation.Value](command: BuildScriptBuiltin, val t: Type, val name: String)(implicit ct: ClassTag[T]) extends Argument[T](ct) {
-        def resolve(args: Interpretation.Arguments): T = {
-            this.checked(args.named.getOrElse(name, BuildScriptError.MissingArgument(s"Missing named argument ${name}").raise()))
+        def resolve(args: Interpretation.Arguments, default: Option[T] = None): T = {
+            this.checked(args.named
+              .get(name)
+              .orElse(default)
+              .getOrElse(
+                  BuildScriptError.MissingArgument(s"Missing named argument ${name}").raise()))
         }
     }
 }

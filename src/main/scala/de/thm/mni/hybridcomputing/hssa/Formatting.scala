@@ -92,7 +92,7 @@ object Formatting {
     }
 
     def format(statement: Syntax.Statement): String = {
-        formatInColumns(statement).mkString(" ")
+        formatInColumns(statement).map(_.content).mkString(" ")
     }
 
     def format(block: Syntax.Block): String = {

@@ -17,36 +17,29 @@ object BuildScriptFileIntegration extends BuildScriptIntegration {
 
     case class File(
                      path: Option[Path],
-                     name: Option[String],
                      in_memory_content: Option[String]
                    ) extends Value {
+
+        def name: Option[String] = path.map(_.getFileName.toString)
 
         def asSourceFile: SourceFile = in_memory_content.map(SourceFile.fromString)
           .orElse(path.map(SourceFile.fromFile))
           .getOrElse(throw new RuntimeException("File has no path nor content"))
 
-        def withPath(path: Path): File = copy(path = Some(path), name = Some(path.getFileName.toString))
+        def withPath(path: Path): File = copy(path = Some(path))
     }
 
     object File {
-        def fromPath(path: Path): File = File(Some(path), Some(path.getFileName.toString), None)
+        def fromPath(path: Path): File = File(Some(path), None)
 
-        def fromContent(content: String): File = File(None, None, Some(content))
+        def fromContent(content: String): File = File(None, Some(content))
 
-        def fromContent(content: String, file_name: String): File = File(None, Some(file_name), Some(content))
+        def fromContent(content: String, file_name: String): File = File(Some(Path.of(file_name)), Some(content))
+
+        def fromContentWithTarget(content: String, target: Path): File = File(Some(target), Some(content))
     }
 
-    override def commands: Seq[(String, Arguments => State => State)] = Seq(
-        ("load", args => {
-            val path = args.expectPositionedString()
-
-            val p = Path.of(path)
-
-            state => {
-                state.withValue(File.fromPath(p))
-            }
-        })
-    )
+    override def commands: Seq[(String, Arguments => State => State)] = Seq()
 
     object Load extends BuildScriptBuiltin {
         override def name: String = "load"
@@ -66,7 +59,34 @@ object BuildScriptFileIntegration extends BuildScriptIntegration {
 
 
     object SaveFiles extends BuildScriptBuiltin {
-        override def name: String = "savefiles"
+        override def name: String = "files.save"
+
+        override def explanation: String = "Saves one or more files that are the current value."
+
+        this.specification.signature(FileType, FileType, "Save the file if it has a disk location.")
+        this.specification.signature(Type.SeqType(FileType), Type.SeqType(FileType), "Save all files that have a disk location.")
+
+        override def eval(args: Arguments): State => State = {
+            def handle(value: Value): Unit = value match {
+                case f: File =>
+                    if (f.path.isDefined) {
+                        Files.createDirectories(f.path.get.getParent)
+
+                        Files.write(f.path.get, f.in_memory_content.get.getBytes(StandardCharsets.UTF_8))
+                    }
+                case v@Value.Sequence(seq) =>
+                    seq.foreach(v => handle(v))
+            }
+
+            state => {
+                handle(state.current_value)
+                state
+            }
+        }
+    }
+
+    object RerootFiles extends BuildScriptBuiltin {
+        override def name: String = "files.reroot"
 
         override def explanation: String = "Saves one or more files that are the current value."
 
@@ -89,6 +109,7 @@ object BuildScriptFileIntegration extends BuildScriptIntegration {
             }
         }
     }
+
 
     override def new_commands: Seq[BuildScriptBuiltin] = Seq(
         Load,
@@ -131,18 +152,7 @@ object BuildScriptFileIntegration extends BuildScriptIntegration {
             }
         }
 
-        object Tap extends Function("tap") {
-            override def instantiate(args: Arguments): CliChain.Function = {
-                import CliChain.Function.*
-                val f = args.expectPositionedChain().withImplicitDump
 
-                input => {
-                    f(input)
-
-                    input
-                }
-            }
-        }
 
         object Foreach extends Function("foreach") {
             override def instantiate(args: Arguments): CliChain.Function = {
