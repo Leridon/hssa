@@ -11,9 +11,18 @@ implementation of the language server protocol.
 
 The software is implemented in Scala and can be compiled and run with sbt or in an IDE of your choice.
 
-**Run the CLI:**
+**Run with SBT**
 
-```sbt run <args>```
+Start the sbt console by running
+
+```sbt```
+
+in the root folder of the project. In the console, type 
+
+```run <args>```
+
+to run 
+
 
 The CLI is non-standard, see the documentation below.
 

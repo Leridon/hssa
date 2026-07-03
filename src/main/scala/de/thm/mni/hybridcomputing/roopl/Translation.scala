@@ -21,7 +21,7 @@ import de.thm.mni.hybridcomputing.roopl.Syntax.VariableIdentifier
 import scala.collection.mutable
 import de.thm.mni.hybridcomputing.roopl.wellformedness.ScopeTree.Method
 import de.thm.mni.hybridcomputing.hssa.Syntax.Statement
-import de.thm.mni.hybridcomputing.hssa.util.BlockBuilder
+import de.thm.mni.hybridcomputing.hssa.util.IncrementalBlockBuilder
 import de.thm.mni.hybridcomputing.roopl.wellformedness.Translatable
 import de.thm.mni.hybridcomputing.roopl.wellformedness.Translatable.Types
 
@@ -62,7 +62,7 @@ object Translation {
         val locals: mutable.Stack[Variable] = mutable.Stack[Variable]()
         val tempVars = UniqueNameGenerator(".")
         // Keeps the currently unfinished block, the first block always entries with "begin"
-        var blockBuilder = BlockBuilder(builder, (Generator.mmem, 0) :=<- "begin")
+        var blockBuilder = IncrementalBlockBuilder(builder, (Generator.mmem, 0) :=<- "begin")
         
         def nextTempVar(): String = tempVars.next("_t")
         def nextAddrVar(): String = tempVars.next("_addr")
@@ -73,7 +73,7 @@ object Translation {
             val exit = ->(exitLabels) := (((Generator.mmem, Generator.thisRef), locals.toSeq), exitJump)
             val entry = (((Generator.mmem, Generator.thisRef), locals.toSeq), entryJump) :=<- entryLabels
             blockBuilder.finish(exit)
-            blockBuilder = BlockBuilder(builder, entry)
+            blockBuilder = IncrementalBlockBuilder(builder, entry)
             tempVars.reset()
         }
         def nextBlock(exitLabels: String, exitJump: Expression, entryJump: Expression, entryLabels: String): Unit = {
@@ -106,7 +106,7 @@ object Translation {
         def generateMain(program: ScopeTree.Program): hssa.Syntax.Relation = {
             // Setup managed memory, initialize object of main class and call roopl main
             this.relation = Relation("main", Seq())
-            relation.blockBuilder = BlockBuilder(relation.builder, ((), 0) :=<- ("begin"))
+            relation.blockBuilder = IncrementalBlockBuilder(relation.builder, ((), 0) :=<- ("begin"))
             // The helper generates a _this parameter for all relations. hssa main (as opposed to roopl main) can't have a this context
             relation.builder.parameter = ()
 
@@ -130,7 +130,7 @@ object Translation {
         def generateMemoryRead(): hssa.Syntax.Relation = {
             val addr = "_addr"
             val relation = RelationBuilder("mmem.read", addr)
-            val block = BlockBuilder(relation, (mmem, 0) :=<- "begin")
+            val block = IncrementalBlockBuilder(relation, (mmem, 0) :=<- "begin")
 
             val value = "_readvalue"
             val res = "_readcopy"
@@ -178,7 +178,7 @@ object Translation {
 
         def generateVtable(clazz: ScopeTree.Class): hssa.Syntax.Relation = {
             val builder = RelationBuilder(vtable(clazz), ("_method"))
-            var block = BlockBuilder(builder, ((), 0) :=<- ("begin"))
+            var block = IncrementalBlockBuilder(builder, ((), 0) :=<- ("begin"))
             block.add(
                 "i" :== ("dup", "_method") := ()
             )
@@ -192,12 +192,12 @@ object Translation {
             )
 
             methods.foreach((entry, code, exit) =>
-                block = BlockBuilder(builder, ((), 0) :=<- entry)
+                block = IncrementalBlockBuilder(builder, ((), 0) :=<- entry)
                 block.add(code)
                 block.finish(->(exit) := ("res", 0))
             )
 
-            block = BlockBuilder(builder, ("res", "i") :=<- methods.map(_._3))
+            block = IncrementalBlockBuilder(builder, ("res", "i") :=<- methods.map(_._3))
             block.add(
                 () :== (~"dup", "_method") := "i"
             )
@@ -210,7 +210,7 @@ object Translation {
             val builder = RelationBuilder(constructor(clazz), ())
             val anonObj = "_anon"
             val table = "_vtable"
-            val block = BlockBuilder(builder, (mmem, 0) :=<- "begin")
+            val block = IncrementalBlockBuilder(builder, (mmem, 0) :=<- "begin")
 
             // Allocate #fields + 1 slots (vtable) in memory for the new object
             block.adds(

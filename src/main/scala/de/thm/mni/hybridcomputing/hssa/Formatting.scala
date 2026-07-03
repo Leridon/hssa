@@ -19,7 +19,7 @@ object Formatting {
         def fromColumn(col: Seq[Cell]): ColumnWidth = {
             val account_for_inversion = col.exists(_.alignment == Alignment.LEFT_WITH_INVERSION) && col.exists(_.content.startsWith("~"))
 
-            val width = col.map(cell => if (account_for_inversion && !cell.content.startsWith("~")) cell.content.length + 1 else cell.content.length).max
+            val width = col.map(cell => if (account_for_inversion && !cell.content.startsWith("~")) cell.content.length + 1 else cell.content.length).maxOption.getOrElse(0)
 
             ColumnWidth(width, account_for_inversion)
         }
@@ -92,7 +92,7 @@ object Formatting {
     }
 
     def format(statement: Syntax.Statement): String = {
-        formatInColumns(statement).mkString(" ")
+        formatInColumns(statement).map(_.content).mkString(" ")
     }
 
     def format(block: Syntax.Block): String = {

@@ -66,7 +66,7 @@ object TestDiscovery {
             
             ExpectationSummary(expectations ++ defaults.toList)
         }
-        lazy val program_with_imports = Modular.Parsing(Language.Canon).parse(Lexing.LexicalGrammar.getTokenReader(source_file))
+        lazy val program_with_imports = Modular.Parsing(Language.Canon).grammar.modularEntry.parse(source_file)
         lazy val (modular_program, parsing_errors) = Modular.Parsing(Language.Canon).parseProject(file.toAbsolutePath)
         lazy val linked = Modular.link(modular_program)
         lazy val binding_tree = BindingTree.init(linked)

@@ -8,7 +8,7 @@ import org.scalatest.matchers.should.Matchers.shouldEqual
 class ParsingTests extends org.scalatest.flatspec.AnyFlatSpec {
     
     def parse(input: String): Syntax.ProgramWithImports = {
-        Parsing(Language.Canon).parse(Lexing.LexicalGrammar.getTokenReader(SourceFile.fromString(input)))
+        Parsing(Language.Canon).grammar.modularEntry.parse(SourceFile.fromString(input))
     }
     
     "Parsing" should "work for empty programs" in {
