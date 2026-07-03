@@ -1,11 +1,16 @@
 package de.thm.mni.hybridcomputing.hssa
 
 import de.thm.mni.hybridcomputing.cli.buildscript
-import de.thm.mni.hybridcomputing.cli.buildscript.Interpretation.Value
+import de.thm.mni.hybridcomputing.cli.buildscript.Interpretation.{StringValue, Value}
 import de.thm.mni.hybridcomputing.cli.buildscript.integrations.BuildScriptFileIntegration
 import de.thm.mni.hybridcomputing.cli.buildscript.{BuildScriptBuiltin, BuildScriptIntegration, Interpretation}
 import de.thm.mni.hybridcomputing.hssa
 import de.thm.mni.hybridcomputing.hssa.modular.Modular
+import de.thm.mni.hybridcomputing.hssa.visualization.Visualization
+import de.thm.mni.hybridcomputing.util.parsing.SourceFile
+
+import java.nio.file.Path
+import scala.collection.mutable.ListBuffer
 
 object BuildScriptHSSAIntegration extends BuildScriptIntegration {
     override def name: String = "HSSA"
@@ -16,6 +21,8 @@ object BuildScriptHSSAIntegration extends BuildScriptIntegration {
         override def shortString: String = super.shortString
 
         override def fullString: String = Formatting.format(program)
+
+        def originalFile: Option[SourceFile] = Option(modular.position).orElse(Option(program.position)).map(_.file)
     }
 
     object HSSA {
@@ -54,7 +61,46 @@ object BuildScriptHSSAIntegration extends BuildScriptIntegration {
         }
     }
 
-    override def new_commands: Seq[BuildScriptBuiltin] = Seq(Check)
+    object Graphs extends BuildScriptBuiltin {
+        override def name: String = "hssa.graphs"
+
+        this.specification.signature(HSSAType, buildscript.Type.SeqType(BuildScriptFileIntegration.FileType), "Get a large number of dot-graphs for the given HSSA program. Includes call graphs, control flow graphs, and block graphs.")
+
+        val path_arg = this.specification.positionedString("./dump/")
+
+        override def eval(args: Interpretation.Arguments): Interpretation.State => Interpretation.State = {
+            state => {
+                state.mapValue({
+                    case p@HSSA(program, _) =>
+                        val parent_dir = Path.of(path_arg.resolve(args, p.originalFile.flatMap(_.path).map(p => StringValue(p.getParent.resolve(s"${p.getFileName}_dump/").toString))).value)
+
+                        val binding_tree = BindingTree.init(program)
+
+                        val files = new ListBuffer[BuildScriptFileIntegration.File]
+
+                        files.addOne(BuildScriptFileIntegration.File.fromContentWithTarget(
+                            Visualization.CallGraphVisualization.apply(binding_tree), parent_dir.resolve("call_graph.dot")
+                        ))
+
+                        binding_tree.relations.map(_.relation).foreach(rel => {
+                            files.addOne(BuildScriptFileIntegration.File.fromContentWithTarget(
+                                Visualization.ControlFlowGraphVisualization.apply(rel), parent_dir.resolve(s"rel_${rel.syntax.name}/cfg_${rel.syntax.name}.dot")
+                            ))
+
+                            rel.blocks.foreach(block => {
+                                files.addOne(BuildScriptFileIntegration.File.fromContentWithTarget(
+                                    Visualization.BlockCircuitVisualization.apply(block), parent_dir.resolve(s"rel_${rel.syntax.name}/block${block.context.get.block_index}.dot")
+                                ))
+                            })
+                        })
+
+                        buildscript.Interpretation.Value.Sequence(files.toSeq)
+                })
+            }
+        }
+    }
+
+    override def new_commands: Seq[BuildScriptBuiltin] = Seq(Check, Graphs, FormatAll)
     /*
 
         object Parse extends Function("hssa.parse") {
