@@ -27,6 +27,7 @@ object BuildScriptFileIntegration extends BuildScriptIntegration {
           .getOrElse(throw new RuntimeException("File has no path nor content"))
 
         def withPath(path: Path): File = copy(path = Some(path))
+        def withPath(path: Option[Path]): File = copy(path = path)
     }
 
     object File {
@@ -84,32 +85,6 @@ object BuildScriptFileIntegration extends BuildScriptIntegration {
             }
         }
     }
-
-    object RerootFiles extends BuildScriptBuiltin {
-        override def name: String = "files.reroot"
-
-        override def explanation: String = "Saves one or more files that are the current value."
-
-        this.specification.signature(FileType, FileType, "Save the file if it has a disk location.")
-        this.specification.signature(Type.SeqType(FileType), Type.SeqType(FileType), "Save all files that have a disk location.")
-
-        override def eval(args: Arguments): State => State = {
-            def handle(value: Value): Unit = value match {
-                case f: File =>
-                    if (f.path.isDefined) {
-                        Files.write(f.path.get, f.in_memory_content.get.getBytes(StandardCharsets.UTF_8))
-                    }
-                case v@Value.Sequence(seq) =>
-                    seq.foreach(v => handle(v))
-            }
-
-            state => {
-                handle(state.current_value)
-                state
-            }
-        }
-    }
-
 
     override def new_commands: Seq[BuildScriptBuiltin] = Seq(
         Load,

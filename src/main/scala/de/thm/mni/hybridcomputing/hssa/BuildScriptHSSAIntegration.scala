@@ -44,7 +44,7 @@ object BuildScriptHSSAIntegration extends BuildScriptIntegration {
             case p: HSSA =>
                 Interpretation.Value.Sequence(p.modular.programs.map(prog => {
                     BuildScriptFileIntegration.File.fromContent(hssa.modular.Modular.Formatting.format(prog))
-                      .withPath(prog.position.file.path.get)
+                      .withPath(Option(prog.position).flatMap(_.file.path))
                 }))
         })
     }
@@ -64,9 +64,9 @@ object BuildScriptHSSAIntegration extends BuildScriptIntegration {
     object Graphs extends BuildScriptBuiltin {
         override def name: String = "hssa.graphs"
 
-        this.specification.signature(HSSAType, buildscript.Type.SeqType(BuildScriptFileIntegration.FileType), "Get a large number of dot-graphs for the given HSSA program. Includes call graphs, control flow graphs, and block graphs.")
+        this.specification.signature(HSSAType, buildscript.Type.SeqType(BuildScriptFileIntegration.FileType), "Get a large number of dot-graphs for the given HSSA program. Includes call graphs, control flow graphs, and block graphs. Remember to use files.save to actually save the files to disk.")
 
-        val path_arg = this.specification.positionedString("./dump/")
+        val path_arg = this.specification.positionedString("./dump/").withDocumentation("(Optional) Path of the directory the files should be created in. ")
 
         override def eval(args: Interpretation.Arguments): Interpretation.State => Interpretation.State = {
             state => {
