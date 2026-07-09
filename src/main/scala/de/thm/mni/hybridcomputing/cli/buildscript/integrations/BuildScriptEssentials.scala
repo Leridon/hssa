@@ -47,6 +47,4 @@ object BuildScriptEssentials extends BuildScriptIntegration {
     override def new_commands: Seq[BuildScriptBuiltin] = Seq(
         Bind, Tap
     )
-
-    override def commands: Seq[(String, Interpretation.Arguments => Interpretation.State => Interpretation.State)] = Seq()
 }

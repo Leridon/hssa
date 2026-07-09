@@ -39,9 +39,7 @@ object BuildScriptFileIntegration extends BuildScriptIntegration {
 
         def fromContentWithTarget(content: String, target: Path): File = File(Some(target), Some(content))
     }
-
-    override def commands: Seq[(String, Arguments => State => State)] = Seq()
-
+    
     object Load extends BuildScriptBuiltin {
         override def name: String = "load"
 
