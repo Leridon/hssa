@@ -1,0 +1,18 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether a compiled program correctly
+// behaves at runtime.
+//
+// empty-stack-2.ja:
+//      Illegal operations on empty stacks are reported correctly.
+//
+// N. Deworetzki, 15. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int n
+    uncall f(n)
+
+procedure f(int n)
+    local   stack s = nil
+    push(n, s)
+    delocal stack s = nil

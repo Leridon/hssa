@@ -1,0 +1,14 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// uncall-undefined-procedure.ja:
+//      When a procedure is uncalled by it's name, there must actually
+//      exist a procedure with said name.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+
+    uncall undefinedProcedure()

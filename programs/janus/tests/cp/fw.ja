@@ -1,0 +1,16 @@
+
+procedure main()
+    int i
+    int j
+
+    call f(i, j)
+
+
+procedure f(int x, int y)
+    local int z = 12
+    if (x > 3) then
+        y += z
+    else
+        y -= z * x
+    fi (x > 3)
+    delocal int z = y

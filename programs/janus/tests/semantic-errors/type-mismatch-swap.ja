@@ -1,0 +1,16 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// type-mismatch-swap.ja:
+//      The types on the left-hand side and the right-hand side of a
+//      swap statement must be equal.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    stack lhs
+    int rhs
+
+    lhs <=> rhs

@@ -1,0 +1,17 @@
+// Created 05.02.2021
+// Expected results:
+// A = [0, 0, 0, 2, 0, 0, 0, 0, 0, 0]
+// y = 6
+
+procedure main()
+    int A[10]
+    int y
+
+    A[3] += 1
+    call memoryReadAndWrite(A, y)
+
+
+procedure memoryReadAndWrite(int A[10], int y)
+    y += A[3] * 2
+    A[3] += 1
+    y += A[3] * 2

@@ -1,0 +1,15 @@
+procedure main()
+    
+    int result
+    local int x=5
+    call factorial(x, result)
+    delocal int x=0
+
+procedure factorial(int n, int result)
+    result += 1
+    from result = 1 do
+        local int product = result * n
+        product <=> result
+        delocal int product = result / n
+        n -= 1
+    until n = 0

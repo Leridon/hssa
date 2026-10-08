@@ -1,0 +1,15 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// self-assign2.ja:
+//      If the assigned-to variable is an array variable, the name is
+//      not allowed to occur in the expression on either side.
+//
+// N. Deworetzki, 31. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int notAllowed[2]
+
+    notAllowed[notAllowed[0]] -= 2

@@ -1,0 +1,95 @@
+////////////////////////////////////////////////////////////////////////
+// janus-write.ja:
+//      This program generates the code required to print the input
+//      from another Janus program.
+//
+// 27. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    stack buffer
+    int in
+
+    from empty(buffer) do
+        readc(in)
+    loop
+        call printWritecStatement(in)
+        push(in, buffer)
+    until in = -1 // EOF
+
+
+procedure printSpecialChar(int char)
+    if char = '\n' then
+        local int char = '\' writec(char) delocal int char = '\'
+        local int char = 'n' writec(char) delocal int char = 'n'
+    else if char = '\r' then
+        local int char = '\' writec(char) delocal int char = '\'
+        local int char = 'r' writec(char) delocal int char = 'r'
+    else if char = '\t' then
+        local int char = '\' writec(char) delocal int char = '\'
+        local int char = 't' writec(char) delocal int char = 't'
+    else
+        writec(char)
+    fi char = '\t'
+    fi char = '\r'
+    fi char = '\n'
+
+
+procedure printWritecStatement(int c)
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = 'o' writec(char) delocal int char = 'o'
+    local int char = 'c' writec(char) delocal int char = 'c'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'c' writec(char) delocal int char = 'c'
+    local int char = 'h' writec(char) delocal int char = 'h'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = '=' writec(char) delocal int char = '='
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = ''' writec(char) delocal int char = '''
+    call printSpecialChar(c)
+    local int char = ''' writec(char) delocal int char = '''
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'w' writec(char) delocal int char = 'w'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = 'c' writec(char) delocal int char = 'c'
+    local int char = '(' writec(char) delocal int char = '('
+    local int char = 'c' writec(char) delocal int char = 'c'
+    local int char = 'h' writec(char) delocal int char = 'h'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = ')' writec(char) delocal int char = ')'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'd' writec(char) delocal int char = 'd'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = 'o' writec(char) delocal int char = 'o'
+    local int char = 'c' writec(char) delocal int char = 'c'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'c' writec(char) delocal int char = 'c'
+    local int char = 'h' writec(char) delocal int char = 'h'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = '=' writec(char) delocal int char = '='
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = ''' writec(char) delocal int char = '''
+    call printSpecialChar(c)
+    local int char = ''' writec(char) delocal int char = '''
+    local int char = '\n' writec(char) delocal int char = '\n'

@@ -1,0 +1,154 @@
+////////////////////////////////////////////////////////////////////////
+// caesar.ja:
+//      This program implements the caesar cipher.
+//      You will be asked for a key on startup and whether the input
+//      should be encrypted or decrypted.
+//      Encrypting calls the encrypt procedure. Decrypting simply
+//      uncalls it.
+//
+// 27. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int key
+    int mode
+    stack text
+
+    call askForKey(key)
+    call askForMode(mode)
+    call readText(text)
+
+    local stack cipher = nil
+    local int char = 0
+        // Iterate over all read characters.
+        from empty(cipher) do
+            pop(char, text)
+
+            if mode = 1 then
+                call encrypt(char, key)
+            else
+                uncall encrypt(char, key)
+            fi mode = 1
+
+            push(char, cipher)
+        until empty(text)
+    delocal int char = 0
+
+    call printCipher(text, cipher)
+    delocal stack cipher = nil
+
+
+procedure readText(stack text)
+    local int in = 0
+        from empty(text) do
+            readc(in)
+        loop
+            push(in, text)
+        until in = -1
+    delocal int in = -1
+
+
+procedure printCipher(stack text, stack cipher)
+    local int char = 0
+        from empty(text) do
+            pop(char, cipher)
+            writec(char)
+            push(char, text)
+        until empty(cipher)
+    delocal int char = 0
+
+
+procedure encrypt(int char, int key)
+    local int mod = 26
+    if char >= 'a' && char <= 'z' then
+        local int offset = 'a'
+        call addModOffset(char, key, mod, offset)
+        delocal int offset = 'a'
+    else if char >= 'A' && char <= 'Z' then
+        local int offset = 'A'
+        call addModOffset(char, key, mod, offset)
+        delocal int offset = 'A'
+
+    fi char >= 'A' && char <= 'Z'
+    fi char >= 'a' && char <= 'z'
+    delocal int mod = 26
+
+
+procedure addModOffset(int var, int sum, int mod, int offset)
+    var -= offset
+    if var + sum >= mod then
+        var += sum - mod
+    else
+        var += sum
+    fi var - sum < 0
+    var += offset
+
+
+procedure askForKey(int key)
+    // Print: Key? [0 - 26]
+    local int char = 'K' writec(char) delocal int char = 'K'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = 'y' writec(char) delocal int char = 'y'
+    local int char = '?' writec(char) delocal int char = '?'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = '[' writec(char) delocal int char = '['
+    local int char = '0' writec(char) delocal int char = '0'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = '-' writec(char) delocal int char = '-'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = '2' writec(char) delocal int char = '2'
+    local int char = '6' writec(char) delocal int char = '6'
+    local int char = ']' writec(char) delocal int char = ']'
+    local int char = '\n' writec(char) delocal int char = '\n'
+    read(key)
+    if key < 0 || key > 26 then
+        call illegalInput()
+    fi key < 0 || key > 26
+
+
+procedure askForMode(int mode)
+    // Print: Encrypt? [y/n]
+    local int char = 'E' writec(char) delocal int char = 'E'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'c' writec(char) delocal int char = 'c'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = 'y' writec(char) delocal int char = 'y'
+    local int char = 'p' writec(char) delocal int char = 'p'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = '?' writec(char) delocal int char = '?'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = '[' writec(char) delocal int char = '['
+    local int char = 'y' writec(char) delocal int char = 'y'
+    local int char = '/' writec(char) delocal int char = '/'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = ']' writec(char) delocal int char = ']'
+    local int char = '\n' writec(char) delocal int char = '\n'
+
+    readc(mode)
+    if mode = 'y' then
+        mode -= 'y' - 1 // Set mode to 1
+    else if mode = 'n' then
+        mode -= 'n' // Set mode to 0
+    else
+        call illegalInput()
+    fi mode = 0
+    fi mode = 1
+
+
+procedure illegalInput()
+    // Print: Illegal input!
+    local int char = 'I' writec(char) delocal int char = 'I'
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = 'g' writec(char) delocal int char = 'g'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = ' ' writec(char) delocal int char = ' '
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'p' writec(char) delocal int char = 'p'
+    local int char = 'u' writec(char) delocal int char = 'u'
+    local int char = 't' writec(char) delocal int char = 't'
+    local int char = '!' writec(char) delocal int char = '!'
+    local int char = '\n' writec(char) delocal int char = 0 // Force crash

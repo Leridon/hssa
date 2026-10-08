@@ -41,7 +41,7 @@ object TestUtils {
             name in optionally(body)
     }
 
-    def wrapErrorPrint(f: => Unit): Unit = try {
+    def wrapErrorPrint[T](f: => T): T = try {
         f
     } catch {
         case e: LanguageError.AbortDueToErrors =>

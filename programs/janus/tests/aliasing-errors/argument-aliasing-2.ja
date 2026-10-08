@@ -1,0 +1,19 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// argument-aliasing-2.ja:
+//      It is not allowed to pass a variable if it is used as an
+//      index for another argument.
+//
+// N. Deworetzki, 22. Sep. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure f(int a, int b)
+    a -= b
+
+procedure main()
+    int notAllowed
+    int array[10]
+
+    call f(notAllowed, array[notAllowed])

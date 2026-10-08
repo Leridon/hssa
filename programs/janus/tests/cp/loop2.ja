@@ -1,0 +1,18 @@
+
+procedure main()
+    int x
+    int result
+
+    call sumCents(x, result)
+
+
+procedure sumCents(int x, int result)
+    local int hundred = 100
+    local int n = x
+    from (n = x) do
+        result += n * hundred
+        n -= 1
+    until (n = 0)
+    delocal int n = 0
+    delocal int hundred = 100
+

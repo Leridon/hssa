@@ -1,0 +1,15 @@
+// Created 05.02.2021
+// Expected results:
+// y = 20
+
+procedure main()
+    int y
+
+    local int a = 5
+    local int b = 13
+    call simpleArithmetic(y, a, b)
+    delocal int b = 13
+    delocal int a = 5
+
+procedure simpleArithmetic(int y, int a, int b)
+    y += 2 * a + 2 * a

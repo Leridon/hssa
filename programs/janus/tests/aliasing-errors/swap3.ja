@@ -1,0 +1,16 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// swap3.ja:
+//      A swap of the form M[x] <=> x is not allowed, if x is
+//      an array.
+//
+// N. Deworetzki, 24. Jul. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int M[2]
+    int x[3]
+
+    M[x[0]] <=> x[1]

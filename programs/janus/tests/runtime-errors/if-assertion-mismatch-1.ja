@@ -1,0 +1,19 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether a compiled program correctly
+// behaves at runtime.
+//
+// if-assertion-mismatch-1.ja:
+//      The assertion expression of an reversible branch statement
+//      is validated and errors are correctly reported.
+//
+// N. Deworetzki, 15. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    call f()
+
+procedure f()
+    if 0 < 1
+    then skip
+    else skip
+    fi 0 > 1

@@ -1,0 +1,38 @@
+procedure f(int x , int y)
+    local int z = 3
+        if x = 0 then
+            y += 1
+        fi x = 0
+        z += x+y
+    delocal int z = x + y
+
+procedure main()
+    skip
+
+/*
+// Original:
+begin f(x_0, y_0)
+z_0 := 0 ^ (3 ^ 0)
+x_0 == 0 -> Lf_5(y_0, x_0, z_0)Lf_6
+Lf_5(y_1, x_1, z_1) <-
+y_4 := y_1 + (1 ^ 0)
+-> Lf_7(x_1, y_4, z_1)
+Lf_6(y_2, x_2, z_2) <-
+-> Lf_8(x_2, y_2, z_2)
+Lf_7(x_7, y_8, z_7)Lf_8 <- x_7 == 0
+z_8 := z_7 + (x_7 + y_8)
+0 := z_8 ^ (x_7 + y_8)
+end f(x_7, y_8)
+
+// With DCE:
+begin f(x_0, y_0)
+x_0 == 0 -> Lf_5(y_0, x_0)Lf_6
+Lf_5(y_1, x_1) <-
+y_4 := y_1 + (1 ^ 0)
+-> Lf_7(x_1, y_4)
+Lf_6(y_2, x_2) <-
+-> Lf_8(x_2, y_2)
+Lf_7(x_7, y_8)Lf_8 <- x_7 == 0
+end f(x_7, y_8)
+
+*/

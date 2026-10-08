@@ -1,0 +1,17 @@
+// This is a tricky example using a branch.
+//  - n is used as a "parameter" of main.
+//  - i is also used overall, but is unused in the "else" branch.
+// It cannot be removed from there, however, since this would
+// introduce inconsistencies in the program.
+
+procedure main()
+    int n
+
+    local int i = 0
+    if (n > 2) then
+        n += i
+    else
+        i += 0
+    fi (n > 2)
+    delocal int i = 0
+

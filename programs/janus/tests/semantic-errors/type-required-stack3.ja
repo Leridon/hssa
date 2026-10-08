@@ -1,0 +1,17 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// type-required-stack3.ja:
+//      The empty-expression requires its operand to be a stack.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int notAStack
+
+    if empty(notAStack)
+    then skip
+    else skip
+    fi empty(notAStack)

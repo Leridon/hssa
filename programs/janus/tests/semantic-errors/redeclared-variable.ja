@@ -1,0 +1,15 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// redeclared-variable.ja:
+//      Variable names in the main procedure must be unique.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int redeclaredVariable
+    int redeclaredVariable
+
+    skip

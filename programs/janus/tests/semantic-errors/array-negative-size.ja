@@ -1,0 +1,14 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// array-negative-size.ja:
+//      Arrays with a negative size are not allowed.
+//
+// N. Deworetzki, 03. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int arrayWithNegativeSize[-10]
+
+    skip

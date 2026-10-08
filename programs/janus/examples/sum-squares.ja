@@ -1,0 +1,34 @@
+////////////////////////////////////////////////////////////////////////
+// sum-squares.ja:
+//      Calculates the sum of the first n square numbers.
+//
+//      This was originally part of a programming assignment
+//      as part of the CS2333 "Functional Programming" course.
+//
+// 17. Jul. 2020
+////////////////////////////////////////////////////////////////////////
+
+
+procedure main()
+    int result
+    int n
+
+    read(n)
+
+    local int i = 0
+    from i = 0 do
+        local int sq = 0
+        call square(i, sq)
+            result += sq
+        uncall square(i, sq)
+        delocal int sq = 0
+    loop
+        i += 1
+    until i = n
+    delocal int i = n
+
+    write(result)
+
+
+procedure square(int n, int square)
+    square += n * n

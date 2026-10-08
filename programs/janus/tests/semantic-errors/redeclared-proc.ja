@@ -1,0 +1,19 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// redeclared-proc.ja:
+//      Procedure names must be unique. It is not allowed to declare
+//      the same procedure twice.
+//
+// N. Deworetzki, 03. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    skip
+
+procedure redeclaredProcedure()
+    skip
+
+procedure redeclaredProcedure()
+    skip

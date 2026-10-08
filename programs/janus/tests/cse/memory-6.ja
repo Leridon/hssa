@@ -1,0 +1,32 @@
+// Created 05.02.2021
+// Expected results:
+// A = [0, 0, 0, 51, 0, 0, 0, 0, 0, 0]
+// x = 18880
+// y = 2025
+
+procedure main()
+    int A[10]
+    int x
+    int y
+
+    A[3] += 1
+    call memoryReadAndWrite(A, x, y)
+
+
+procedure memoryReadAndWrite(int A[10], int x, int y)
+    local int a = 3
+    local int i = 0
+
+    from i = 0 do
+        i += 1
+
+        x += A[3] * 7 + 2 + A[3] * 7
+        x += A[3] * 7 + 2 + A[3] * 7
+        A[3] += 5
+        y += A[3] * 7 + a
+        x += A[3] * 7 + 2 + A[3] * 7 + y
+
+    until i = 10
+
+    delocal int i = 10
+    delocal int a = 3

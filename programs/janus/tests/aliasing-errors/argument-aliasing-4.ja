@@ -1,0 +1,20 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// argument-aliasing-4.ja:
+//      It is not allowed to pass the value used to index an array
+//      to a procedure.
+//
+// N. Deworetzki, 22. Sep. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure f(int a, int b)
+    a -= b
+
+procedure main()
+    int notAllowed[2]
+
+    local int three = 3
+    call f(notAllowed[notAllowed[0]], three)
+    delocal int three = 3

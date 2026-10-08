@@ -1,0 +1,17 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// type-required-bool1.ja:
+//      The entry condition of an if-statement must be boolean.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int notABoolean
+
+    if notABoolean
+    then skip
+    else skip
+    fi 5 < 7

@@ -1,0 +1,17 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// type-required-bool3.ja:
+//      The from-condition of a loop must be boolean.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int notABoolean
+
+    from notABoolean
+    do skip
+    loop skip
+    until 5 < 7

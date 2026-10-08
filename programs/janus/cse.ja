@@ -1,0 +1,11 @@
+
+procedure main()
+    int A[10]
+    int x
+    int y
+
+    skip
+
+
+procedure memoryReadAndWrite(int A[10], int a, int x, int y)
+    a += (x * y) + (x * y)

@@ -1,0 +1,103 @@
+////////////////////////////////////////////////////////////////////////
+// read.ja:
+//      A possible implementation of the builtin read procedure
+//      implemented in Janus using the builtin readc procedure.
+//
+// N. Deworetzki, 26. Apr. 2020
+////////////////////////////////////////////////////////////////////////
+
+// Read an integer from the command line.
+//
+// This procedure reads a single line of input from the command line and
+// parses it into an integer value. The resulting value is stored in the
+// parameter passed to this procedure.
+//
+// This procedure is limited in so far, that only a continuous string of
+// numerical digits can be parsed into an integer. An optional leading
+// minus sign is also allowed.
+// Any number lead by a minus sign will be interpreted as a negative number.
+// It is not possible to write negative zero, since the digit zero and the
+// digit zero lead by a minus sign, would both result in the integer zero
+// being parsed. This would make this procedure non-injective and thus not
+// possible to implement in Janus without an additional parameter to store
+// parsing information.
+// Lines read have to be terminated by a line break (\n). It is not allowed
+// to end the string of digits with an end-of-file character, since it is
+// not possible to parse both variants of terminated strings into a number
+// using an injective procedure.
+procedure builtin_read(int value)
+    local stack input = nil
+    local int sign = 0
+    local int char_read = 0
+    local int amount_read = 0
+    local int pow = 1
+
+    // Probe negative sign
+    readc(char_read)
+    if char_read = '-' then
+        sign -= 1
+        char_read -= '-'
+    else
+        sign += char_read - '0'
+        char_read -= sign + '0'
+    fi sign = -1
+
+    // Read until line end.
+    from empty(input) do
+        readc(char_read)
+    loop
+        push(char_read, input)
+        amount_read += 1
+    until char_read = '\n'
+    char_read -= '\n'
+
+    if amount_read > 0 then
+        from value = 0 do
+            // Take next number from input.
+            pop(char_read, input)
+            // Increase result by current decimal place times read number.
+            value += (char_read - '0') * pow
+            // Zero out the temporary variable.
+            char_read -= (value / pow) + '0'
+
+            // Multiply power for decimal place by 10.
+            local int powTen = pow * 10
+            pow <=> powTen
+            delocal int powTen = pow / 10
+        until empty(input)
+    fi amount_read > 0
+
+    // Prepend number if sign wasn't '-'.
+    if sign >= 0 then
+        value += pow * sign
+        sign -= value / pow
+
+        // Adjust stat values.
+        amount_read += 1
+        local int powTen = pow * 10
+        pow <=> powTen
+        delocal int powTen = pow / 10
+    fi sign = 0
+
+
+    // Clear up values.
+    from pow > value do
+        amount_read -= 1
+        // Divide power for decimal place by 10.
+        local int powTen = pow / 10
+        pow <=> powTen
+        delocal int powTen = pow * 10
+    until amount_read = 0
+
+    if sign = -1 then
+        sign += 1
+        local int negatedValue = -1 * value
+        value <=> negatedValue
+        delocal int negatedValue = -1 * value
+    fi value < 0
+
+    delocal int pow = 1
+    delocal int amount_read = 0
+    delocal int char_read = 0
+    delocal int sign = 0
+    delocal stack input = nil

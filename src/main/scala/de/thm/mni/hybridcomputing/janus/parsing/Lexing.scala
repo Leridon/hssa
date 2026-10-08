@@ -1,0 +1,209 @@
+package de.thm.mni.hybridcomputing.janus.parsing
+
+import de.thm.mni.hybridcomputing.util.parsing.{FileReader, LexicalGrammarUtilities, SourceFile, Token, TokenReader}
+
+import java.nio.file.Path
+import scala.util.parsing.input.{CharSequenceReader, Position}
+
+object Lexing {
+    object Tokens {
+        
+        enum TokenClass {
+            case INTLIT
+            case IDENT
+            case COMMA
+            case INTEGER
+            case LBRACK
+            case RBRACK
+            case LPAR
+            case RPAR
+            case VAL
+            case ASGN_ADD
+            case ASGN_SUB
+            case STACK
+            case ASGN_XOR
+            case SWAP
+            case IF
+            case THEN
+            case ELSE
+            case FI
+            case PROCEDURE
+            case FROM
+            case DO
+            case LOOP
+            case UNTIL
+            case LOCAL
+            case DELOCAL
+            case CALL
+            case UNCALL
+            case SKIP
+            case NIL
+            case ADD
+            case SUB
+            case XOR
+            case MUL
+            case DIV
+            case MOD
+            case BITAND
+            case BITOR
+            case LOGAND
+            case LOGOR
+            case LESSTHAN
+            case GREATERTHAN
+            case EQUAL
+            case NOTEQUAL
+            case LESSEQUAL
+            case GREATEREQUAL
+            case LINEBREAK
+            case WHITESPACE
+            case LINECOMMENT
+            case BLOCKCOMMENT
+            case READ
+            case WRITE
+            case READC
+            case WRITEC
+            case EMPTY
+            case PUSH
+            case POP
+            case TOP
+            case EOF
+            
+            override def toString(): String = this match
+                case IDENT => "IDENT"
+                case COMMA => "COMMA"
+                case INTEGER => "INTEGER"
+                case STACK => "STACK"
+                case LBRACK => "LBRACK"
+                case RBRACK => "RBRACK"
+                case LPAR => "LPAR"
+                case RPAR => "RPAR"
+                case ASGN_ADD => "ASGN_ADD"
+                case ASGN_SUB => "ASGN_SUB"
+                case ASGN_XOR => "ASGN_XOR"
+                case SWAP => "SWAP"
+                case IF => "IF"
+                case THEN => "THEN"
+                case ELSE => "ELSE"
+                case FI => "FI"
+                case FROM => "FROM"
+                case DO => "DO"
+                case LOOP => "LOOP"
+                case UNTIL => "UNTIL"
+                case LOCAL => "LOCAL"
+                case DELOCAL => "DELOCAL"
+                case CALL => "CALL"
+                case UNCALL => "UNCALL"
+                case SKIP => "SKIP"
+                case NIL => "NIL"
+                case ADD => "ADD"
+                case SUB => "SUB"
+                case XOR => "XOR"
+                case MUL => "MUL"
+                case DIV => "DIV"
+                case MOD => "MOD"
+                case BITAND => "BITAND"
+                case BITOR => "BITOR"
+                case LOGAND => "LOGAND"
+                case LOGOR => "LOGOR"
+                case LESSTHAN => "LESSTHAN"
+                case GREATERTHAN => "GREATERTHAN"
+                case EQUAL => "EQUAL"
+                case NOTEQUAL => "NOTEQUAL"
+                case LESSEQUAL => "LESSEQUAL"
+                case GREATEREQUAL => "GREATEREQUAL"
+                case LINEBREAK => "LINEBREAK"
+                case WHITESPACE => "WHITESPACE"
+                case LINECOMMENT => "LINECOMMENT"
+                case BLOCKCOMMENT => "BLOCKCOMMENT"
+                case EOF => "EOF"
+                case INTLIT => "INTLIT"
+                case VAL => "VAL"
+                case PROCEDURE => "PROCEDURE"
+                case READ => "READ"
+                case WRITE => "WRITE"
+                case READC => "READ"
+                case WRITEC => "WRITE"
+                case EMPTY => "EMPTY"
+                case PUSH => "PUSH"
+                case POP => "POP"
+                case TOP => "TOP"
+        }
+    }
+    
+    object LexicalGrammar extends LexicalGrammarUtilities[Tokens.TokenClass] {
+        
+        import Tokens.TokenClass.*
+        
+        //override lazy val whitespace: Parser[Any] = """(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))*""".r
+        
+        def eof_token = Tokens.TokenClass.EOF
+        
+        def token: Parser[TokenValue] =
+            "[a-zA-Z][a-zA-Z_0-9']*".r ^^ {
+                case "int" => symbol(INTEGER)
+                case "procedure" => symbol(PROCEDURE)
+                case "if" => symbol(IF)
+                case "then" => symbol(THEN)
+                case "else" => symbol(ELSE)
+                case "fi" => symbol(FI)
+                case "byval" => symbol(VAL)
+                case "from" => symbol(FROM)
+                case "do" => symbol(DO)
+                case "loop" => symbol(LOOP)
+                case "until" => symbol(UNTIL)
+                case "local" => symbol(LOCAL)
+                case "delocal" => symbol(DELOCAL)
+                case "call" => symbol(CALL)
+                case "uncall" => symbol(UNCALL)
+                case "skip" => symbol(SKIP)
+                case "nil" => symbol(NIL)
+                case "stack" => symbol(STACK)
+                case "read" => symbol(READ)
+                case "write" => symbol(WRITE)
+                case "readc" => symbol(READC)
+                case "writec" => symbol(WRITEC)
+                case "empty" => symbol(EMPTY)
+                case "push" => symbol(PUSH)
+                case "pop" => symbol(POP)
+                case "top" => symbol(TOP)
+                case l => symbol(IDENT, l)
+            } |
+              //"""(\s|(//.*)|(/\*[^*]*\*+(?:[^/*][^*]*\*+)*/))+""".r ^^^ symbol(WHITESPACE) |
+              "\\n".r ^^^ symbol(LINEBREAK) |
+              "\\s+".r ^^^ symbol(WHITESPACE) |
+              """//.*""".r ^^^ symbol(LINECOMMENT) |
+              """/\*[^*]*\*+(?:[^/*][^*]*\*+)*/""".r ^^^ symbol(BLOCKCOMMENT) |
+              "," ^^^ symbol(COMMA) |
+              "[" ^^^ symbol(LBRACK) |
+              "]" ^^^ symbol(RBRACK) |
+              "(" ^^^ symbol(LPAR) |
+              ")" ^^^ symbol(RPAR) |
+              "+=" ^^^ symbol(ASGN_ADD) |
+              "-=" ^^^ symbol(ASGN_SUB) |
+              "^=" ^^^ symbol(ASGN_XOR) |
+              "<=>" ^^^ symbol(SWAP) |
+              "(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
+              "'.'".r ^^ (l => symbol(INTLIT, l.charAt(1).toInt)) |
+              "'\\\\.'".r ^^ (l => symbol(INTLIT, l.charAt(2) match {
+                  case 'n' => '\n'.toInt
+                  case 'r' => '\r'.toInt
+                  case 't' => '\t'.toInt
+              })) |
+              "+" ^^^ symbol(ADD) |
+              "-" ^^^ symbol(SUB) |
+              "^" ^^^ symbol(XOR) |
+              "*" ^^^ symbol(MUL) |
+              "/" ^^^ symbol(DIV) |
+              "%" ^^^ symbol(MOD) |
+              "&&" ^^^ symbol(LOGAND) |
+              "||" ^^^ symbol(LOGOR) |
+              "&" ^^^ symbol(BITAND) |
+              "|" ^^^ symbol(BITOR) |
+              "!=" ^^^ symbol(NOTEQUAL) |
+              "<=" ^^^ symbol(LESSEQUAL) |
+              ">=" ^^^ symbol(GREATEREQUAL) |
+              "<" ^^^ symbol(LESSTHAN) |
+              ">" ^^^ symbol(GREATERTHAN) |
+              "=" ^^^ symbol(EQUAL)
+    }
+}

@@ -1,0 +1,65 @@
+////////////////////////////////////////////////////////////////////////
+// replicate.ja:
+//      Replicates every element of a stack n times.
+//
+//      This was originally part of a programming assignment
+//      as part of the CS2333 "Functional Programming" course.
+//
+// 17. Jul. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    stack line
+    int count
+
+    read(count)
+    call readLine(line)
+    
+    call replicate(line, count)
+
+    call printLine(line)
+
+
+procedure readLine(stack line)
+    local int char = 0
+    from empty(line) do
+        readc(char)
+    loop
+        push(char, line)
+    until char = '\n'
+    delocal int char = '\n'
+
+procedure printLine(stack line)
+    if empty(line) else
+        local int char = 0
+        pop(char, line)
+        
+        writec(char)
+        call printLine(line)
+
+        push(char, line)
+        delocal int char = 0
+    fi empty(line)
+
+procedure replicate(stack s, int n)
+    if empty(s) else
+        local int val = 0
+        pop(val, s)
+
+        call replicate(s, n)
+
+        local int i = n
+        from i = n do
+            i -= 1
+
+
+            local int tmp = val
+            push(tmp, s)
+            delocal int tmp = 0
+
+        until i = 0
+        delocal int i = 0
+
+        delocal int val = top(s)
+    fi empty(s)
+

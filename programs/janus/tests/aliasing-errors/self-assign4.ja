@@ -1,0 +1,17 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// self-assign4.ja:
+//      An array on the left-hand side must not occur on the right-hand
+//      side.
+//
+// N. Deworetzki, 26. May. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int index1
+    int index2
+    int array[2]
+
+    array[index1] -= array[index2]

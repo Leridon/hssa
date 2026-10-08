@@ -1,0 +1,9 @@
+procedure main()
+  local int k=0
+  local int l=0
+  if (k>0)
+    then k+=1
+  else k+=2
+  fi (k>0)
+  delocal int l=0
+  delocal int k=2

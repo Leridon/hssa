@@ -1,0 +1,39 @@
+////////////////////////////////////////////////////////////////////////
+// bits.ja:
+//      Reads an 8-Bit unsigned integer as input and prints
+//      the binary representation of it.
+//      The reversed program converts a binary array into
+//      a decimal number.
+//
+// N. Deworetzki, 20. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int byte[8]
+
+    local int input = 0
+    read(input)
+    call bits(input, byte)
+    delocal int input = 0
+
+
+procedure divBy(int divisor, int n, int remainder)
+    remainder += n % divisor
+
+    local   int h = (n - remainder) / divisor
+    n <=> h
+    delocal int h = n * divisor + remainder
+
+
+procedure bits(int input, int byte[8])
+    local   int two = 2
+    local   int i = 0
+
+    from    i = 0
+    do      call divBy(two, input, byte[8 - (i + 1)])
+            i += 1
+    until   i = 8
+
+    delocal int i = 8
+    delocal int two = 2
+

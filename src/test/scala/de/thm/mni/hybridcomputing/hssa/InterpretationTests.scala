@@ -17,9 +17,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import java.nio.file.Paths
 import scala.language.postfixOps
 
-class InterpretationTests extends AnyWordSpec with Matchers{
-
-
+class InterpretationTests extends AnyWordSpec with Matchers {
 
     "Interpretation" should {
         TestDiscovery.all_relation_tests.foreach(test => {

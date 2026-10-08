@@ -1,0 +1,52 @@
+////////////////////////////////////////////////////////////////////////
+// collatz-sum.ja:
+//      Calculates the numbers of the "Collatz Conjecture" for the input
+//      number 31. All calculated numbers are added up.
+// Expected result:
+//  sum = 101104
+//
+// N. Deworetzki, 21. Oct. 2020
+////////////////////////////////////////////////////////////////////////
+
+
+procedure main()
+    stack s
+    int sum
+
+    local int start = 31
+        call collatz(start, s)
+        call sum(s, sum)
+    delocal int start = 31
+
+procedure collatz(int c, stack trace)
+    if c != 1 then
+        if c % 2 = 0 then
+            local int c1 = c / 2
+            call collatz(c1, trace)
+            delocal int c1 = c / 2
+        else
+            local int c1 = 3 * c + 1
+            call collatz(c1, trace)
+            delocal int c1 = 3 * c + 1
+        fi c % 2 = 0
+    fi c != 1
+    push(c, trace)
+    c += top(trace)
+
+procedure sum(stack s, int result)
+    local stack copy = nil
+    local int tmp = 0
+
+    from empty(copy) do
+        pop(tmp, s)
+        result += tmp
+        push(tmp, copy)
+    until empty(s)
+
+    from empty(s) do
+        pop(tmp, copy)
+        push(tmp, s)
+    until empty(copy)
+
+    delocal int tmp = 0
+    delocal stack copy = nil

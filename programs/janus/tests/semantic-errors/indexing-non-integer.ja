@@ -1,0 +1,16 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// indexing-non-integer.ja:
+//      When accessing elements of a variable via an index, the index
+//      must be an expression of type integer.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int i
+    int notAnInt[19]
+
+    i -= notAnInt[notAnInt]

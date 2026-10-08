@@ -1,0 +1,15 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// undefined-variable1.ja:
+//      When a variable is used by its name, a variable with said name
+//      must have been declared.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    stack s
+
+    push(s, undefinedVariable)

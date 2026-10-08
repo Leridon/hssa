@@ -1,0 +1,117 @@
+////////////////////////////////////////////////////////////////////////
+// palindrome.ja:
+//      Determines whether a line of input is a palindrome or not.
+//
+//      This was originally part of a programming assignment
+//      as part of the CS2333 "Functional Programming" course.
+//
+// 17. Jul. 2020
+////////////////////////////////////////////////////////////////////////
+
+
+procedure main()
+    stack garbage
+    
+    local stack line = nil
+    local stack reverseLine = nil
+    local int difference = 0
+
+    from empty(garbage) do
+        call readLine(line)
+    loop
+        call reverse(line, reverseLine)
+        call difference(line, reverseLine, difference)
+
+        if difference > 0 then
+            call printNo()
+        fi difference > 0
+        call printPalindrome()
+
+        uncall difference(line, reverseLine, difference)
+        uncall reverse(line, reverseLine)
+        call clear(line, garbage)
+    until empty(line)
+
+    delocal int difference = 0
+    delocal stack reverseLine = nil
+    delocal stack line = nil
+
+procedure clear(stack s, stack garbage)
+    local int size = 0
+    local int tmp = 0
+
+    from size = 0 do
+        pop(tmp, s)
+        push(tmp, garbage)
+        size += 1
+
+    until empty(s)
+
+    push(size, garbage)
+
+    delocal int tmp = 0
+    delocal int size = 0
+
+
+procedure reverse(stack s, stack reversed)
+    if empty(s) else
+        local int n = top(s)
+        push(n, reversed)
+        pop(n, s)
+
+        call reverse(s, reversed)
+
+        push(n, s)
+        delocal int n = 0
+    fi empty(s)
+
+
+procedure readLine(stack line)
+    local int char = 0
+    from empty(line) do
+        readc(char)
+    loop
+        push(char, line)
+    until char = '\n'
+    delocal int char = '\n'
+
+
+procedure difference(stack s1, stack s2, int diff)
+    if empty(s1) || empty(s2) else
+        local int n1 = 0
+        local int n2 = 0
+
+        pop(n1, s1)
+        pop(n2, s2)
+
+        if n1 != n2 then
+            diff += 1
+        fi n1 != n2
+        call difference(s1, s2, diff)
+
+        push(n2, s2)
+        push(n1, s1)
+
+        delocal int n2 = 0
+        delocal int n1 = 0
+    fi empty(s1) || empty(s2)
+
+
+procedure printNo()
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'o' writec(char) delocal int char = 'o'
+    local int char = ' ' writec(char) delocal int char = ' '
+
+
+procedure printPalindrome()
+    local int char = 'p' writec(char) delocal int char = 'p'
+    local int char = 'a' writec(char) delocal int char = 'a'
+    local int char = 'l' writec(char) delocal int char = 'l'
+    local int char = 'i' writec(char) delocal int char = 'i'
+    local int char = 'n' writec(char) delocal int char = 'n'
+    local int char = 'd' writec(char) delocal int char = 'd'
+    local int char = 'r' writec(char) delocal int char = 'r'
+    local int char = 'o' writec(char) delocal int char = 'o'
+    local int char = 'm' writec(char) delocal int char = 'm'
+    local int char = 'e' writec(char) delocal int char = 'e'
+    local int char = '\n' writec(char) delocal int char = '\n'

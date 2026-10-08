@@ -1,0 +1,15 @@
+procedure main()
+    stack s
+    int i
+    call test (s)
+    uncall test (s)
+
+procedure test(stack s)
+    local int i = 0
+    from empty(s) do
+        i += 1
+        local int x = i
+        push(x,s)
+        delocal int x = 0
+    until top(s) =  100000
+    delocal int i = 100000

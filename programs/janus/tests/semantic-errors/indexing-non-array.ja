@@ -1,0 +1,16 @@
+////////////////////////////////////////////////////////////////////////
+// This file is used to test, whether the compiler correctly detects
+// semantic errors in an input file.
+//
+// indexing-non-array.ja:
+//      When accessing elements of a variable via an index, the indexed
+//      variable must be an array.
+//
+// N. Deworetzki, 04. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure main()
+    int i
+    int notAnArray
+
+    i -= notAnArray[0]

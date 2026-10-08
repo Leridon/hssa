@@ -1,0 +1,26 @@
+////////////////////////////////////////////////////////////////////////
+// factorial.ja:
+//      Calculates and outputs n! for a given n as input.
+//
+// N. Deworetzki, 21. Mar. 2020
+////////////////////////////////////////////////////////////////////////
+
+procedure factorial(int n, int res)
+    if      n > 0
+    then    n -= 1
+            call factorial(n, res)
+            local   int h = res * (n + 1)
+                    res <=> h
+            delocal int h = res / (n + 1)
+            n += 1
+
+    else    res += 1
+    fi      n > 0
+
+procedure main()
+    int n
+    int result
+
+    
+    call factorial(n, result)
+    write(result)
