@@ -32,7 +32,7 @@ class CompilerHandler {
         val tokenStream: TokenReader[TokenClass] = Lexing.LexicalGrammar.getTokenReader(sourceFile)
         tokenStream.readAll().filter(t => t.typ == TokenClass.IDENT)
           .foreach(t => if (t.value.isDefined) documentIdentifiers.append(t.value.get.toString))
-        val syntax: Program = Parsing.parse(tokenStream)
+        val syntax: Program = Parsing.Grammar.parse(sourceFile)
         val graph: ClassGraph.Program = ClassGraph.check(syntax)
         val scopes: ScopeTree.Program = Wellformedness.check(graph)
         scopeTree.put(uri, scopes)

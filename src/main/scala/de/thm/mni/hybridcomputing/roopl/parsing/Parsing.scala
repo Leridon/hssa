@@ -1,41 +1,33 @@
 package de.thm.mni.hybridcomputing.roopl.parsing
 
-import de.thm.mni.hybridcomputing.util.parsing.Token
+import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, ParserUtilities, SourcePosition, Token}
+
 import scala.util.parsing.input.Reader
 import de.thm.mni.hybridcomputing.util.parsing
-import de.thm.mni.hybridcomputing.util.parsing.ParserUtilities
+
 import scala.util.parsing.combinator.ImplicitConversions
 import de.thm.mni.hybridcomputing.roopl.Syntax
 import de.thm.mni.hybridcomputing.roopl.Syntax.Program
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
-import de.thm.mni.hybridcomputing.util.parsing.SourcePosition
 import de.thm.mni.hybridcomputing.roopl.Syntax.Expression
+import de.thm.mni.hybridcomputing.roopl.parsing.Lexing.Tokens
 
 object Parsing {
     type TokenReader = Reader[Token[Lexing.Tokens.TokenClass]]
 
-    val grammar = new Parsing.Grammar()
-
-    def parse(token_reader: Parsing.TokenReader): Program = {
-        
-        this.grammar.program(token_reader) match {
-            case grammar.Success(prog, _) => prog
-            case grammar.NoSuccess(msg, rest) =>
-                val r = rest.asInstanceOf[parsing.TokenReader[?]]
-                
-                LanguageError.SyntaxError(msg).setPosition(SourcePosition(r.file, r.position, null)).raise()
-            case grammar.Failure(_, _) => ???
-            case grammar.Error(_, _) => ???
-        }
-    }
-
-    class Grammar extends ParserUtilities[Lexing.Tokens.TokenClass] with ImplicitConversions {
+    object Grammar extends ParserUtilities[Lexing.Tokens.TokenClass] with ImplicitConversions {
         import de.thm.mni.hybridcomputing.roopl.parsing.Lexing.Tokens.TokenClass.*
         import de.thm.mni.hybridcomputing.util.parsing
 
         private type P[T] = this.Parser[T]
 
         override def skipTokens: Set[Lexing.Tokens.TokenClass] = Set(WHITESPACE, BLOCKCOMMENT, LINECOMMENT, LINEBREAK)
+
+        override type StartSymbolType = Syntax.Program
+
+        override def defaultLexer: LexicalGrammarUtilities[Tokens.TokenClass] = Lexing.LexicalGrammar
+
+        override def startSymbolParser: Grammar.this.P[Program] = program
 
         def variableIdent: P[Syntax.VariableIdentifier] = posi {
             valueToken[String](IDENT) ^^ Syntax.VariableIdentifier.apply
@@ -210,7 +202,7 @@ object Parsing {
         def simple_expression: P[Syntax.Expression] =
             valueToken[Integer](INTLIT) ^ (i => Syntax.Expression.Literal.apply(i.intValue()))
             | variableLiteral ^ Syntax.Expression.Reference.apply
-            | NIL ^ Syntax.Expression.Nil
+            | NIL ^ Syntax.Expression.Nil.apply
             | LPAR ~~ expression ~~ RPAR
             | (in => Failure(s"Expected simple expression but got ${in.first} at ${in.pos}", in))
     }

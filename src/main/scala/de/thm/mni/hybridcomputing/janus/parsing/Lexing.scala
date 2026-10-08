@@ -1,4 +1,4 @@
-package de.thm.mni.hybridcomputing.roopl.parsing
+package de.thm.mni.hybridcomputing.janus.parsing
 
 import de.thm.mni.hybridcomputing.util.parsing.{FileReader, LexicalGrammarUtilities, SourceFile, Token, TokenReader}
 
@@ -9,41 +9,34 @@ object Lexing {
     object Tokens {
         
         enum TokenClass {
+            case INTLIT
             case IDENT
-            case CLASS
-            case INHERITS
-            case METHOD
             case COMMA
             case INTEGER
             case LBRACK
             case RBRACK
             case LPAR
             case RPAR
+            case VAL
             case ASGN_ADD
             case ASGN_SUB
+            case STACK
             case ASGN_XOR
             case SWAP
             case IF
             case THEN
             case ELSE
             case FI
+            case PROCEDURE
             case FROM
             case DO
             case LOOP
             case UNTIL
-            case CONSTRUCT
-            case DESTRUCT
             case LOCAL
             case DELOCAL
-            case NEW
-            case DELETE
-            case COPY
-            case UNCOPY
             case CALL
             case UNCALL
-            case DBLCOLON
             case SKIP
-            case INTLIT
             case NIL
             case ADD
             case SUB
@@ -69,11 +62,9 @@ object Lexing {
             
             override def toString(): String = this match
                 case IDENT => "IDENT"
-                case CLASS => "CLASS"
-                case INHERITS => "INHERITS"
-                case METHOD => "METHOD"
                 case COMMA => "COMMA"
                 case INTEGER => "INTEGER"
+                case STACK => "STACK"
                 case LBRACK => "LBRACK"
                 case RBRACK => "RBRACK"
                 case LPAR => "LPAR"
@@ -90,19 +81,11 @@ object Lexing {
                 case DO => "DO"
                 case LOOP => "LOOP"
                 case UNTIL => "UNTIL"
-                case CONSTRUCT => "CONSTRUCT"
-                case DESTRUCT => "DESTRUCT"
                 case LOCAL => "LOCAL"
                 case DELOCAL => "DELOCAL"
-                case NEW => "NEW"
-                case DELETE => "DELETE"
-                case COPY => "COPY"
-                case UNCOPY => "UNCOPY"
                 case CALL => "CALL"
                 case UNCALL => "UNCALL"
-                case DBLCOLON => "DBLCOLON"
                 case SKIP => "SKIP"
-                case INTLIT => "INTLIT"
                 case NIL => "NIL"
                 case ADD => "ADD"
                 case SUB => "SUB"
@@ -138,26 +121,19 @@ object Lexing {
         
         def token: Parser[TokenValue] =
             "[a-zA-Z][a-zA-Z_0-9']*".r ^^ {
-                case "class" => symbol(CLASS)
-                case "inherits" => symbol(INHERITS)
-                case "method" => symbol(METHOD)
                 case "int" => symbol(INTEGER)
+                case "procedure" => symbol(INTEGER)
                 case "if" => symbol(IF)
                 case "then" => symbol(THEN)
                 case "else" => symbol(ELSE)
                 case "fi" => symbol(FI)
+                case "val" => symbol(VAL)
                 case "from" => symbol(FROM)
                 case "do" => symbol(DO)
                 case "loop" => symbol(LOOP)
                 case "until" => symbol(UNTIL)
-                case "construct" => symbol(CONSTRUCT)
-                case "destruct" => symbol(DESTRUCT)
                 case "local" => symbol(LOCAL)
                 case "delocal" => symbol(DELOCAL)
-                case "new" => symbol(NEW)
-                case "delete" => symbol(DELETE)
-                case "copy" => symbol(COPY)
-                case "uncopy" => symbol(UNCOPY)
                 case "call" => symbol(CALL)
                 case "uncall" => symbol(UNCALL)
                 case "skip" => symbol(SKIP)
@@ -178,7 +154,6 @@ object Lexing {
               "-=" ^^^ symbol(ASGN_SUB) |
               "^=" ^^^ symbol(ASGN_XOR) |
               "<=>" ^^^ symbol(SWAP) |
-              "::" ^^^ symbol(DBLCOLON) |
               "(-)?(([1-9][0-9]*)|0)".r ^^ (l => symbol(INTLIT, l.toInt)) |
               "+" ^^^ symbol(ADD) |
               "-" ^^^ symbol(SUB) |

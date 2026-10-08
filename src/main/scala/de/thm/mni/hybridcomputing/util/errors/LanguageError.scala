@@ -79,7 +79,12 @@ object LanguageError {
         = LanguageError(Severity.Error, s"Lexical Error: $msg", pos)
     
     class AbortDueToErrors(val errors: Seq[LanguageError]) extends Throwable {
-        
+        def printAll(): Unit = {
+            errors.foreach(e => {
+                println(e)
+                println()
+            })
+        }
     }
     
     val previousLinesShown = 3

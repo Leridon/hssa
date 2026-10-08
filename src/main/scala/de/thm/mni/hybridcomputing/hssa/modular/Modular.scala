@@ -36,18 +36,6 @@ object Modular {
     class Parsing(language: hssa.Language) {
         val grammar = Parsing.Grammar(language)
 
-        def parse(reader: TokenReader[Tokens.TokenClass]): Syntax.ProgramWithImports = {
-            this.grammar.prog(reader) match {
-                case grammar.Success(prog, _) => prog
-                case grammar.NoSuccess(msg, rest) =>
-                    val r = rest.asInstanceOf[parsing.TokenReader[?]]
-
-                    LanguageError.SyntaxError(msg).setPosition(SourcePosition(r.file, r.position, null)).raise()
-                case grammar.Failure(_, _) => ???
-                case grammar.Error(_, _) => ???
-            }
-        }
-
         def parseProject(root_file: Path): (Syntax.Program, LanguageError.Collector) = {
             def resolve(relative_to: Path, id: Identifier): Path = {
                 val path = """\.+""".r.replaceAllIn(id.name, m => "/" + "../".repeat(m.matched.length - 1)).dropWhile(_ == '/') + ".hssa"
@@ -67,7 +55,7 @@ object Modular {
                 val file = next.toAbsolutePath
 
                 if (!programs.exists(_.program.position.file.path.exists(_ == file))) {
-                    val program = parse(hssa.parsing.Lexing.LexicalGrammar.getTokenReader(SourceFile.fromFile(file)))
+                    val program = grammar.modularEntry.parse(SourceFile.fromFile(file))
 
                     programs.addOne(program)
 
@@ -80,10 +68,12 @@ object Modular {
     }
 
     object Parsing {
-        class Grammar(language: Language) extends hssa.parsing.Parsing.Grammar(language) with ImplicitConversions {
+        class Grammar(language: Language) extends hssa.parsing.Parsing.Grammar(language) {
             def imp: Parser[Syntax.Import] = Lexing.Tokens.TokenClass.IMPORT ~~! this.ident ^ Syntax.Import.apply
 
             def prog: Parser[Syntax.ProgramWithImports] = rep(imp) ~ this.program ^ { case imports ~ prog => Syntax.ProgramWithImports(imports, prog) }
+            
+            def modularEntry = EntrySymbol(prog)
         }
     }
 
@@ -95,40 +85,6 @@ object Modular {
 
             if (imports.isEmpty) hssa.Formatting.format(prog.program)
             else imports + "\n\n" + hssa.Formatting.format(prog.program)
-        }
-    }
-
-    class Chains(language: hssa.Language) {
-        def parse(root_file: Path): Syntax.ProgramWithImports = {
-            Parsing(language).parse(hssa.parsing.Lexing.LexicalGrammar.getTokenReader(SourceFile.fromFile(root_file)))
-        }
-
-        def parseProject(root_file: Path): Syntax.Program = {
-            val (modular_prog, _) = Modular.Parsing(language).parseProject(root_file)
-
-            modular_prog
-        }
-
-        def parseAndLink(root_file: Path): hssa.Syntax.Program = {
-            val (modular_prog, _) = Modular.Parsing(language).parseProject(root_file)
-
-            link(modular_prog)
-        }
-
-        def parseAndFormat(root_file: Path): Syntax.ProgramWithImports = {
-            val prog = parse(root_file)
-
-            println(Formatting.format(prog))
-
-            prog
-        }
-
-        def formatProjectInplace(program: Syntax.Program): Unit = {
-            program.programs.foreach(prog => {
-                prog.position.file.path.foreach(path => {
-                    Files.write(path, Formatting.format(prog).getBytes(StandardCharsets.UTF_8))
-                })
-            })
         }
     }
 

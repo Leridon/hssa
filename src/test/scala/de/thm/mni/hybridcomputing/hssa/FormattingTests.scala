@@ -21,7 +21,7 @@ class FormattingTests extends AnyWordSpec with Matchers {
                 val parsed = test.program_with_imports
                 val formatted = Modular.Formatting.format(parsed)
                 
-                val parsed2 = Modular.Parsing(Language.Canon).parse(hssa.parsing.Lexing.LexicalGrammar.getTokenReader(SourceFile.fromString(formatted)))
+                val parsed2 = Modular.Parsing(Language.Canon).grammar.modularEntry.parse(SourceFile.fromString(formatted))
                 
                 parsed2 shouldEqual parsed
             }

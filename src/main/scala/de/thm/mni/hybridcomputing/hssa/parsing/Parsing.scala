@@ -6,31 +6,13 @@ import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.{LexicalGrammar, Tokens}
 import de.thm.mni.hybridcomputing.hssa.{Language, Syntax}
 import de.thm.mni.hybridcomputing.util.errors.LanguageError
 import de.thm.mni.hybridcomputing.util.parsing
-import de.thm.mni.hybridcomputing.util.parsing.{ParserUtilities, SourceFile, SourcePosition, Token}
+import de.thm.mni.hybridcomputing.util.parsing.{LexicalGrammarUtilities, ParserUtilities, SourceFile, SourcePosition, Token}
 
 import scala.util.parsing.combinator.ImplicitConversions
 import scala.util.parsing.input.Reader
 
 case class Parsing(language: Language = Language.Canon) {
     val grammar = new Parsing.Grammar(language)
-    
-    def parseLiteral(string: String): Value = Interpretation(language).evaluate(this.grammar.expression(LexicalGrammar.getTokenReader(SourceFile.fromString(string))).get, Interpretation.ValueContext(None))
-    
-    def parse(token_reader: Parsing.TokenReader): Program = {
-        this.grammar.program(token_reader) match {
-            case grammar.Success(prog, _) => prog
-            case grammar.NoSuccess(msg, rest) =>
-                val r = rest.asInstanceOf[parsing.TokenReader[?]]
-                
-                LanguageError.SyntaxError(msg).setPosition(SourcePosition(r.file, r.position, null)).raise()
-            case grammar.Failure(_, _) => ???
-            case grammar.Error(_, _) => ???
-        }
-    }
-    
-    def parseBlock(input: String): Syntax.Block = {
-        this.grammar.block(Lexing.LexicalGrammar.getTokenReader(SourceFile.fromString(input))).get
-    }
 }
 
 object Parsing {
@@ -40,11 +22,16 @@ object Parsing {
         
         import de.thm.mni.hybridcomputing.hssa.parsing.Lexing.Tokens.TokenClass.*
         import de.thm.mni.hybridcomputing.util.parsing
-        
+
         private type P[T] = this.Parser[T]
-        
+
         override def skipTokens: Set[Lexing.Tokens.TokenClass] = Set(WHITESPACE, BLOCKCOMMENT, LINECOMMENT, LINEBREAK)
-        
+
+        override type StartSymbolType = Syntax.Program
+        override def defaultLexer: LexicalGrammarUtilities[Tokens.TokenClass] = Lexing.LexicalGrammar
+
+        override def startSymbolParser: Grammar.this.P[Program] = program
+
         protected def ident: P[Syntax.Identifier] = valueToken[String](IDENT) ^ Syntax.Identifier.apply
         
         def simple_expresion: P[Syntax.Expression] = {

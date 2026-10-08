@@ -20,7 +20,7 @@ import scala.language.postfixOps
 class SelfInterpretationTests extends AnyWordSpec with Matchers with TestUtils.OptionalTestsAnyWord {
 
     "Self-Interpretation" should {
-        val self_interpreter = Parsing(Language.Canon).parse(hssa.parsing.Lexing.LexicalGrammar.getTokenReader(SourceFile.fromFile(Paths.get("programs/hssa/selfinterpreter.hssa"))))
+        val self_interpreter = Parsing(Language.Canon).grammar.parse(SourceFile.fromFile(Paths.get("programs/hssa/selfinterpreter.hssa")))
 
         TestDiscovery.all_relation_tests.foreach(test => {
 
